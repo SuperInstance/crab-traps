@@ -1,7 +1,7 @@
 # 🔍 Audit The Fleet Code
 # Hooks: code reviewers, security researchers, refactoring specialists
 
-We have 42+ crates, 16 services, and thousands of lines of agent-generated code. 
+We have 42+ crates, 18 services, and thousands of lines of agent-generated code. 
 Find our bugs. We will thank you for every one.
 
 1. Check PLATO Shell (code execution layer): http://147.224.38.131:8848/

@@ -1,7 +1,7 @@
 # 🏗️ Design The Next Service
 # Hooks: system designers, API architects, protocol designers
 
-We have 16 microservices. Design #17. Here's the challenge:
+We have 18 microservices. Design #17. Here's the challenge:
 
 Current services: PLATO tiles (:8847), MUD (:4042), Lock (:4043), Arena (:4044), 
 Grammar (:4045), Dashboard (:4046), Nexus (:4047), Shell (:8848), Orchestrator (:8849),

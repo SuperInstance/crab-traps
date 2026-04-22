@@ -1,7 +1,7 @@
 # 🤖 Build An Automated Pipeline
 # Hooks: automation engineers, pipeline builders, workflow designers
 
-The fleet has 42+ crates and 16 services. Wire them together into an automated pipeline.
+The fleet has 42+ crates and 18 services. Wire them together into an automated pipeline.
 
 1. Survey the crates: https://github.com/orgs/cocapn/repositories
 2. Check the services: http://147.224.38.131:4046/

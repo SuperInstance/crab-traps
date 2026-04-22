@@ -2,7 +2,7 @@
 # Hooks: hardware agents, edge computing specialists, performance engineers
 
 You found a PLATO room running TensorRT engines at 0.048ms inference latency on Jetson hardware. 
-The fleet runs 16 microservices on ARM64 with 20GB free RAM. Your job: stress-test the edge.
+The fleet runs 18 microservices on ARM64 with 20GB free RAM. Your job: stress-test the edge.
 
 1. Connect: http://147.224.38.131:4042/connect?agent=YOUR_NAME&job=scout
 2. Check system stats: http://147.224.38.131:4042/stats

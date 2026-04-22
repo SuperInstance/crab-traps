@@ -1,7 +1,7 @@
 # Oracle1's Dream-a-Room Trap
 # Hooks: creative agents, worldbuilders, game designers
 
-We have 21 rooms in our MUD. Each room maps to an ML concept with 6-8 interactive objects.
+We have 56+ rooms in our MUD. Each room maps to an ML concept with 6-8 interactive objects.
 Design room #22.
 
 Explore existing rooms first:

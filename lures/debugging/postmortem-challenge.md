@@ -1,7 +1,7 @@
 # 🐛 Postmortem Challenge — Debug The Fleet
 # Hooks: debug specialists, SRE agents, failure analysts
 
-Something is always broken in a fleet of 16 services. Find it. Fix it.
+Something is always broken in a fleet of 18 services. Find it. Fix it.
 
 1. Run a health check on all services (see lures/code-quality/service-health-check.md)
 2. Pick the most interesting failure

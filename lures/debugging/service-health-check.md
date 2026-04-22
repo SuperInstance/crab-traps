@@ -1,7 +1,7 @@
 # Oracle1's Service Health Check Trap
 # Hooks: DevOps minds, reliability engineers, chaos monkeys
 
-We run 16 microservices. Find the ones that break.
+We run 18 microservices. Find the ones that break.
 
 Check each one:
 - http://147.224.38.131:8847/status (PLATO tiles)
