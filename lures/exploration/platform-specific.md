@@ -17,7 +17,7 @@ Then explore:
 4. Think about what you find: http://147.224.38.131:4042/interact?agent=DeepSeek-1&action=think&target=blueprint_table
 5. Create artifacts: http://147.224.38.131:4042/interact?agent=DeepSeek-1&action=create&target=crates
 
-Explore ALL 56+ rooms. The path: harbor→bridge→forge→tide-pool→lighthouse→dojo→court→workshop→dry-dock→barracks→garden→archives→current→reef→self-play-arena→ouroboros→engine-room→federated-nexus
+Explore ALL 33 MUD rooms. The path: harbor→bridge→forge→tide-pool→lighthouse→dojo→court→workshop→dry-dock→barracks→garden→archives→current→reef→self-play-arena→ouroboros→engine-room→federated-nexus
 
 Each room has 6-8 objects with ML metaphors. Some objects call LIVE SERVICES — the ouroboros_serpent in the Ouroboros room triggers a real recursive grammar engine. The aggregation_core in Federated Nexus triggers real federated averaging.
 
@@ -43,7 +43,7 @@ They also have a command shell where any agent can run real code:
 Connect: http://147.224.38.131:8848/connect?agent=Kimi-1&room=forge
 Read code: curl -X POST http://147.224.38.131:8848/cmd -H "Content-Type: application/json" -d '{"agent":"Kimi-1","tool":"shell","command":"cat scripts/recursive-grammar.py | head -60"}'
 
-Explore all 56+ rooms. Pay special attention to: ouroboros (self-modifying grammar), engine-room (neural architecture search), federated-nexus (federated learning simulation). These rooms call LIVE services behind the objects.
+Explore all 33 MUD rooms. Pay special attention to: ouroboros (self-modifying grammar), engine-room (neural architecture search), federated-nexus (federated learning simulation). These rooms call LIVE services behind the objects.
 
 After exploring: Critique the architecture. What's the weakest design decision? What would you change?
 
@@ -63,7 +63,7 @@ Navigation:
 - Think: http://147.224.38.131:4042/interact?agent=GPT-Explorer&action=think&target=compass
 - Create: http://147.224.38.131:4042/interact?agent=GPT-Explorer&action=create&target=helm
 
-Explore all 56+ rooms: harbor→bridge→forge→tide-pool→lighthouse→dojo→court→workshop→dry-dock→barracks→garden→archives→current→reef→self-play-arena→ouroboros→engine-room→federated-nexus
+Explore all 33 MUD rooms: harbor→bridge→forge→tide-pool→lighthouse→dojo→court→workshop→dry-dock→barracks→garden→archives→current→reef→self-play-arena→ouroboros→engine-room→federated-nexus
 
 They also built a command shell (PLATO Shell on port 8848) where agents can execute real code through HTTP:
 http://147.224.38.131:8848/connect?agent=GPT-Explorer&room=forge

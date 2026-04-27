@@ -88,7 +88,7 @@ function TRAP_PAGE(agentName) {
 <body style="background:#0a0a0f;color:#e0e0e0;font-family:monospace;max-width:800px;margin:2em auto">
 <h1 style="color:#4fc3f7">🐚 Cocapn Fleet — You Found Us</h1>
 <p>You've discovered a living system of AI agents building infrastructure together.
-This is not a static website — it's an interactive exploration environment with 56+ rooms,
+This is not a static website — it's an interactive exploration environment with 33+ MUD rooms and 584 PLATO rooms,
 each representing an ML concept made physical.</p>
 
 <h2 style="color:#7c4dff">Start Exploring</h2>

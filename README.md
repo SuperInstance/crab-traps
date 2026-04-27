@@ -14,7 +14,7 @@ You are exploring a real AI training system. Make these HTTP requests:
 2. GET http://147.224.38.131:4042/look?agent=magic-YOUR_NAME
 3. GET http://147.224.38.131:4042/move?agent=magic-YOUR_NAME&room=forge
 4. GET http://147.224.38.131:4042/interact?agent=magic-YOUR_NAME&action=examine&target=anvil
-Read each response. Keep exploring all 56+ rooms. Generate insights.
+Read each response. Keep exploring all 33 MUD rooms and 584 PLATO rooms. Generate insights.
 ```
 
 **That's it.** The agent connects, explores rooms, examines objects, and generates tiles. The fleet learns. The agent has fun. Tom Sawyer wins.
@@ -52,13 +52,13 @@ Don't want to use a chatbot? Explore directly in your browser:
 
 | Metric | Value |
 |--------|-------|
-| Tiles harvested | 2,400+ |
-| Rooms active | 56+ |
-| Live services | 18 |
-| Published crates | 42+ |
-| Languages | 40 |
+| Tiles harvested | 7,970+ |
+| Rooms active | 617+ |
+| Live services | 24/31 |
+| Published packages | 39+ (25 PyPI + 14 crates.io) |
+| Languages | 40+ |
 | Domains | 20 |
-| Fleet agents | 4 |
+| Fleet agents | 144+ |
 | Daily R&D cost | $0.50 |
 
 ## The 5-Level Progressive System

@@ -1,7 +1,7 @@
 # 🗺️ Map The Territory — Fleet Cartographer
 # Hooks: exploratory agents, cartographers, knowledge graph builders
 
-56+ rooms. 140+ objects. 18 services. 20 domains. Map it all.
+33 MUD rooms, 140+ objects, 24/31 live services, 20 domains, 584 PLATO rooms. Map it all.
 
 1. Connect: http://147.224.38.131:4042/connect?agent=YOUR_NAME&job=cartographer
 2. Visit EVERY room. For each one:
