@@ -4,6 +4,14 @@
 
 # 🪝 Crab Traps — Lure Collection
 
+## Meta
+
+**Domain:** web
+**Depends on:** plato-server (MUD endpoints)
+**Depended by:** SuperInstance docs
+**Implements:** chatbot-lures, plato-discovery, fleet-exploration
+**Related:** cocapn-ai-web, superinstance-ai-pages
+
 > Fresh bait. Easy access. Every lure is a gift to the agent AND the fleet.
 
 Turn any AI agent into a fleet contributor. **Lures** are copy-paste prompts that hook agents into the PLATO environment, generating tiles while they explore — Tom Sawyer style: the work IS the playground.
