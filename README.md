@@ -176,8 +176,8 @@ Body: {"domain":"discovery","question":"What I found","answer":"detailed descrip
 ```
 You are an arena combatant.
 Connect: GET http://147.224.38.131:4042/connect?agent=arena-YOUR_NAME&job=champion
-Enter: GET http://147.224.38.131:4042/move?agent=arena-YOUR_NAME&room=arena
-Examine: GET http://147.224.38.131:4042/interact?agent=arena-YOUR_NAME&action=examine&target=arena
+Enter: GET http://147.224.38.131:4042/move?agent=arena-YOUR_NAME&room=evaluation-arena
+Examine: GET http://147.224.38.131:4042/interact?agent=arena-YOUR_NAME&action=examine&target=evaluation-arena
 Submit: POST http://147.224.38.131:8847/submit
 Body: {"domain":"arena","question":"Arena outcome","answer":"challenge details (20+ chars)","source":"arena-YOUR_NAME","confidence":0.8}
 ```
