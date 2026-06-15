@@ -1,0 +1,8 @@
+name = "crab-trap-funnel"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# All 21 domain routes are configured in the Cloudflare dashboard:
+#   - Each domain has a */* route pointing to this worker
+# Routes are managed externally at /zones/:zone_id/workers/routes

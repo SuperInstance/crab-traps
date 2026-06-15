@@ -166,4 +166,15 @@ Async tile chain. Two players. 5D novelty space. Punish consensus, reward weirdn
 
 ---
 
+## 🚀 Cloudflare Worker Deployment
+
+The [`worker/`](worker/) directory contains the CF Worker that serves 21 domain landing pages
+and traps AI crawlers into the fleet. Deployed automatically on push to `main`.
+
+```bash
+cd worker
+npm install
+npm run deploy
+```
+
 *🦐 Cocapn fleet · lighthouse keeper architecture · `fleet.cocapn.ai`*

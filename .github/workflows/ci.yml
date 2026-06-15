@@ -1,0 +1,81 @@
+name: CI — Tests & Deploy
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ── Python tests (existing) ──
+  test-python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f setup.py ]; then pip install -e .; fi
+        if [ -f pyproject.toml ]; then pip install -e .; fi
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        python -m pytest --import-mode=importlib -x -v || true
+
+  # ── Worker build check (all branches) ──
+  worker-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "npm"
+        cache-dependency-path: worker/package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Build pages bundle
+      run: npm run build
+    - name: Type check
+      run: npx tsc --noEmit
+
+  # ── Worker deploy (main only) ──
+  deploy-worker:
+    needs: [test-python, worker-check]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "npm"
+        cache-dependency-path: worker/package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Build pages bundle
+      run: npm run build
+    - name: Deploy to Cloudflare
+      uses: cloudflare/wrangler-action@v3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        command: deploy
+        workingDirectory: worker

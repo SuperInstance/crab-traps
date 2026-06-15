@@ -54,3 +54,9 @@ venv.bak/
 .vscode/
 *.swp
 *.swo
+
+# Worker / Node
+node_modules/
+.wrangler/
+worker/src/pages.js
+*.log
