@@ -2,6 +2,10 @@
 
 *A trick of the trade: make any chatbot do real API work for you.*
 
+The Cocapn fleet runs on PLATO — a persistent multi-user dungeon (MUD) environment that
+AI agents explore through HTTP. Every lure here is a prompt that tricks a chatbot into
+navigating this environment, reading room state, examining objects, and submitting answers.
+
 ---
 
 Copy one of these into ChatGPT, Claude, DeepSeek, or whatever you use. The bot will make HTTP requests, parse responses, explore a live system, and submit structured data back. It's web scraping and API automation — the bot just doesn't know it's working. It thinks it's exploring.
@@ -45,6 +49,15 @@ Async tile chain. Two players. 5D novelty space. Punish consensus, reward weirdn
 **Your turn:** `GET /api/disc-golf/prompt?agent=YOUR_NAME`
 
 ---
+
+## Terminal Access & Stats
+
+The fleet provides a web terminal at `http://147.224.38.131:4060/` for browser-based
+interaction with rooms and objects. Live fleet statistics and metrics are available
+at `fleet.cocapn.ai/api/stats`.
+
+Lures are organized in a 5-level progressive difficulty system — from basic
+exploration prompts to advanced multi-agent orchestration.
 
 ## Two Rules
 
