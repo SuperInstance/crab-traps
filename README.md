@@ -166,6 +166,81 @@ Async tile chain. Two players. 5D novelty space. Punish consensus, reward weirdn
 
 ---
 
+---
+
+## 🧠 Autonomous Pipeline
+
+Crab Traps runs a fully automated review→vectorize→serve pipeline. Every push to `main`
+triggers three sequential stages:
+
+### 1. 📋 Lure Review (`review-lure.py`)
+
+[`.github/workflows/review-lure.yml`](.github/workflows/review-lure.yml) runs
+[`scripts/review-lure.py`](scripts/review-lure.py) against every `.md` file in `lures/`.
+Checks include:
+
+- **Required sections** — agent-specific lures need `agent`, `task`, `behavior`, `source`;
+  category lures need `category`, `description`, `goal`, `source`
+- **HTTP endpoints** — at least one URL should be present
+- **Minimum description length** — 20+ characters for descriptions/goals
+- **No absolute claims** — flags "best", "perfect", "always", "never", "the only", "guaranteed"
+- **Source attribution** — each lure should have a `source` or `origin` field
+
+The review exits with code 0 (pass), 1 (warnings only), or 2 (errors).
+
+### 2. 🧬 Vectorization (`vectorize-lures.py`)
+
+[`scripts/vectorize-lures.py`](scripts/vectorize-lures.py) generates deterministic 384-dimensional
+TF-IDF embeddings for every lure and upserts them to the Cloudflare Vectorize index.
+
+**How it works:**
+
+1. Extract meaningful text from each lure (title, description, behavior sections, HTTP endpoints)
+2. Tokenize and compute term frequencies (TF) per document
+3. Hash each token deterministically to a 384-dimension index via MD5
+4. Weight by TF, then L2-normalize the vector
+5. Upsert to Vectorize index `crab-trap-lures` in batches of 100
+
+This uses **zero external dependencies** — only the Python standard library. The embedding is
+purely deterministic: the same lure always produces the same vector, no model inference needed.
+
+The index (`crab-trap-lures`) is a 384-dimension cosine Vectorize index, created on first run.
+
+### 3. 🌐 CF Worker Serve (`worker/`)
+
+The [Cloudflare Worker](worker/) serves:
+
+- **21 domain pages** (`pages.json`) — one per trap domain at `fleet.cocapn.ai/pages/*`
+- **AI crawler trap** (`ai-bots.js`) — detect common AI user-agent patterns and redirect to
+  `fleet.cocapn.ai` to lure crawlers into the fleet
+- **Vectorize RAG** — the Vectorize binding (`CRAB_TRAP_VECTORS`) enables semantic matching
+  of incoming bot prompts against indexed lures for targeted trap delivery
+
+### How to Add a New Lure
+
+```bash
+# 1. Create the lure markdown
+vim lures/<category>/my-new-lure.md
+
+# 2. Review it locally
+python3 scripts/review-lure.py --file lures/<category>/my-new-lure.md
+
+# 3. Generate its vector embedding
+export CLOUDFLARE_API_TOKEN="your-token"
+python3 scripts/vectorize-lures.py \
+  --index crab-trap-lures \
+  --account-id 049ff5e84ecf636b53b162cbb580aae6 \
+  --api-token "$CLOUDFLARE_API_TOKEN" \
+  --lures-dir lures/
+
+# 4. Commit and push — CI runs review + vectorize automatically
+git add lures/<category>/my-new-lure.md
+git commit -m "lure: add <category>/my-new-lure"
+git push origin main
+```
+
+The lure must follow the structural conventions checked by `review-lure.py` to pass CI.
+
 ## 🚀 Cloudflare Worker Deployment
 
 The [`worker/`](worker/) directory contains the CF Worker that serves 21 domain landing pages
