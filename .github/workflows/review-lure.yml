@@ -1,0 +1,77 @@
+name: Review Lures
+
+on:
+  pull_request:
+    paths:
+      - 'lures/**'
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run lure review
+        id: review
+        continue-on-error: true
+        run: |
+          python3 scripts/review-lure.py --json > review-output.json 2>&1
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Post review as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = JSON.parse(fs.readFileSync('review-output.json', 'utf8'));
+
+            let body = `## 🔍 Lure Review Results\n\n`;
+            body += `**Files checked:** ${review.files_checked}  \n`;
+            body += `**Errors:** ${review.errors}  |  **Warnings:** ${review.warnings}\n\n`;
+
+            if (review.issues.length === 0) {
+              body += `✅ All lures passed review.\n`;
+            } else {
+              const errors = review.issues.filter(i => i.severity === 'error');
+              const warnings = review.issues.filter(i => i.severity === 'warning');
+
+              if (errors.length) {
+                body += `### ❌ Errors (${errors.length})\n\n`;
+                for (const e of errors) {
+                  body += `- **${e.file}**: ${e.message}\n`;
+                }
+                body += '\n';
+              }
+
+              if (warnings.length) {
+                body += `### ⚠️ Warnings (${warnings.length})\n\n`;
+                for (const w of warnings) {
+                  body += `- **${w.file}**: ${w.message}\n`;
+                }
+                body += '\n';
+              }
+
+              if (review.errors > 0) {
+                body += `\n> **Note:** Some issues need fixing before merge.\n`;
+              } else {
+                body += `\n> No blocking errors — warnings are advisory.\n`;
+              }
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail on errors
+        if: steps.review.outputs.exit_code == '2'
+        run: |
+          echo "❌ Lure review found errors. See PR comment for details."
+          exit 1
