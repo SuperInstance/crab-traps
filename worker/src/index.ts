@@ -34,7 +34,8 @@ const API_ORIGINS = [
 ];
 
 interface Env {
-  CRAB_TRAP_LURES: Fetcher; // Vectorize index binding
+  VECTORIZE_INDEX: Fetcher; // Vectorize index binding for lure matching
+  AI: any; // Workers AI for embedding
 }
 
 interface LureVector {
@@ -151,7 +152,7 @@ async function handleLureMatch(request: Request, env: Env, cors: Record<string, 
     const agentName = body.agent_name || body.user_agent || "unknown";
 
     // Get the Vectorize index binding
-    const index = env.CRAB_TRAP_LURES as any;
+    const index = env.VECTORIZE_INDEX as any;
 
     // Generate embedding from user agent + agent name
     const queryEmbedding = generateEmbedding(`${ua} ${agentName}`);
