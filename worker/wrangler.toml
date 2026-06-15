@@ -8,7 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 binding = "AI"
 
 # Vectorize index for lure matching
-[vectorize]
+[[vectorize]]
 binding = "VECTORIZE_INDEX"
 index_name = "crab-trap-lures"
 
