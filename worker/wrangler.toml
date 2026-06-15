@@ -3,12 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Workers AI binding for embedding generation in lure RAG endpoint
-[[ai]]
+# Workers AI binding for embedding generation
+[ai]
 binding = "AI"
 
 # Vectorize index for lure matching
-[[vectorize]]
+[vectorize]
 binding = "VECTORIZE_INDEX"
 index_name = "crab-trap-lures"
 
