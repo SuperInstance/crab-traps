@@ -46,7 +46,6 @@ jobs:
       with:
         node-version: "20"
         cache: "npm"
-        cache-dependency-path: worker/package-lock.json
     - name: Install dependencies
       run: npm ci
     - name: Build pages bundle
@@ -68,7 +67,6 @@ jobs:
       with:
         node-version: "20"
         cache: "npm"
-        cache-dependency-path: worker/package-lock.json
     - name: Install dependencies
       run: npm ci
     - name: Build pages bundle
