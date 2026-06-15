@@ -47,9 +47,14 @@ def tokenize(text):
 
 
 def hash_feature(token, dim):
-    """Deterministic hash of a token to a dimension index."""
-    h = hashlib.md5(token.encode()).digest()
-    return int.from_bytes(h[:4], "little") % dim
+    """Deterministic hash of a token to a dimension index.
+    Must match the Worker's TypeScript hashFeature (FNV-like hash).
+    """
+    h = 0
+    for ch in token:
+        h = ((h << 5) - h) + ord(ch)
+        h &= 0xFFFFFFFF  # simulate 32-bit integer overflow
+    return h % dim
 
 
 def generate_embedding(text):
