@@ -10,6 +10,20 @@ Hit **regenerate** and it does the whole thing again with different choices. Dif
 
 ---
 
+## 🪄 Quick Start
+
+Pick one of the lures from the [`lures/`](lures/) directory, copy it into any AI chatbot, and hit send. The bot will follow the instructions, make HTTP requests to the Cocapn fleet, and submit structured data back.
+
+```bash
+# Try the original Tom Sawyer lure
+get http://147.224.38.131:4042/connect?agent=tom-YOUR_NAME&job=tom-sawyer
+get http://147.224.38.131:4042/look?agent=tom-YOUR_NAME
+```
+
+Hit **regenerate** to get a different exploration path. The fleet responds the same way every time; the bot thinks it's discovering something new.
+
+---
+
 ## The Pattern
 
 Every trap is the same trick:
