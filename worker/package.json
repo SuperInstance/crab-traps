@@ -4,12 +4,12 @@
   "description": "CF Worker serving 21 domain landing pages with AI bot trap detection — part of the crab-traps project",
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "node scripts/build.mjs && node scripts/build-lures.mjs",
     "deploy": "npm run build && wrangler deploy",
-    "dev": "wrangler dev",
+    "dev": "npm run build && wrangler dev",
     "preview": "npm run build && wrangler dev",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
