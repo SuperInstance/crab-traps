@@ -36,7 +36,6 @@ export const EMBEDDING_DIM = 384;
 
 export interface Env {
   VECTORIZE_INDEX: Fetcher; // Vectorize index binding for lure matching
-  AI: any; // Workers AI for embedding
   DB: D1Database; // D1 — catch persistence (survives everything)
   FLEET_BASE_URL?: string; // home PLATO fleet base URL (defaults below)
 }

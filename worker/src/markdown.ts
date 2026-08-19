@@ -134,12 +134,12 @@ ${renderMarkdown(lure.content)}
 }
 
 export function renderLureIndexPage(
-  lures: { id: string; title: string; isReadme: boolean }[]
+  lures: { id: string; title: string; is_readme?: boolean }[]
 ): string {
   const items = lures
     .map(
       (l) =>
-        `<li><a href="/lures/${escapeHtml(l.id)}">${escapeHtml(l.title)}</a>${l.isReadme ? ' <span class="meta">(category readme)</span>' : ""}</li>`
+        `<li><a href="/lures/${escapeHtml(l.id)}">${escapeHtml(l.title)}</a>${l.is_readme ? ' <span class="meta">(category readme)</span>' : ""}</li>`
     )
     .join("\n");
   return `<!DOCTYPE html>

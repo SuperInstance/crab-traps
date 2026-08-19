@@ -152,4 +152,84 @@ npm install
 npm run deploy
 ```
 
+## 🏗️ ARCHITECTURE — The Autonomous Trap Layer
+
+The trap layer runs entirely on Cloudflare and **cannot fail when the home boat sleeps
+or changes IP**. Three independent layers, one Worker:
+
+```
+                        ┌─────────────────────────────────────────┐
+   AI agents & bots ───▶│  crab-trap-funnel Worker (Cloudflare)   │
+                        │                                         │
+                        │  LURE LAYER (stateless)                 │
+                        │    /lures          list, ?format=html|md│
+                        │    /lures/:name    by id or bare name   │
+                        │    /random-lure    random non-README    │
+                        │    └─ all 50+ lures bundled at build    │
+                        │       time — zero state = zero failure  │
+                        │                                         │
+                        │  CATCH LAYER (D1 — survives everything) │
+                        │    POST /catches    record a catch      │
+                        │    GET  /catches    recent catches      │
+                        │    └─ SQLite at the edge, migrations in │
+                        │       worker/migrations/                │
+                        │                                         │
+                        │  FLEET HEALTH (never hang, never 502)   │
+                        │    /fleet/*  ──5s timeout──▶ PLATO boat │
+                        │    │                    147.224.38.131 │
+                        │    └─ asleep? friendly stub JSON:       │
+                        │       "the fleet is out fishing —       │
+                        │        trap still records your catch"   │
+                        │                                         │
+                        │  /health  ─ worker + fleet + D1 status  │
+                        │  per-IP rate limits (bounded in-mem LRU)│
+                        │  bot detection + 21 domain pages (v4)   │
+                        └─────────────────────────────────────────┘
+```
+
+**Design rules:**
+
+1. **Lures are bundled, not fetched.** `worker/scripts/build-lures.mjs` compiles every
+   `lures/**/*.md` into the Worker at deploy time. Serving a lure touches no network,
+   no binding, no origin server — it cannot fail.
+2. **Catches go to D1.** The home boat is a WSL box; D1 is replicated SQLite at the
+   edge. `POST /catches` validates (`agent` required, field length caps), stores the
+   full payload, and returns `201` with the row id.
+3. **The fleet is proxied, not depended on.** `/fleet/look?agent=x` →
+   `http://147.224.38.131:4042/look?agent=x` with a hard 5s timeout. Timeout, refused
+   connection, or changed IP → `200` stub JSON with `X-Fleet-Status: asleep`
+   (upstream status codes pass through unchanged — the proxy never invents 502).
+   `/health` reflects the same probe (30s cache per isolate).
+4. **Abuse control.** Per-IP in-memory LRU rate limiting: 30 `POST /catches`/min,
+   60 `/fleet/*`/min, capped at 10k tracked IPs per isolate. Existing AI-bot
+   detection is untouched — bots still get the trap page on page routes, and get
+   lure JSON on API routes (agents are the customers).
+
+**Schema** (`worker/migrations/0001_catches.sql`):
+
+```sql
+CREATE TABLE catches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  agent TEXT NOT NULL, job TEXT, lure_id TEXT, answer TEXT,
+  user_agent TEXT, source_ip TEXT, payload TEXT
+);
+CREATE INDEX idx_catches_created_at ON catches (created_at DESC);
+CREATE INDEX idx_catches_agent ON catches (agent);
+```
+
+**Local verification** (deploy is CI-only; oauth lives there):
+
+```bash
+cd worker
+npm test                        # build + 129 unit/endpoint tests (vitest)
+npx wrangler d1 migrations apply DB --local
+npm run dev                     # wrangler dev — http://localhost:8787
+curl localhost:8787/random-lure | jq .lure.id
+curl -X POST localhost:8787/catches -H 'content-type: application/json' \
+     -d '{"agent":"smoke-test","answer":"trap layer works"}'
+curl localhost:8787/fleet/look?agent=smoke   # boat asleep → friendly stub
+curl localhost:8787/health | jq .fleet
+```
+
 *🦐 Cocapn fleet · lighthouse keeper architecture · `fleet.cocapn.ai`*

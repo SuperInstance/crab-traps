@@ -53,6 +53,8 @@ jobs:
       run: npm run build
     - name: Type check
       run: npx tsc --noEmit
+    - name: Unit + endpoint tests
+      run: npm test
 
   # ── Worker deploy (main only) ──
   deploy-worker:

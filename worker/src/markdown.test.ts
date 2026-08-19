@@ -135,8 +135,8 @@ describe("renderLurePage", () => {
 describe("renderLureIndexPage", () => {
   it("links every lure and tags readmes", () => {
     const html = renderLureIndexPage([
-      { id: "creative/dream-a-room", title: "Dream", isReadme: false },
-      { id: "creative/README", title: "Creative", isReadme: true },
+      { id: "creative/dream-a-room", title: "Dream", is_readme: false },
+      { id: "creative/README", title: "Creative", is_readme: true },
     ]);
     expect(html).toContain('href="/lures/creative/dream-a-room"');
     expect(html).toContain("(category readme)");

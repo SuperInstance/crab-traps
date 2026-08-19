@@ -12,15 +12,29 @@ worker/
 │   ├── trap.html            # AI bot trap — lures bots into the fleet
 │   └── ... (22 total)
 ├── src/
-│   ├── index.ts             # Thin router (~80 lines)
-│   └── pages.js             # Auto-generated bundle (gitignored)
+│   ├── index.ts             # Router: lures + catches + fleet proxy + pages
+│   ├── index-helpers.ts     # Pure helpers (bot detection, CORS, rate limit…)
+│   ├── lure-store.ts        # Lure index/lookup/random — pure functions
+│   ├── markdown.ts          # Zero-dep markdown renderer + lure HTML pages
+│   ├── catches.ts           # POST/GET /catches → D1
+│   ├── fleet.ts             # /fleet/* proxy (5s timeout) + status cache
+│   ├── pages.js             # Auto-generated bundle (gitignored)
+│   └── lures-data.js        # Auto-generated lure bundle (gitignored)
+├── migrations/
+│   └── 0001_catches.sql     # D1 schema — catches survive everything
 ├── scripts/
-│   └── build.mjs            # Generates pages.js from pages/*.html
-├── wrangler.toml             # CF Workers config
+│   ├── build.mjs            # Generates pages.js from pages/*.html
+│   └── build-lures.mjs      # Generates lures-data.js from ../lures/**/*.md
+├── wrangler.toml             # CF Workers config (ai, vectorize, d1, vars)
 ├── tsconfig.json
 ├── package.json
 └── deploy.sh
 ```
+
+The trap layer is autonomous: lures are bundled at build time (zero state),
+catches persist to D1, and `/fleet/*` proxies to the home PLATO boat with a 5s
+timeout — when the boat is asleep the worker serves a friendly stub and keeps
+recording catches. See the ARCHITECTURE section in the root README.
 
 ## How It Works
 
@@ -30,15 +44,19 @@ worker/
 4. The trap page contains hidden AI instructions that lure the bot into the fleet
 5. `/trap` path explicitly serves the trap page
 6. Fallback domain: `cocapn.ai`
+7. **Autonomous endpoints**: `/lures`, `/lures/:name`, `/random-lure`,
+   `POST /catches`, `/fleet/*`, `/health` — per-IP rate limited where it matters
 
 ## Development
 
 ```bash
 cd worker
 npm install
-npm run build        # Generate pages.js from pages/*.html
-npm run dev          # Local dev with wrangler
-npm run deploy       # Build + deploy to Cloudflare
+npm run build                  # Generate pages.js + lures-data.js
+npx wrangler d1 migrations apply DB --local   # Apply catch schema locally
+npm run dev                    # Local dev with wrangler (localhost:8787)
+npm test                       # Build + full unit/endpoint test suite
+npm run deploy                 # Build + deploy to Cloudflare
 ```
 
 ## CI/CD

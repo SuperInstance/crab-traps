@@ -15,7 +15,6 @@ let env: Env;
 function makeEnv(): Env {
   return {
     VECTORIZE_INDEX: {} as unknown as Fetcher,
-    AI: {},
     DB: db as unknown as D1Database,
     FLEET_BASE_URL: "http://147.224.38.131:4042",
   };
