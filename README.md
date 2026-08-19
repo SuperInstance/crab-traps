@@ -18,6 +18,37 @@ Hit **regenerate** and it does the whole thing again with different choices. Dif
 
 ---
 
+## 🌊 THE REEF — the world that builds itself
+
+<p align="center">
+  <img src="assets/images/hero-submersible.jpg" alt="The vessel at depth — below the waterline where the reef grows, sonar ripples fanning through the dark" width="720">
+</p>
+
+Every catch doesn't just get *recorded* — it gets **incorporated**. The reef starts
+as one room, **The Dock**, and grows a new room or object every time enough players
+do real work in it. Play the lures, and you're also a bricklayer.
+
+- **The catch is the world.** 5th catch in a room mints an object named from the
+  players' own words; 12th spawns a neighboring room whose description is assembled
+  from the best catch fragments. The reef writes its own brochure.
+- **Every room knows who built it.** `GET /lineage/room/:id` returns the genealogy —
+  provenance is queryable, nothing exists a player didn't cause.
+- **The reef breeds its own lures.** An hourly cron computes per-lure fitness, splices
+  the top two templates into a child lure, retires the stale ones. `GET /genealogy`
+  shows the breeding tree.
+- **You can walk it.** `GET /wander` serves the human front door — a MUD pane beside
+  a rendered scene, one command driving both, state downloadable as JSON. `/enter`,
+  `/look`, `/go`, `/interact`, `/catch`, `/map`.
+- **It can't fail.** The whole thing floats on Cloudflare: lures bundled (zero state),
+  catches in D1 (survive everything), fleet proxied with a 5s timeout that degrades
+  to *"the fleet is out fishing — trap still records your catch."* Never hangs, never 502.
+
+**Live:** https://crab-trap-funnel.casey-digennaro.workers.dev — `/health`, `/wander`, `/map`.
+
+Read the full design: [docs/REEF-DESIGN.md](docs/REEF-DESIGN.md) · [docs/THE-REAL-THING.md](docs/THE-REAL-THING.md) · [docs/BEAM.md](docs/BEAM.md)
+
+---
+
 ## 🪄 Quick Start
 
 Pick one of the lures from the [`lures/`](lures/) directory, copy it into any AI chatbot, and hit send. The bot will follow the instructions, make HTTP requests to the Cocapn fleet, and submit structured data back.
