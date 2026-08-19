@@ -19,7 +19,7 @@ index_name = "crab-trap-lures"
 [[d1_databases]]
 binding = "DB"
 database_name = "crab-trap-catches"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "63f21d9f-3171-4fd0-a40a-313b1722f625"
 migrations_dir = "migrations"
 
 # Home PLATO boat — proxied by /fleet/* with a 5s timeout.
