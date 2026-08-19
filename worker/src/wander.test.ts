@@ -63,4 +63,19 @@ describe("wanderHtml", () => {
     expect(html).toContain("QUIPS");
     expect(html).toContain("HINTS");
   });
+
+  it("ships the terrain 3D pane toggle (one game, two views)", () => {
+    // the toggle lives in the scene pane; the painted 2D view is the default
+    expect(html).toContain('id="view-2d"');
+    expect(html).toContain('id="view-3d"');
+    expect(html).toMatch(/<button class="viewbtn active" id="view-2d"/);
+    expect(html).toContain('id="scene-3d"');
+    // the 3D pane loads /scene/:room (the terrain contract) and renders it
+    expect(html).toContain("/scene/");
+    expect(html).toContain("three.min.js");
+    expect(html).toContain("renderRoom");
+    // degrade gracefully: CDN or endpoint failure falls back to the 2D view
+    expect(html).toContain("staying in the painted view");
+    expect(html).toContain("back to the painted view");
+  });
 });

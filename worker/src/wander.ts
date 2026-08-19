@@ -5,6 +5,10 @@
 // rooms) + the nine-verb sentence bar (verbs + hotspots assemble the
 // command visibly in the input bar — SCUMM's sentence line, typed or
 // clicked, identical).
+// v3: the terrain beam — a 3D view toggle in the scene pane loads
+// /scene/:room (terrain's scene.json contract) and renders the same room
+// walkable in Three.js; the painted 2D view stays the default. The MUD
+// stays the truth; both views are shadows of the same room JSON.
 
 export function wanderHtml(base = ""): string {
 	return `<!DOCTYPE html>
@@ -43,6 +47,13 @@ main{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:0}
 #scene-slide{flex:1;position:relative;overflow:hidden;transition:transform .42s ease,opacity .42s ease}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
 #scene-cap{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:var(--mist);font-size:.75rem;font-style:italic;pointer-events:none;z-index:4}
+/* view toggle — the same room in two views (2D painted default, 3D terrain) */
+#viewbar{position:absolute;top:10px;right:12px;z-index:5;display:flex;gap:6px}
+.viewbtn{background:rgba(10,22,40,.88);color:var(--mist);border:1px solid #2c4a73;border-radius:5px;font-family:Verdana,sans-serif;font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 11px;cursor:pointer}
+.viewbtn:hover{border-color:var(--brass);color:var(--brass-soft)}
+.viewbtn.active{background:var(--brass);color:var(--hull);border-color:var(--brass)}
+#scene-3d{position:absolute;inset:0;display:none;background:var(--hull);cursor:crosshair}
+#scene-3d canvas{display:block}
 /* mint cutscene letterbox (input-lock + esc-skip by design, SCUMM cutscene opcode) */
 #letterbox{position:absolute;inset:0;pointer-events:none;z-index:3}
 .lb-bar{position:absolute;left:0;right:0;height:0;background:#04070d;transition:height .5s ease}
@@ -81,6 +92,11 @@ button:hover{filter:brightness(1.1)}
   <div id="scene-wrap">
     <div id="scene-slide">
       <canvas id="scene" width="640" height="480"></canvas>
+      <div id="scene-3d"></div>
+    </div>
+    <div id="viewbar">
+      <button class="viewbtn active" id="view-2d" title="the painted ScummVM-style view">2D painted</button>
+      <button class="viewbtn" id="view-3d" title="the same room, walkable — terrain's scene.json">3D walkable</button>
     </div>
     <div id="scene-cap">the same room, seen from inside — click objects, walk the edges</div>
     <div id="letterbox" class="letterbox"><div class="lb-bar lb-top"></div><div class="lb-bar lb-bot"></div></div>
@@ -210,6 +226,231 @@ function slideScene(side){
   },420);
 }
 
+// ---------- 3D pane (the terrain beam — one room, two views) ----------
+// The painted canvas stays the default; the 3D toggle loads /scene/:room
+// (terrain's scene.json contract, compiled server-side) and renders it with
+// a minimal Three.js scene: floor, walls, ceiling, lit objects, exits as
+// glowing doorways. Degrades to the 2D view if the CDN or the endpoint is
+// unreachable. Clicks stay terminal commands (law 3: commands are the
+// protocol) — click an object to examine it, click a doorway to go.
+const scene3d = document.getElementById('scene-3d');
+let viewMode = '2d'; // painted canvas is the default view
+const T3 = { scene:null, camera:null, renderer:null, objs:[], keys:{}, yaw:0, pitch:0, locked:false, ray:null, loopId:0 };
+
+function loadThree(){
+  if(window.THREE) return Promise.resolve();
+  if(loadThree._p) return loadThree._p;
+  loadThree._p = new Promise(function(res,rej){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload=function(){ window.THREE?res():rej(new Error('three missing')); };
+    s.onerror=function(){ rej(new Error('three cdn unreachable')); };
+    document.head.appendChild(s);
+    setTimeout(function(){ if(!window.THREE) rej(new Error('three cdn timed out')); }, 8000);
+  });
+  return loadThree._p;
+}
+function setViewBtns(){
+  document.getElementById('view-2d').classList.toggle('active', viewMode==='2d');
+  document.getElementById('view-3d').classList.toggle('active', viewMode==='3d');
+}
+function view2d(){
+  if(viewMode==='2d') return;
+  viewMode='2d'; setViewBtns(); stop3d();
+  cv.style.display='block'; scene3d.style.display='none';
+  drawScene();
+}
+function view3d(){
+  if(viewMode==='3d') return;
+  if(!room){ sceneCap('the reef is still waking — enter first'); return; }
+  loadThree()
+    .then(function(){ return drawScene3D(); })
+    .then(function(){
+      viewMode='3d'; setViewBtns();
+      cv.style.display='none'; scene3d.style.display='block';
+      sceneCap('3D — the same room, walkable · click to look, WASD to walk, click a doorway to go');
+      start3d();
+    })
+    .catch(function(){ sceneCap('the 3D engine is unreachable — staying in the painted view'); });
+}
+function paneSize(){
+  const w=scene3d.clientWidth||cv.width, h=scene3d.clientHeight||cv.height;
+  return {w:w||640, h:h||480};
+}
+function geom3d(type){
+  switch(type){
+    case 'SphereGeometry': return new THREE.SphereGeometry(0.5,12,12);
+    case 'CylinderGeometry': return new THREE.CylinderGeometry(0.35,0.45,1,10);
+    case 'ConeGeometry': return new THREE.ConeGeometry(0.45,1,10);
+    case 'TorusGeometry': return new THREE.TorusGeometry(0.4,0.15,8,16);
+    case 'PlaneGeometry': return new THREE.PlaneGeometry(1,1);
+    default: return new THREE.BoxGeometry(1,1,1);
+  }
+}
+function mat3d(p,fallback){
+  p=p||{};
+  const m=new THREE.MeshStandardMaterial();
+  m.color=new THREE.Color(p.color||fallback||'#888888');
+  if(p.metalness!==undefined) m.metalness=p.metalness;
+  if(p.roughness!==undefined) m.roughness=p.roughness;
+  if(p.emissive){ m.emissive=new THREE.Color(p.emissive); m.emissiveIntensity=(p.emissiveIntensity!==undefined)?p.emissiveIntensity:1; }
+  if(p.opacity!==undefined){ m.transparent=true; m.opacity=p.opacity; }
+  return m;
+}
+function objMat3d(o){
+  const p=o.material||{};
+  const m=new THREE.MeshStandardMaterial();
+  m.color=new THREE.Color(p.color||'#8899aa');
+  if(p.metalness!==undefined) m.metalness=p.metalness;
+  if(p.roughness!==undefined) m.roughness=p.roughness;
+  if(p.emissive){ m.emissive=new THREE.Color(p.emissive); m.emissiveIntensity=(p.emissiveIntensity!==undefined)?p.emissiveIntensity:1; }
+  else { m.emissive=new THREE.Color(m.color).multiplyScalar(0.55); m.emissiveIntensity=0.35; } // lit objects
+  return m;
+}
+function label3d(text){
+  const c=document.createElement('canvas'); const x=c.getContext('2d');
+  x.font='bold 14px Verdana'; const w=Math.max(140, x.measureText(text).width+24);
+  c.width=w; c.height=30;
+  x.fillStyle='rgba(4,9,16,.88)'; x.fillRect(0,0,w,30);
+  x.strokeStyle='rgba(217,164,65,.7)'; x.strokeRect(0.5,0.5,w-1,29);
+  x.fillStyle='#e8c47c'; x.font='bold 14px Verdana'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(text,w/2,16);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));
+  sp.scale.set(2.6,0.66,1);
+  return sp;
+}
+function build3D(sj){
+  const theme=sj.theme||{};
+  const s=new THREE.Scene();
+  s.background=new THREE.Color(theme.bg||'#0a0a1a');
+  T3.objs=[];
+  // floor (contract geometry)
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20), mat3d(sj.floor&&sj.floor.material,'#2a2a2a'));
+  floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; s.add(floor);
+  // walls — simple boxes, thick enough to read from inside
+  const wm=mat3d((sj.walls&&sj.walls[0]&&sj.walls[0].material)||null,'#3a3a4a');
+  function wallBox(wx,wy,wz,ww,wh,wd){ const m=new THREE.Mesh(new THREE.BoxGeometry(ww,wh,wd),wm); m.position.set(wx,wy,wz); s.add(m); }
+  wallBox(0,4,-10,20,8,0.4); wallBox(0,4,10,20,8,0.4); wallBox(10,4,0,0.4,8,20); wallBox(-10,4,0,0.4,8,20);
+  // ceiling
+  const ceil=new THREE.Mesh(new THREE.PlaneGeometry(20,20), mat3d(sj.ceiling&&sj.ceiling.material,'#303040'));
+  ceil.rotation.x=Math.PI/2; ceil.position.y=8; s.add(ceil);
+  // lights — ambient, accent overhead, hemisphere fill
+  s.add(new THREE.AmbientLight(0x404060,0.5));
+  const accent=new THREE.Color(theme.accent||'#ffd700');
+  const main=new THREE.PointLight(accent,0.9,30); main.position.set(0,6,0); s.add(main);
+  s.add(new THREE.HemisphereLight(0x606080,0x303040,0.35));
+  // exits — glowing doorways; clicking one executes go <target>
+  (sj.exits||[]).forEach(function(ex){
+    const pos=ex.position||{x:0,y:2,z:-9};
+    const col=new THREE.Color(ex.color||theme.accent||'#ffd700');
+    const ew=(ex.size&&ex.size.width)||3, eh=(ex.size&&ex.size.height)||4;
+    const frame=new THREE.Mesh(
+      new THREE.BoxGeometry(ew+0.6,eh+0.6,0.35),
+      new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.55,metalness:0.8,roughness:0.2})
+    );
+    frame.position.set(pos.x||0,pos.y||2,pos.z||0);
+    frame.userData={type:'exit',exit:ex}; s.add(frame); T3.objs.push(frame);
+    const glow=new THREE.Mesh(new THREE.PlaneGeometry(ew,eh), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.18,side:THREE.DoubleSide}));
+    glow.position.set(pos.x||0,pos.y||2,(pos.z||0)+0.25); s.add(glow); T3.objs.push(glow);
+    const label=label3d(ex.direction+' → '+(ex.target||'?'));
+    label.position.set(pos.x||0,(pos.y||2)+eh/2+0.7,pos.z||0); s.add(label); T3.objs.push(label);
+  });
+  // objects — contract geometry + material, faint emissive so they read in the dark
+  (sj.objects||[]).forEach(function(o){
+    const mesh=new THREE.Mesh(geom3d(o.geometry&&o.geometry.type), objMat3d(o));
+    const p=o.position||{};
+    mesh.position.set(p.x!==undefined?p.x:0, p.y!==undefined?p.y:0.5, p.z!==undefined?p.z:0);
+    if(o.scale) mesh.scale.set(o.scale.x||1,o.scale.y||1,o.scale.z||1);
+    mesh.userData={type:'object',obj:o};
+    s.add(mesh); T3.objs.push(mesh);
+  });
+  // camera from the contract
+  const cp=(sj.camera&&sj.camera.position)||{x:0,y:4,z:8};
+  const size=paneSize();
+  T3.camera=new THREE.PerspectiveCamera((sj.camera&&sj.camera.fov)||60, size.w/size.h, 0.1, 200);
+  T3.camera.position.set(cp.x||0, cp.y||4, cp.z||8);
+  T3.camera.lookAt(0,1,0);
+  T3.yaw=0; T3.pitch=0;
+  // renderer
+  if(T3.renderer) T3.renderer.dispose();
+  T3.renderer=new THREE.WebGLRenderer({antialias:true});
+  T3.renderer.setSize(size.w,size.h);
+  T3.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  scene3d.innerHTML='';
+  scene3d.appendChild(T3.renderer.domElement);
+  T3.scene=s; T3.ray=new THREE.Raycaster();
+  window.addEventListener('resize', resize3d);
+}
+function resize3d(){
+  if(!T3.renderer||!T3.camera) return;
+  const size=paneSize();
+  T3.renderer.setSize(size.w,size.h);
+  T3.camera.aspect=size.w/size.h; T3.camera.updateProjectionMatrix();
+}
+async function drawScene3D(){
+  const r=room||{};
+  const ref=(r.id!==undefined&&r.id!==null)?r.id:(r.name||'');
+  if(ref==='') throw new Error('no room');
+  const res=await fetch(API+'/scene/'+encodeURIComponent(String(ref)));
+  if(!res.ok) throw new Error('scene '+res.status);
+  build3D(await res.json());
+}
+// one room, one render — whichever view is live
+function renderRoom(){
+  if(viewMode==='3d'){
+    drawScene3D().catch(function(){ view2d(); sceneCap('the 3D scene would not load — back to the painted view'); });
+  } else drawScene();
+}
+function start3d(){ stop3d(); T3.loopId=requestAnimationFrame(loop3d); }
+function stop3d(){ if(T3.loopId){ cancelAnimationFrame(T3.loopId); T3.loopId=0; } }
+function loop3d(){
+  if(viewMode!=='3d'||!T3.scene||!T3.renderer||!T3.camera){ stop3d(); return; }
+  move3d();
+  T3.renderer.render(T3.scene,T3.camera);
+  T3.loopId=requestAnimationFrame(loop3d);
+}
+function move3d(){
+  const k=T3.keys, sp=0.14;
+  let f=0,r=0;
+  if(k.KeyW||k.ArrowUp) f+=1; if(k.KeyS||k.ArrowDown) f-=1;
+  if(k.KeyD||k.ArrowRight) r+=1; if(k.KeyA||k.ArrowLeft) r-=1;
+  if(f||r){
+    const y=T3.yaw;
+    const dx=Math.sin(y), dz=Math.cos(y);
+    const rx=Math.cos(y), rz=-Math.sin(y);
+    const p=T3.camera.position;
+    p.x+=(-dx*f+rx*r)*sp; p.z+=(-dz*f+rz*r)*sp;
+    p.x=Math.max(-9.2,Math.min(9.2,p.x)); p.z=Math.max(-9.2,Math.min(9.2,p.z));
+  }
+  T3.camera.position.y=1.6; // walk, don't fly
+}
+document.addEventListener('keydown',e=>{ if(viewMode==='3d'&&document.activeElement&&document.activeElement.id!=='cmd') T3.keys[e.code]=true; });
+document.addEventListener('keyup',e=>{ T3.keys[e.code]=false; });
+scene3d.addEventListener('click', ev=>{
+  if(!T3.renderer||!T3.scene) return;
+  if(!T3.locked){ T3.renderer.domElement.requestPointerLock(); return; }
+  T3.ray.setFromCamera(new THREE.Vector2(0,0), T3.camera); // locked: looking = clicking
+  const hits=T3.ray.intersectObjects(T3.objs,true);
+  if(hits.length){
+    const ud=hits[0].object.userData||{};
+    if(ud.type==='exit'){
+      const target=(ud.exit&&ud.exit.target)||'';
+      document.exitPointerLock();
+      return doCmd('go '+target);
+    }
+    if(ud.type==='object'){
+      const name=(ud.obj&&ud.obj.name)||'';
+      document.exitPointerLock();
+      if(verb) return setSentence(verb+' '+(name||''));
+      return doCmd('examine '+(name||''));
+    }
+  }
+  document.exitPointerLock();
+});
+document.addEventListener('pointerlockchange', ()=>{ T3.locked=(document.pointerLockElement===T3.renderer.domElement); });
+document.getElementById('view-2d').onclick=()=>view2d();
+document.getElementById('view-3d').onclick=()=>view3d();
+
 // ---------- mint cutscene (law 5: growth is the drama) ----------
 let cutscene = null; // {end} while the reef is being born
 function mintCutscene(detail, after){
@@ -279,7 +520,7 @@ cv.addEventListener('click', ev=>{
 
 // ---------- API ----------
 async function api(path,body){ const r=await fetch(API+path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined); return r.json(); }
-async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); hudRoom(room.name); const hp=document.getElementById('hud-health'); hp.textContent='● reef awake'; hp.className='up'; say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, arm a verb then click the scene, or walk the screen edges'); document.getElementById('conn').textContent='● on the reef'; drawScene(); refreshBricks(); }catch(e){ const hp=document.getElementById('hud-health'); hp.textContent='● reef asleep'; hp.className='down'; say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
+async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); hudRoom(room.name); const hp=document.getElementById('hud-health'); hp.textContent='● reef awake'; hp.className='up'; say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, arm a verb then click the scene, or walk the screen edges'); document.getElementById('conn').textContent='● on the reef'; renderRoom(); refreshBricks(); }catch(e){ const hp=document.getElementById('hud-health'); hp.textContent='● reef asleep'; hp.className='down'; say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
 // ---------- punchline parser (Huh? is banned — every refusal is a hint) ----------
 const QUIPS=[
   "You can't {v} the {o}. It's load-bearing — for the whole reef, probably.",
@@ -316,8 +557,8 @@ async function doCmd(raw){
   try{
     if(lc==='help'){ say('sys','go <exit> · examine <object> · look · catch <json> · score · the verb rail + scene clicks speak the same grammar'); return; }
     if(lc==='score'){ const b=document.getElementById('hud-bricks'); say('sys','score '+catches+' catch'+(catches===1?'':'es')+' this session · '+b.textContent+' in the reef'); bump('hud-score'); bump('hud-bricks'); return; }
-    if(lc==='look'||lc==='l'){ const s=await api('/look?agent='+agent); room=s.room||s; hudRoom(room.name); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); (room.objects||[]).forEach(o=>say('sys','  · '+(o.name||o))); (room.exits||[]).forEach(e=>say('sys','  → '+(e.name||e))); drawScene(); return; }
-    if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } const from=room; room=s.room||s; visited.add(room.name); hudRoom(room.name); const ex=((from&&from.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===decodeURIComponent(t).toLowerCase())[0]; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); drawScene(); slideScene(exitSide(ex||{})); return; }
+    if(lc==='look'||lc==='l'){ const s=await api('/look?agent='+agent); room=s.room||s; hudRoom(room.name); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); (room.objects||[]).forEach(o=>say('sys','  · '+(o.name||o))); (room.exits||[]).forEach(e=>say('sys','  → '+(e.name||e))); renderRoom(); return; }
+    if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } const from=room; room=s.room||s; visited.add(room.name); hudRoom(room.name); const ex=((from&&from.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===decodeURIComponent(t).toLowerCase())[0]; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); renderRoom(); if(viewMode==='2d') slideScene(exitSide(ex||{})); return; }
     if(lc.startsWith('examine ')||lc.startsWith('x ')||lc.startsWith('interact ')){ const t=encodeURIComponent(line.replace(/^\\w+\\s+/,'')); const s=await api('/interact?agent='+agent+'&obj='+t,{}); say('txt', s.lore||s.description||s.error||'nothing special'); return; }
     if(lc.startsWith('catch ')){ const s=await api('/catch',{agent,room:room&&room.name,payload:line.slice(6)}); hudCatch();
       if(s.minted){
@@ -325,7 +566,8 @@ async function doCmd(raw){
         say('sys','catch accepted — the reef grew: '+s.minted);
         say('txt','this '+(d.kind==='room'?'room':'object')+' exists because '+agent+' submitted catch #'+(d.created_from_catch||'?')+' — your name is on the birth certificate');
         sceneCap('the reef grew');
-        mintCutscene(d, async()=>{ try{ const s2=await api('/look?agent='+agent); if(s2.room){ room=s2.room; drawScene(); } }catch(e){} refreshBricks(); });
+        if(viewMode==='3d') view2d(); // the cutscene owns the pane — letterbox over the painted canvas
+        mintCutscene(d, async()=>{ try{ const s2=await api('/look?agent='+agent); if(s2.room){ room=s2.room; renderRoom(); } }catch(e){} refreshBricks(); });
       } else { say('sys','catch accepted — recorded'); }
       return; }
     // nine-verb routing: walk to a real exit walks; everything else earns a refusal
