@@ -78,6 +78,15 @@ Each: terminal form / scene form. Build in this order.
 10. **Look-at deep focus** (SCUMM study): `examine X` zooms the scene camera
     into the object while the terminal prints its lore — the SCUMM
     `panCameraTo` grammar, input-locked until the narration ends. — *later.*
+11. **Polaroid saves + Death Cards** (Sierra study): `save` renders the canvas
+    to a polaroid pinned on the scene pane — saves become visible objects;
+    clicking restores with a 10x command-log replay. Parser errors get Sierra
+    tombstone cards with a *Restore* button — failure becomes the onboarding
+    curriculum. — *the export plumbing already exists; mostly toDataURL.*
+12. **The walking ego** (Sierra study): `go` gets a body — the @-sprite walks
+    to the exit doorframe (AGI priority bands: behind pedestals, in front of
+    south walls), directional wipe, walk in from the far edge. The command
+    gets a body and a camera. — *biggest single jump in 'the MUD has a world'.*
 
 ## Architecture (what repo owns what — no new repos)
 
