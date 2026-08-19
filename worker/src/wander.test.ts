@@ -78,4 +78,27 @@ describe("wanderHtml", () => {
     expect(html).toContain("staying in the painted view");
     expect(html).toContain("back to the painted view");
   });
+
+  it("api() refuses error responses — a rejected catch can never read as 'accepted'", () => {
+    // The punchline parser's catch branch bumps the score and announces
+    // acceptance on s.minted===undefined; when /catch 400s/413s/503s the api
+    // helper must throw instead, so the failure lands in the error sink and
+    // neither the score nor the "accepted" line ever renders for a rejection.
+    expect(html).toContain("if(!r.ok || j.success===false)");
+    expect(html).toContain("throw new Error(j.error");
+    // the score bump happens only after the POST resolves (search from the
+    // catch branch's call site — the earlier hit is the function definition)
+    const callIdx = html.indexOf("'/catch',{agent");
+    const hudIdx = html.indexOf("hudCatch()", callIdx);
+    expect(callIdx).toBeGreaterThan(-1);
+    expect(hudIdx).toBeGreaterThan(callIdx);
+  });
+
+  it("never renders an error payload as the room (no 'undefined' in the HUD)", () => {
+    // On a failed /look the old code did room = s.room || s (the error object),
+    // then hudRoom(room.name) painted "undefined" in the HUD. The look branch
+    // must refuse an empty room before touching the HUD.
+    expect(html).toContain("the reef lost your feet");
+    expect(html).toContain("room=s.room;");
+  });
 });
