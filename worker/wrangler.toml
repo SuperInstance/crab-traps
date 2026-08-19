@@ -3,6 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
+# P4 — the cold-path flywheel: lure breeding runs hourly (fitness, breed,
+# retire). The pass claims its hour bucket in D1 (reef_state), so a
+# double-fired trigger is a no-op.
+[triggers]
+crons = ["0 * * * *"]
+
 # Workers AI binding intentionally omitted: embeddings are generated locally
 # (deterministic TF-IDF, see index-helpers.ts). A remote AI binding would force
 # `wrangler dev` into an authenticated remote session. Re-add [ai] if a future

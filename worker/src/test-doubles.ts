@@ -20,6 +20,8 @@ export class FakeD1 {
   canned: CannedResponse[] = [];
   /** Pattern-scoped errors, e.g. "no such column: status". Checked before canned. */
   failures: { match: RegExp; message: string }[] = [];
+  /** Pattern-scoped run() meta.changes — how the breeding cron claims its hour. */
+  runChanges: { match: RegExp; changes: number }[] = [];
   private idSeq = 0;
 
   prepare(sql: string): FakeD1Statement {
@@ -47,6 +49,12 @@ export class FakeD1 {
   /** Fail every statement whose SQL matches `match` with a D1-style error. */
   failOn(match: RegExp, message: string): this {
     this.failures.push({ match, message });
+    return this;
+  }
+
+  /** Stub the run() meta.changes for statements whose SQL matches `match`. */
+  onRun(match: RegExp, changes: number): this {
+    this.runChanges.unshift({ match, changes });
     return this;
   }
 }
@@ -80,10 +88,11 @@ class FakeD1Statement {
     return { results: this.resolveRows() as T[] };
   }
 
-  async run(): Promise<{ success: boolean; meta: { last_row_id: number } }> {
+  async run(): Promise<{ success: boolean; meta: { last_row_id: number; changes: number } }> {
     this.flush();
     if (this.db.failNext) throw new Error("d1 unavailable (test)");
-    return { success: true, meta: { last_row_id: this.db.nextId() } };
+    const rc = this.db.runChanges.find((r) => r.match.test(this.sql));
+    return { success: true, meta: { last_row_id: this.db.nextId(), changes: rc?.changes ?? 1 } };
   }
 
   private flush(): void {
