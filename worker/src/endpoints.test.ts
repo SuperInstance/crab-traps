@@ -207,6 +207,18 @@ describe("POST /catches", () => {
     expect(res.status).toBe(503);
     expect((await json(res)).error).toContain("unavailable");
   });
+
+  it("413s oversized bodies before parsing (payload-size DoS guard)", async () => {
+    const huge = JSON.stringify({ agent: "tom-crab", junk: "x".repeat(200_000) });
+    const res = await call("/catches", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: huge,
+    });
+    expect(res.status).toBe(413);
+    expect((await json(res)).error).toContain("too large");
+    expect(db.statements.filter((s) => /INSERT INTO catches/.test(s.sql))).toHaveLength(0);
+  });
 });
 
 describe("GET /catches", () => {

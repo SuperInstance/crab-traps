@@ -16,6 +16,12 @@ import { DiscoveredEdge, catchText, discoverNeighbors, embedCatch, updateRoomCen
 const INSERT_SQL = `INSERT INTO catches (agent, job, lure_id, answer, user_agent, source_ip, payload, room)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
+// Catch bodies are tiny by contract (fields are capped in the validator; the
+// payload column stores at most 64KB). Anything bigger is waste or abuse —
+// parsing it whole (json() allocates + re-stringifies before the slice) is a
+// per-request CPU/memory DoS vector, so the gate fires before parsing.
+export const MAX_CATCH_BODY_BYTES = 100_000;
+
 function mintSummary(m: MintDetail): string {
   return m.kind === "object"
     ? `object '${m.name}' minted in room ${m.room_id}`
@@ -27,9 +33,25 @@ export async function handleCatchPost(
   env: Env,
   cors: Record<string, string>
 ): Promise<Response> {
+  const declaredLength = parseInt(request.headers.get("content-length") || "0", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_CATCH_BODY_BYTES) {
+    return jsonResponse(
+      { success: false, error: `body too large (max ${MAX_CATCH_BODY_BYTES} bytes)` },
+      413,
+      cors
+    );
+  }
   let body: unknown;
   try {
-    body = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_CATCH_BODY_BYTES) {
+      return jsonResponse(
+        { success: false, error: `body too large (max ${MAX_CATCH_BODY_BYTES} bytes)` },
+        413,
+        cors
+      );
+    }
+    body = JSON.parse(raw);
   } catch {
     return jsonResponse(
       { success: false, error: "invalid JSON body" },
