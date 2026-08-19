@@ -163,9 +163,11 @@ export interface CatchInput {
   job: string | null;
   lure_id: string | null;
   answer: string | null;
+  /** Room the catch happened in: numeric id, room name, or null (auto). */
+  room: number | string | null;
 }
 
-const CATCH_FIELD_LIMITS: { field: keyof CatchInput; max: number }[] = [
+const CATCH_FIELD_LIMITS: { field: "agent" | "job" | "lure_id" | "answer"; max: number }[] = [
   { field: "agent", max: 128 },
   { field: "job", max: 128 },
   { field: "lure_id", max: 256 },
@@ -179,14 +181,39 @@ export function validateCatchInput(
     return { ok: false, error: "body must be a JSON object" };
   }
   const b = body as Record<string, unknown>;
+
+  // Reef front doors (e.g. /wander) send the catch text as `payload`.
+  const answer =
+    typeof b.answer === "string"
+      ? b.answer
+      : typeof b.payload === "string" && b.payload.trim()
+        ? b.payload
+        : null;
+
+  let room: number | string | null = null;
+  if (typeof b.room === "number" && Number.isInteger(b.room)) {
+    room = b.room;
+  } else if (typeof b.room === "string" && b.room.trim()) {
+    room = b.room.trim();
+  } else if (typeof b.room === "number") {
+    return { ok: false, error: "field 'room' must be a room id or a room name" };
+  }
+
   const value: CatchInput = {
     agent: typeof b.agent === "string" ? b.agent.trim() : "",
     job: typeof b.job === "string" && b.job.trim() ? b.job.trim() : null,
     lure_id: typeof b.lure_id === "string" ? b.lure_id.trim() : null,
-    answer: typeof b.answer === "string" ? b.answer : null,
+    answer,
+    room,
   };
   if (!value.agent) {
     return { ok: false, error: "field 'agent' is required (non-empty string)" };
+  }
+  if (room !== null && (typeof room === "number" && (room < 1 || room > 1_000_000_000))) {
+    return { ok: false, error: "field 'room' must be a room id or a room name" };
+  }
+  if (room !== null && typeof room === "string" && room.length > 128) {
+    return { ok: false, error: "field 'room' too long (max 128 chars)" };
   }
   for (const { field, max } of CATCH_FIELD_LIMITS) {
     const v = value[field];

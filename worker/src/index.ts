@@ -1,7 +1,9 @@
-// worker/src/index.ts — Crab Trap Funnel v5
+// worker/src/index.ts — Crab Trap Funnel v6
 // Autonomous trap layer:
 //   /lures, /lures/:name, /random-lure — lures bundled at build time (zero state)
 //   POST /catches — D1 persistence (catches survive everything)
+//   /enter, /look, /go, /interact, /map, /lineage/room/:id — the self-building
+//   reef: world = D1 rooms/objects/edges, every catch may mint a brick
 //   /fleet/* — 5s-timeout proxy to the home PLATO boat, friendly stub when asleep
 //   /health — worker + fleet + d1 status
 //   per-IP rate limiting on /catches and /fleet/* (bounded in-memory LRU)
@@ -29,14 +31,21 @@ import {
 } from "./lure-store";
 import { renderLureIndexPage, renderLurePage } from "./markdown";
 import { handleCatchPost, handleCatchList } from "./catches";
-import { handleRoomLineage } from "./reef";
+import {
+  handleEnter,
+  handleLook,
+  handleGo,
+  handleInteract,
+  handleMap,
+  handleRoomLineage,
+} from "./reef";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
 import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
 
-const VERSION = "5.1.0";
+const VERSION = "6.0.0";
 
 // Lure index is built once per isolate from the bundle — zero state, zero failure.
 const LURES = buildLureIndex(LURE_FILES);
@@ -102,8 +111,14 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /lures": "List all lures (json | html | md via ?format=)",
       "GET /lures/:name": "One lure by id (category/name) or unique name",
       "GET /random-lure": "Random lure (never a category README)",
-      "POST /catches": "Record a catch. Payload: { agent, job?, lure_id?, answer? }",
+      "POST /catches": "Record a catch. Payload: { agent, job?, lure_id?, answer?, room? } — on the 5th/12th catch in a room the reef grows",
+      "POST /catch": "Alias of POST /catches (the design's canonical path)",
       "GET /catches": "Recent catches. Query: ?limit=1..100&agent=",
+      "GET /enter?agent=NAME": "Enter the reef: assigned a starting room, returns state {agent, room}",
+      "GET /look?agent=NAME": "The agent's current room: name, description, objects, exits",
+      "GET /go?agent=NAME&to=ROOM": "Traverse an edge (id or name); reinforces the ant-trail traffic",
+      "POST /interact?agent=NAME&obj=X": "Touch an object — returns its lore",
+      "GET /map": "The reef so far: all rooms + edges",
       "GET /lineage/room/:id": "Which catches built this room — the genealogy is public",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
@@ -321,15 +336,35 @@ export default {
     }
 
     // --- Catch layer: D1 ---
-    if (pathname === "/catches") {
+    if (pathname === "/catches" || pathname === "/catch") {
       const limited = rateLimited(CATCH_LIMITER.check(getClientIp(request)));
       if (limited) return limited;
       if (request.method === "POST") return handleCatchPost(request, env, cors);
-      if (request.method === "GET") return handleCatchList(url, env, cors);
+      if (request.method === "GET" && pathname === "/catches") return handleCatchList(url, env, cors);
       return jsonResponse({ error: "method not allowed" }, 405, cors);
     }
 
     // --- Reef layer: the self-building world (D1 rooms/objects/edges) ---
+    if (pathname === "/enter") {
+      if (request.method !== "GET") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      return handleEnter(url, env, cors);
+    }
+    if (pathname === "/look") {
+      if (request.method !== "GET") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      return handleLook(url, env, cors);
+    }
+    if (pathname === "/go") {
+      if (request.method !== "GET") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      return handleGo(url, env, cors);
+    }
+    if (pathname === "/interact") {
+      if (request.method !== "POST") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      return handleInteract(url, env, cors);
+    }
+    if (pathname === "/map") {
+      if (request.method !== "GET") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      return handleMap(env, cors);
+    }
     if (pathname.startsWith("/lineage/room/")) {
       if (request.method !== "GET") {
         return jsonResponse({ error: "method not allowed" }, 405, cors);

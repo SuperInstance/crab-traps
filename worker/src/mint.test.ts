@@ -1,0 +1,299 @@
+// Minting tests — the extraction heuristics (pure) and the Nth-catch
+// thresholds through POST /catches (same FakeD1 harness as endpoints).
+
+import { describe, it, expect, beforeEach } from "vitest";
+import worker from "./index";
+import { FakeD1 } from "./test-doubles";
+import {
+  extractNouns,
+  keywordCounts,
+  objectName,
+  roomName,
+  bestFragment,
+  mintWorld,
+  OBJECT_MINT_N,
+  ROOM_MINT_N,
+} from "./mint";
+import type { Env } from "./index-helpers";
+
+let db: FakeD1;
+let env: Env;
+
+function makeEnv(): Env {
+  return {
+    VECTORIZE_INDEX: {} as unknown as Fetcher,
+    DB: db as unknown as D1Database,
+    FLEET_BASE_URL: "http://147.224.38.131:4042",
+  };
+}
+
+function call(path: string, init: RequestInit = {}): Promise<Response> {
+  return worker.fetch(new Request(`http://localhost:8787${path}`, init), env, {} as ExecutionContext);
+}
+
+async function json(res: Response): Promise<any> {
+  return JSON.parse(await res.text());
+}
+
+function post(body: unknown): Promise<Response> {
+  return call("/catches", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+// ── Extraction heuristics (pure) ─────────────────────────────────────────────
+
+describe("extractNouns", () => {
+  it("counts capitalized non-stopword words across texts", () => {
+    const nouns = extractNouns([
+      "The Radar pings near the old Radar mast",
+      "Radar static everywhere",
+    ]);
+    expect(nouns[0]).toEqual({ word: "radar", count: 3 });
+  });
+
+  it("skips stopwords even when capitalized", () => {
+    const nouns = extractNouns(["The Dock is quiet. It was The same yesterday."]);
+    const words = nouns.map((n) => n.word);
+    expect(words).not.toContain("the");
+    expect(words).not.toContain("it");
+    expect(words).not.toContain("was");
+    expect(words).toContain("dock");
+  });
+
+  it("breaks ties by first appearance (deterministic minting)", () => {
+    const nouns = extractNouns(["Zebra and Apple"]);
+    expect(nouns.map((n) => n.word)).toEqual(["zebra", "apple"]);
+  });
+
+  it("returns empty for texts with no capitalized words", () => {
+    expect(extractNouns(["just lowercase words here"])).toEqual([]);
+    expect(extractNouns([""])).toEqual([]);
+  });
+});
+
+describe("keywordCounts", () => {
+  it("uses the tokenizer and skips stopwords", () => {
+    const kws = keywordCounts(["the gully hums with radar static", "the gully sleeps"]);
+    expect(kws[0]).toEqual({ word: "gully", count: 2 });
+    expect(kws.map((k) => k.word)).not.toContain("the");
+    expect(kws.map((k) => k.word)).not.toContain("with");
+  });
+});
+
+describe("objectName", () => {
+  it("prefers the top capitalized noun", () => {
+    expect(objectName(["the Lighthouse blinks past the Radar"])).toBe("Lighthouse");
+  });
+
+  it("falls back to the top lowercase keyword, title-cased", () => {
+    expect(objectName(["barnacles everywhere, barnacles on everything"])).toBe("Barnacles");
+  });
+
+  it("mints a Curio from silence", () => {
+    expect(objectName([""])).toBe("Curio");
+  });
+});
+
+describe("roomName", () => {
+  it("joins the top two keywords, title-cased", () => {
+    expect(roomName(["Radar pings in the gully", "Radar fades, the gully sleeps"])).toBe("Radar Gully");
+  });
+
+  it("is deterministic when the catches say nothing", () => {
+    expect(roomName([""])).toBe("Uncharted Reef");
+  });
+});
+
+describe("bestFragment", () => {
+  it("picks the longest substantive answer", () => {
+    expect(bestFragment(["short", null, "a much longer fragment about the reef", "mid"])).toBe(
+      "a much longer fragment about the reef"
+    );
+  });
+
+  it("returns null when nobody said anything", () => {
+    expect(bestFragment([null, undefined, "   "])).toBeNull();
+  });
+
+  it("bounds fragments to 500 chars", () => {
+    expect(bestFragment(["x".repeat(900)])?.length).toBe(500);
+  });
+});
+
+// ── mintWorld thresholds ─────────────────────────────────────────────────────
+
+describe("mintWorld", () => {
+  beforeEach(() => {
+    db = new FakeD1();
+    env = makeEnv();
+  });
+
+  it("does nothing before the 5th catch", async () => {
+    db.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, [{ n: OBJECT_MINT_N - 1 }]);
+    expect(await mintWorld(env.DB as unknown as D1Database, { catchId: 4, room: 1 })).toBeNull();
+    expect(db.statements.filter((s) => /INSERT/.test(s.sql))).toHaveLength(0);
+  });
+
+  it("mints nothing on non-threshold counts (6..11)", async () => {
+    for (const n of [6, 9, 11, 13, 24]) {
+      const fresh = new FakeD1();
+      fresh.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, [{ n }]);
+      expect(await mintWorld(fresh as unknown as D1Database, { catchId: 1, room: 1 })).toBeNull();
+    }
+  });
+});
+
+// ── POST /catches → minting hot path ─────────────────────────────────────────
+
+describe("POST /catches minting", () => {
+  beforeEach(() => {
+    db = new FakeD1();
+    env = makeEnv();
+  });
+
+  function stubRoomCatches(n: number, recents: Record<string, unknown>[]) {
+    db.on(
+      /SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/,
+      (b) => (b[0] === 1 ? [{ n }] : [{ n: 0 }])
+    );
+    db.on(
+      /SELECT id, answer, job, payload FROM catches WHERE room = \? ORDER BY id DESC LIMIT 50/,
+      recents
+    );
+  }
+
+  it("on the 5th catch in a room: mints an object named from the payloads", async () => {
+    stubRoomCatches(OBJECT_MINT_N, [
+      { id: 5, answer: "The Radar pings near the old Radar mast", job: null, payload: null },
+      { id: 4, answer: "Radar static everywhere", job: "survey", payload: null },
+    ]);
+
+    const res = await post({ agent: "tom", room: 1, answer: "another Radar ping" });
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.room_id).toBe(1);
+    expect(body.minted).toContain("object 'Radar'");
+    expect(body.minted_detail).toMatchObject({
+      kind: "object",
+      room_id: 1,
+      name: "Radar",
+      created_from_catch: 1, // the catch that minted it — provenance
+    });
+    expect(body.minted_detail.lore).toBe("The Radar pings near the old Radar mast");
+
+    const ins = db.statements.find((s) => /INSERT OR IGNORE INTO objects/.test(s.sql));
+    expect(ins).toBeDefined();
+    expect(ins!.bindings.slice(0, 4)).toEqual([
+      1,
+      "Radar",
+      "minted",
+      "The Radar pings near the old Radar mast",
+    ]);
+    expect(ins!.bindings[4]).toBe(1); // created_from_catch = the new catch id
+  });
+
+  it("on the 12th catch in a room: mints a NEIGHBOR room with an edge to the parent", async () => {
+    stubRoomCatches(ROOM_MINT_N, [
+      { id: 12, answer: "Radar pings in the gully", job: null, payload: null },
+      { id: 11, answer: "Radar fades, the gully sleeps", job: null, payload: null },
+    ]);
+    db.on(/SELECT id FROM rooms WHERE created_from_catch = \?/, (b) =>
+      b[0] === 1 ? [{ id: 9 }] : []
+    );
+    db.on(
+      /SELECT id, name, description, x, y, created_from_catch, created_at FROM rooms WHERE id = \?/,
+      (b) =>
+        b[0] === 9
+          ? [{ id: 9, name: "Radar Gully", description: "Radar fades, the gully sleeps", x: null, y: null, created_from_catch: 1, created_at: "t" }]
+          : []
+    );
+
+    const res = await post({ agent: "tom", room: 1, answer: "the gully opens" });
+    expect(res.status).toBe(201);
+    const body = await json(res);
+    expect(body.minted).toContain("room 'Radar Gully'");
+    expect(body.minted_detail).toMatchObject({
+      kind: "room",
+      id: 9,
+      name: "Radar Gully",
+      description: "Radar fades, the gully sleeps",
+      parent_room: 1,
+      created_from_catch: 1,
+    });
+    expect(body.room.id).toBe(9); // the response carries the new room state
+
+    const roomIns = db.statements.find((s) => /INSERT OR IGNORE INTO rooms/.test(s.sql));
+    expect(roomIns!.bindings).toEqual([
+      "Radar Gully",
+      "Radar fades, the gully sleeps",
+      1, // provenance catch id
+    ]);
+    const edgeIns = db.statements.find((s) => /INSERT OR IGNORE INTO edges/.test(s.sql));
+    expect(edgeIns).toBeDefined();
+    expect(edgeIns!.bindings).toEqual([1, 9]); // parent → child
+  });
+
+  it("does not mint on ordinary catches", async () => {
+    stubRoomCatches(4, []);
+    const body = await json(await post({ agent: "tom", room: 1, answer: "nothing special" }));
+    expect(body.minted).toBeNull();
+    expect(body.minted_detail).toBeNull();
+    expect(db.statements.filter((s) => /INSERT OR IGNORE INTO (objects|rooms|edges)/.test(s.sql))).toHaveLength(0);
+  });
+
+  it("resolves room names to ids for provenance", async () => {
+    db.on(/SELECT id FROM rooms WHERE lower\(name\) = lower\(\?\)/, (b) =>
+      typeof b[0] === "string" && b[0].toLowerCase() === "the dock" ? [{ id: 1 }] : []
+    );
+    stubRoomCatches(3, []);
+
+    const body = await json(await post({ agent: "tom", room: "The Dock", answer: "x" }));
+    expect(body.room_id).toBe(1);
+    const count = db.statements.find((s) => /SELECT COUNT\(\*\) AS n FROM catches WHERE room/.test(s.sql));
+    expect(count).toBeDefined();
+    expect(count!.bindings).toEqual([1]);
+    const upd = db.statements.find((s) => /UPDATE catches SET room/.test(s.sql));
+    expect(upd).toBeDefined();
+    expect(upd!.bindings).toEqual([1, 1]);
+  });
+
+  it("a catch with no room lands where the agent stands (seed default)", async () => {
+    db.on(/SELECT room_id FROM agents WHERE agent = \?/, (b) =>
+      b[0] === "tom" ? [{ room_id: 2 }] : []
+    );
+    stubRoomCatches(4, []);
+
+    const body = await json(await post({ agent: "tom", answer: "drifting" }));
+    expect(body.room_id).toBe(2);
+    const upd = db.statements.find((s) => /UPDATE catches SET room/.test(s.sql));
+    expect(upd!.bindings).toEqual([2, 1]);
+  });
+
+  it("keeps the catch safe when minting storage fails", async () => {
+    db.failOn(/SELECT COUNT\(\*\) AS n FROM catches WHERE room/, "no such table: catches");
+    const res = await post({ agent: "tom", room: 1, answer: "boom" });
+    expect(res.status).toBe(201); // the catch never fails for the reef
+    const body = await json(res);
+    expect(body.recorded).toBe(true);
+    expect(body.minted).toBeNull();
+  });
+
+  it("POST /catch (design's canonical path) is an alias", async () => {
+    const res = await call("/catch", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ agent: "tom", answer: "via alias" }),
+    });
+    expect(res.status).toBe(201);
+    expect((await json(res)).recorded).toBe(true);
+  });
+
+  it("rejects junk room values", async () => {
+    const res = await post({ agent: "tom", room: 1.5 });
+    expect(res.status).toBe(400);
+    expect((await json(res)).error).toContain("room");
+  });
+});

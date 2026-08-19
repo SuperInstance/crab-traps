@@ -34,12 +34,13 @@ export class FakeD1 {
     return ++this.idSeq;
   }
 
-  /** Stub a response for every statement whose SQL matches `match`. */
+  /** Stub a response for every statement whose SQL matches `match`.
+   *  Later stubs win over earlier ones (same pattern = override). */
   on(
     match: RegExp,
     rows: Record<string, unknown>[] | ((bindings: unknown[]) => Record<string, unknown>[])
   ): this {
-    this.canned.push({ match, rows });
+    this.canned.unshift({ match, rows });
     return this;
   }
 

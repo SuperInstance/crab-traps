@@ -14,6 +14,7 @@ export interface RoomObject {
 
 export interface RoomExit {
   to_room: number;
+  name?: string | null;
   traffic: number;
 }
 
@@ -39,7 +40,9 @@ export async function getRoomState(db: D1Database, roomId: number): Promise<Room
     .bind(roomId)
     .all<RoomObject>();
   const exits = await db
-    .prepare("SELECT to_room, traffic FROM edges WHERE from_room = ? ORDER BY traffic DESC, to_room")
+    .prepare(
+      "SELECT e.to_room, r.name, e.traffic FROM edges e LEFT JOIN rooms r ON r.id = e.to_room WHERE e.from_room = ? ORDER BY e.traffic DESC, e.to_room"
+    )
     .bind(roomId)
     .all<RoomExit>();
   return {
@@ -49,6 +52,263 @@ export async function getRoomState(db: D1Database, roomId: number): Promise<Room
     objects: objects.results ?? [],
     exits: exits.results ?? [],
   };
+}
+
+// --- Agent position (the worker stays stateless; D1 remembers feet) ---
+
+/** The agent's room, else the seed room, else any room — else no world. */
+export async function currentAgentRoom(db: D1Database, agent: string): Promise<number | null> {
+  const row = await db
+    .prepare("SELECT room_id FROM agents WHERE agent = ?")
+    .bind(agent)
+    .first<{ room_id: number | null }>();
+  if (row?.room_id) return row.room_id;
+  const seed = await db.prepare("SELECT id FROM rooms WHERE id = 1").first<{ id: number }>();
+  if (seed) return seed.id;
+  const any = await db.prepare("SELECT id FROM rooms ORDER BY RANDOM() LIMIT 1").first<{ id: number }>();
+  return any?.id ?? null;
+}
+
+export async function setAgentRoom(db: D1Database, agent: string, roomId: number): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO agents (agent, room_id) VALUES (?, ?)
+       ON CONFLICT(agent) DO UPDATE SET room_id = excluded.room_id, updated_at = CURRENT_TIMESTAMP`
+    )
+    .bind(agent, roomId)
+    .run();
+}
+
+/** A room reference: numeric id, or a room name ("Radar Gully"). */
+export async function resolveRoomRef(db: D1Database, raw: string): Promise<number | null> {
+  const t = raw.trim();
+  if (!t) return null;
+  if (/^\d+$/.test(t)) return parseInt(t, 10);
+  const row = await db
+    .prepare("SELECT id FROM rooms WHERE lower(name) = lower(?)")
+    .bind(t)
+    .first<{ id: number }>();
+  return row?.id ?? null;
+}
+
+// --- Shared plumbing ---
+
+function requireParam(url: URL, name: string): string | null {
+  const v = (url.searchParams.get(name) || "").trim().slice(0, 128);
+  return v || null;
+}
+
+function d1Unavailable(err: unknown, cors: Record<string, string>): Response {
+  const e = err as { message?: string };
+  return jsonResponse(
+    {
+      success: false,
+      error: "world storage unavailable",
+      detail: e?.message || String(err),
+    },
+    503,
+    cors
+  );
+}
+
+// --- GET /enter?agent=NAME — the front door ---
+
+export async function handleEnter(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
+  const agent = requireParam(url, "agent");
+  if (!agent) {
+    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  }
+  try {
+    // The seed room first; if the seed is gone, any room will do.
+    const seed = await env.DB.prepare("SELECT id FROM rooms WHERE id = 1").first<{ id: number }>();
+    let start: number | null = seed?.id ?? null;
+    if (start === null) {
+      const any = await env.DB
+        .prepare("SELECT id FROM rooms ORDER BY RANDOM() LIMIT 1")
+        .first<{ id: number }>();
+      start = any?.id ?? null;
+    }
+    if (start === null) {
+      return jsonResponse(
+        { success: false, error: "the reef is empty — apply the migrations first" },
+        503,
+        cors
+      );
+    }
+    await setAgentRoom(env.DB, agent, start);
+    const room = await getRoomState(env.DB, start);
+    return jsonResponse(
+      {
+        success: true,
+        agent,
+        room,
+        note: "the reef grows where you walk",
+      },
+      200,
+      cors
+    );
+  } catch (err) {
+    return d1Unavailable(err, cors);
+  }
+}
+
+// --- GET /look?agent=NAME — where do I stand ---
+
+export async function handleLook(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
+  const agent = requireParam(url, "agent");
+  if (!agent) {
+    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  }
+  try {
+    const roomId = await currentAgentRoom(env.DB, agent);
+    if (roomId === null) {
+      return jsonResponse({ success: false, error: "the reef is empty — apply the migrations first" }, 503, cors);
+    }
+    const room = await getRoomState(env.DB, roomId);
+    return jsonResponse({ success: true, agent, room }, 200, cors);
+  } catch (err) {
+    return d1Unavailable(err, cors);
+  }
+}
+
+// --- GET /go?agent=NAME&to=ROOM — traverse an edge, reinforce the ant-trail ---
+
+export async function handleGo(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
+  const agent = requireParam(url, "agent");
+  if (!agent) {
+    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  }
+  const toRaw = (url.searchParams.get("to") || "").trim().slice(0, 128);
+  if (!toRaw) {
+    return jsonResponse({ success: false, error: "query parameter 'to' is required (room id or name)" }, 400, cors);
+  }
+  try {
+    const to = await resolveRoomRef(env.DB, toRaw);
+    if (to === null || !(await env.DB.prepare("SELECT id FROM rooms WHERE id = ?").bind(to).first())) {
+      return jsonResponse(
+        {
+          success: false,
+          error: `no room '${toRaw}' — the reef hasn't grown that way yet`,
+          hint: "GET /map shows the reef so far",
+        },
+        404,
+        cors
+      );
+    }
+
+    const from = await currentAgentRoom(env.DB, agent);
+    if (from === null) {
+      return jsonResponse({ success: false, error: "the reef is empty — apply the migrations first" }, 503, cors);
+    }
+
+    // Edges are directed rows but traversable both ways (a minted room must
+    // not be a trap): forward traffic reinforces the forward row, a return
+    // trip reinforces the existing reverse row. No row either way → no exit.
+    const forward = await env.DB
+      .prepare("SELECT traffic FROM edges WHERE from_room = ? AND to_room = ?")
+      .bind(from, to)
+      .first<{ traffic: number }>();
+    let reinforce: [number, number] | null = forward ? [from, to] : null;
+    if (!reinforce) {
+      const back = await env.DB
+        .prepare("SELECT traffic FROM edges WHERE from_room = ? AND to_room = ?")
+        .bind(to, from)
+        .first<{ traffic: number }>();
+      if (back) reinforce = [to, from];
+    }
+    if (!reinforce) {
+      const here = await getRoomState(env.DB, from);
+      return jsonResponse(
+        {
+          success: false,
+          error: "no exit that way",
+          from,
+          to,
+          exits: here?.exits ?? [],
+          hint: "you can only travel existing edges — the reef grows where players catch",
+        },
+        400,
+        cors
+      );
+    }
+
+    // Reinforce the ant-trail (upsert keeps it one statement, race-safe).
+    await env.DB
+      .prepare("INSERT INTO edges (from_room, to_room, traffic) VALUES (?, ?, 1) ON CONFLICT(from_room, to_room) DO UPDATE SET traffic = traffic + 1")
+      .bind(reinforce[0], reinforce[1])
+      .run();
+    await setAgentRoom(env.DB, agent, to);
+
+    const room = await getRoomState(env.DB, to);
+    return jsonResponse({ success: true, agent, from, room }, 200, cors);
+  } catch (err) {
+    return d1Unavailable(err, cors);
+  }
+}
+
+// --- POST /interact?agent=NAME&obj=X — touch an object, hear its lore ---
+
+export async function handleInteract(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
+  const agent = requireParam(url, "agent");
+  if (!agent) {
+    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  }
+  const obj = requireParam(url, "obj");
+  if (!obj) {
+    return jsonResponse({ success: false, error: "query parameter 'obj' is required" }, 400, cors);
+  }
+  try {
+    const roomId = await currentAgentRoom(env.DB, agent);
+    if (roomId === null) {
+      return jsonResponse({ success: false, error: "the reef is empty — apply the migrations first" }, 503, cors);
+    }
+    const object = await env.DB
+      .prepare("SELECT id, name, kind, lore FROM objects WHERE room_id = ? AND lower(name) = lower(?)")
+      .bind(roomId, obj)
+      .first<{ id: number; name: string | null; kind: string | null; lore: string | null }>();
+    if (!object) {
+      return jsonResponse(
+        {
+          success: false,
+          error: `no '${obj}' here`,
+          hint: `GET /look?agent=${encodeURIComponent(agent)} to see what's in the room`,
+        },
+        404,
+        cors
+      );
+    }
+    return jsonResponse(
+      { success: true, agent, room_id: roomId, obj, lore: object.lore, object },
+      200,
+      cors
+    );
+  } catch (err) {
+    return d1Unavailable(err, cors);
+  }
+}
+
+// --- GET /map — the reef so far ---
+
+export async function handleMap(env: Env, cors: Record<string, string>): Promise<Response> {
+  try {
+    const rooms = await env.DB
+      .prepare("SELECT id, name, description, created_from_catch, created_at FROM rooms ORDER BY id")
+      .all<{ id: number; name: string; description: string | null; created_from_catch: number | null; created_at: string }>();
+    const edges = await env.DB
+      .prepare("SELECT from_room, to_room, traffic FROM edges ORDER BY traffic DESC, from_room, to_room")
+      .all<{ from_room: number; to_room: number; traffic: number }>();
+    return jsonResponse(
+      {
+        success: true,
+        rooms: rooms.results ?? [],
+        edges: edges.results ?? [],
+      },
+      200,
+      cors
+    );
+  } catch (err) {
+    return d1Unavailable(err, cors);
+  }
 }
 
 // --- GET /lineage/room/:id — the genealogy is public ---
