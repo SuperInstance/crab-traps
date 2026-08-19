@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import worker from "./index";
 import { FakeD1 } from "./test-doubles";
+import { MAP_LIMIT } from "./reef";
 import type { Env } from "./index-helpers";
 
 let db: FakeD1;
@@ -403,5 +404,24 @@ describe("GET /map", () => {
   it("503s cleanly when D1 is down", async () => {
     db.failNext = true;
     expect((await call("/map")).status).toBe(503);
+  });
+
+  it("caps the world it returns and says so (never an unbounded response)", async () => {
+    const full = Array.from({ length: MAP_LIMIT }, (_, i) => ({
+      id: i + 1,
+      name: `Room ${i + 1}`,
+      description: null,
+      created_from_catch: null,
+      created_at: "t",
+    }));
+    db.on(/SELECT id, name, description, created_from_catch, created_at FROM rooms ORDER BY id/, full);
+    db.on(/SELECT from_room, to_room, traffic FROM edges ORDER BY/, []);
+    const res = await call("/map");
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.rooms).toHaveLength(MAP_LIMIT);
+    expect(body.truncated).toBe(true);
+    const roomQuery = db.statements.find((s) => /FROM rooms ORDER BY id/.test(s.sql));
+    expect(roomQuery!.sql).toContain("LIMIT ?");
   });
 });

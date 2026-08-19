@@ -287,21 +287,29 @@ export async function handleInteract(url: URL, env: Env, cors: Record<string, st
   }
 }
 
-// --- GET /map — the reef so far ---
+// --- GET /map — the reef so far (bounded: a grown world must not make /map
+// the thing that 502s — the cap is high and truncation is reported) ---
+
+export const MAP_LIMIT = 5_000;
 
 export async function handleMap(env: Env, cors: Record<string, string>): Promise<Response> {
   try {
     const rooms = await env.DB
-      .prepare("SELECT id, name, description, created_from_catch, created_at FROM rooms ORDER BY id")
+      .prepare("SELECT id, name, description, created_from_catch, created_at FROM rooms ORDER BY id LIMIT ?")
+      .bind(MAP_LIMIT)
       .all<{ id: number; name: string; description: string | null; created_from_catch: number | null; created_at: string }>();
     const edges = await env.DB
-      .prepare("SELECT from_room, to_room, traffic, kind FROM edges ORDER BY traffic DESC, from_room, to_room")
+      .prepare("SELECT from_room, to_room, traffic, kind FROM edges ORDER BY traffic DESC, from_room, to_room LIMIT ?")
+      .bind(MAP_LIMIT)
       .all<{ from_room: number; to_room: number; traffic: number; kind: string | null }>();
+    const roomRows = rooms.results ?? [];
+    const edgeRows = edges.results ?? [];
     return jsonResponse(
       {
         success: true,
-        rooms: rooms.results ?? [],
-        edges: edges.results ?? [],
+        rooms: roomRows,
+        edges: edgeRows,
+        truncated: roomRows.length === MAP_LIMIT || edgeRows.length === MAP_LIMIT,
       },
       200,
       cors
