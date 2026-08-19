@@ -137,6 +137,32 @@ describe("mintWorld", () => {
     expect(db.statements.filter((s) => /INSERT/.test(s.sql))).toHaveLength(0);
   });
 
+  it("keys thresholds to the catch's ordinal (id <= catchId), not the room total", async () => {
+    // A plain COUNT(*) races concurrent commits: two catches landing in a
+    // 4-catch room can both be counted at once and the 5th-catch mint is
+    // skipped forever. The ordinal is stable: catch 5 is always the 5th.
+    const seen: unknown[][] = [];
+    const fresh = new FakeD1();
+    fresh.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, (b) => {
+      seen.push(b);
+      return [{ n: b[1] as number }]; // ordinal == catchId in this stub
+    });
+    fresh.on(/SELECT id, answer, job, payload FROM catches WHERE room = \?/, [
+      { id: 5, answer: "The Radar pings", job: null, payload: null },
+    ]);
+    expect(await mintWorld(fresh as unknown as D1Database, { catchId: 5, room: 1 })).toMatchObject({
+      kind: "object",
+      created_from_catch: 5,
+    });
+    // the concurrent 6th catch — same room, both committed before counting —
+    // sees its own ordinal and must NOT mint a second brick
+    expect(await mintWorld(fresh as unknown as D1Database, { catchId: 6, room: 1 })).toBeNull();
+    expect(seen).toEqual([
+      [1, 5],
+      [1, 6],
+    ]);
+  });
+
   it("mints nothing on non-threshold counts (6..11)", async () => {
     for (const n of [6, 9, 11, 13, 24]) {
       const fresh = new FakeD1();
@@ -254,7 +280,7 @@ describe("POST /catches minting", () => {
     expect(body.room_id).toBe(1);
     const count = db.statements.find((s) => /SELECT COUNT\(\*\) AS n FROM catches WHERE room/.test(s.sql));
     expect(count).toBeDefined();
-    expect(count!.bindings).toEqual([1, 1]); // ordinal count: room + this catch's id
+    expect(count!.bindings).toEqual([1, body.id]); // room, then the catch's ordinal anchor
     const upd = db.statements.find((s) => /UPDATE catches SET room/.test(s.sql));
     expect(upd).toBeDefined();
     expect(upd!.bindings).toEqual([1, 1]);
