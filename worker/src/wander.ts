@@ -21,6 +21,14 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 header h1{font-size:1.05rem;font-weight:400;letter-spacing:.08em}
 header h1 b{color:var(--brass)}
 #conn{font-size:.75rem;color:var(--mist);font-family:Verdana,sans-serif}
+/* Sierra status HUD — one strip over both panes */
+#hud{display:flex;gap:28px;align-items:center;padding:6px 18px;background:#0b1a30;border-bottom:1px solid #22395c;font-family:Verdana,sans-serif;font-size:.72rem;letter-spacing:.05em;color:var(--mist)}
+#hud span{display:inline-block}
+#hud-room{color:var(--brass-soft)}
+#hud-health.up{color:#57c98a}
+#hud-health.down{color:#c96a5a}
+.tick{animation:hudtick .6s ease}
+@keyframes hudtick{0%{transform:scale(1)}35%{transform:scale(1.3);color:#fff}100%{transform:scale(1)}}
 main{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:0}
 @media(max-width:800px){main{grid-template-columns:1fr;grid-template-rows:1fr 1fr}}
 /* MUD pane */
@@ -56,6 +64,12 @@ button:hover{filter:brightness(1.1)}
   <h1>Wander the Reef <b>·</b> one command, two views</h1>
   <div><span id="conn">waking the reef…</span> <button id="dl" title="download session state as JSON">⬇ state.json</button></div>
 </header>
+<div id="hud">
+  <span id="hud-room">somewhere on the reef</span>
+  <span id="hud-score">score 0</span>
+  <span id="hud-bricks">bricks —</span>
+  <span id="hud-health" class="down">● reef asleep</span>
+</div>
 <main>
   <div id="mud"></div>
   <div id="scene-wrap">
@@ -94,6 +108,12 @@ let verb = null; // armed verb from the sentence rail (the SCUMM sentence line)
 
 function say(cls, text){ const d=document.createElement('div'); d.className=cls; d.textContent=text; mud.appendChild(d); mud.scrollTop=mud.scrollHeight; log.push({t:Date.now(),cls,text}); }
 function sceneCap(text){ const el=document.getElementById('scene-cap'); el.textContent=text; clearTimeout(sceneCap._t); sceneCap._t=setTimeout(()=>{el.textContent=CAPTION_HOME;},2600); }
+
+// ---------- Sierra status HUD (the score ledger — one event, two renderings) ----------
+function bump(id){ const el=document.getElementById(id); el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); }
+function hudRoom(name){ const el=document.getElementById('hud-room'); el.textContent=name; bump('hud-room'); }
+function hudCatch(){ catches++; const el=document.getElementById('hud-score'); el.textContent='score '+catches; bump('hud-score'); }
+async function refreshBricks(){ try{ const m=await api('/map'); const n=(m.rooms||[]).length; const el=document.getElementById('hud-bricks'); el.textContent='bricks '+n; bump('hud-bricks'); }catch(e){} }
 
 // ---------- sentence rail (the nine verbs — clicks emit parser words) ----------
 document.querySelectorAll('#verbbar .vb').forEach(b=>{
@@ -213,16 +233,17 @@ cv.addEventListener('click', ev=>{
 
 // ---------- API ----------
 async function api(path,body){ const r=await fetch(API+path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined); return r.json(); }
-async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, arm a verb then click the scene, or walk the screen edges'); document.getElementById('conn').textContent='● on the reef'; drawScene(); }catch(e){ say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
+async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); hudRoom(room.name); const hp=document.getElementById('hud-health'); hp.textContent='● reef awake'; hp.className='up'; say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, arm a verb then click the scene, or walk the screen edges'); document.getElementById('conn').textContent='● on the reef'; drawScene(); refreshBricks(); }catch(e){ const hp=document.getElementById('hud-health'); hp.textContent='● reef asleep'; hp.className='down'; say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
 async function doCmd(raw){
   const line=raw.trim(); if(!line) return; say('you','> '+line);
   const lc=line.toLowerCase();
   try{
-    if(lc==='help'){ say('sys','go <exit> · examine <object> · look · catch <json> · the verb rail + scene clicks speak the same grammar'); return; }
-    if(lc==='look'||lc==='l'){ const s=await api('/look?agent='+agent); room=s.room||s; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); (room.objects||[]).forEach(o=>say('sys','  · '+(o.name||o))); (room.exits||[]).forEach(e=>say('sys','  → '+(e.name||e))); drawScene(); return; }
-    if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } const from=room; room=s.room||s; visited.add(room.name); const ex=((from&&from.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===decodeURIComponent(t).toLowerCase())[0]; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); drawScene(); slideScene(exitSide(ex||{})); return; }
+    if(lc==='help'){ say('sys','go <exit> · examine <object> · look · catch <json> · score · the verb rail + scene clicks speak the same grammar'); return; }
+    if(lc==='score'){ const b=document.getElementById('hud-bricks'); say('sys','score '+catches+' catch'+(catches===1?'':'es')+' this session · '+b.textContent+' in the reef'); bump('hud-score'); bump('hud-bricks'); return; }
+    if(lc==='look'||lc==='l'){ const s=await api('/look?agent='+agent); room=s.room||s; hudRoom(room.name); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); (room.objects||[]).forEach(o=>say('sys','  · '+(o.name||o))); (room.exits||[]).forEach(e=>say('sys','  → '+(e.name||e))); drawScene(); return; }
+    if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } const from=room; room=s.room||s; visited.add(room.name); hudRoom(room.name); const ex=((from&&from.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===decodeURIComponent(t).toLowerCase())[0]; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); drawScene(); slideScene(exitSide(ex||{})); return; }
     if(lc.startsWith('examine ')||lc.startsWith('x ')||lc.startsWith('interact ')){ const t=encodeURIComponent(line.replace(/^\\w+\\s+/,'')); const s=await api('/interact?agent='+agent+'&obj='+t,{}); say('txt', s.lore||s.description||s.error||'nothing special'); return; }
-    if(lc.startsWith('catch ')){ const s=await api('/catch',{agent,room:room&&room.name,payload:line.slice(6)}); catches++; say('sys','catch accepted — '+(s.minted?('the reef grew: '+s.minted):'recorded')); if(s.room){room=s.room; drawScene();} return; }
+    if(lc.startsWith('catch ')){ const s=await api('/catch',{agent,room:room&&room.name,payload:line.slice(6)}); hudCatch(); say('sys','catch accepted — '+(s.minted?('the reef grew: '+s.minted):'recorded')); if(s.room){room=s.room; drawScene();} return; }
     say('err',"unknown command — try help");
   }catch(e){ say('err',e.message); }
 }
