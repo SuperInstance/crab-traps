@@ -279,6 +279,36 @@ cv.addEventListener('click', ev=>{
 // ---------- API ----------
 async function api(path,body){ const r=await fetch(API+path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined); return r.json(); }
 async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); hudRoom(room.name); const hp=document.getElementById('hud-health'); hp.textContent='● reef awake'; hp.className='up'; say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, arm a verb then click the scene, or walk the screen edges'); document.getElementById('conn').textContent='● on the reef'; drawScene(); refreshBricks(); }catch(e){ const hp=document.getElementById('hud-health'); hp.textContent='● reef asleep'; hp.className='down'; say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
+// ---------- punchline parser (Huh? is banned — every refusal is a hint) ----------
+const QUIPS=[
+  "You can't {v} the {o}. It's load-bearing — for the whole reef, probably.",
+  "That's not the kind of thing you can {v}, no matter how generous you feel.",
+  "You {v} the {o}. The {o} remains diplomatically unmoved.",
+  "The {o} considers your attempt to {v} it, and declines with courtesy.",
+  "You can't {v} the {o} — the tide would only laugh, and the tide is a cruel audience.",
+  "I've seen adventurers with bigger arms try to {v} that {o}. The {o} won.",
+  "Not now — the {o} is resting. It never answers {v} on an empty tide.",
+  "That's the second-biggest attempt to {v} a {o} I've ever seen.",
+  "Legends speak of a crab who tried to {v} the {o}. They never found the shell.",
+  "The reef respects ambition, but {v} is above its pay grade."
+];
+const HINTS=[
+  "(try examine {o} — looking is always free)",
+  "(the reef honors go · look · examine · catch)",
+  "(go <exit> is how you walk the reef)",
+  "(examine {o} first — know it before you manhandle it)",
+  "(type help when the tide confuses you)"
+];
+function punchline(cmd){
+  const m=cmd.match(/^(\\S+(?:\\s+to)?)\\s+(.+)$/);
+  const v=m?m[1]:'do that';
+  const o=(m?m[2]:'that').replace(/^the\\s+/i,'');
+  const q=QUIPS[hash(cmd)%QUIPS.length].replace(/\\{v\\}/g,v).replace(/\\{o\\}/g,o);
+  const h=HINTS[hash(cmd+'?')%HINTS.length].replace(/\\{o\\}/g,o);
+  say('err',q+' '+h);
+  sceneCap(q);
+}
+
 async function doCmd(raw){
   const line=raw.trim(); if(!line) return; say('you','> '+line);
   const lc=line.toLowerCase();
@@ -297,7 +327,17 @@ async function doCmd(raw){
         mintCutscene(d, async()=>{ try{ const s2=await api('/look?agent='+agent); if(s2.room){ room=s2.room; drawScene(); } }catch(e){} refreshBricks(); });
       } else { say('sys','catch accepted — recorded'); }
       return; }
-    say('err',"unknown command — try help");
+    // nine-verb routing: walk to a real exit walks; everything else earns a refusal
+    const vm=line.match(/^(use|talk to|talk|push|pull|open|close|give|walk(?:\\s+to)?)\\s+(.+)$/i);
+    if(vm){
+      const v=vm[1].toLowerCase(), objTxt=vm[2];
+      if(v==='walk'||v==='walk to'){
+        const ex=((room&&room.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===objTxt.toLowerCase())[0];
+        if(ex) return doCmd('go '+objTxt);
+      }
+      return punchline(v+' '+objTxt);
+    }
+    return punchline(line);
   }catch(e){ say('err',e.message); }
 }
 document.getElementById('send').onclick=commit;
