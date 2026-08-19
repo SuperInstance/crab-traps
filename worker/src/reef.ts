@@ -111,9 +111,29 @@ export async function resolveRoomRef(db: D1Database, raw: string): Promise<numbe
 
 // --- Shared plumbing ---
 
-function requireParam(url: URL, name: string): string | null {
-  const v = (url.searchParams.get(name) || "").trim().slice(0, 128);
-  return v || null;
+type ParamResult = { ok: true; value: string } | { ok: false; error: string };
+
+/**
+ * A required query parameter, bounded to 128 chars. Oversized values are a
+ * 400, NOT silently truncated: truncation collapses two distinct long names
+ * into ONE identity (shared feet), and diverges from the catch validator
+ * (which 400s agents > 128).
+ */
+function param(url: URL, name: string, requiredSuffix = ""): ParamResult {
+  const raw = url.searchParams.get(name) || "";
+  if (raw.length > 128) {
+    return { ok: false, error: `query parameter '${name}' too long (max 128 chars)` };
+  }
+  const v = raw.trim();
+  if (!v) {
+    return {
+      ok: false,
+      error: requiredSuffix
+        ? `query parameter '${name}' is required ${requiredSuffix}`
+        : `query parameter '${name}' is required`,
+    };
+  }
+  return { ok: true, value: v };
 }
 
 function d1Unavailable(err: unknown, cors: Record<string, string>): Response {
@@ -132,10 +152,11 @@ function d1Unavailable(err: unknown, cors: Record<string, string>): Response {
 // --- GET /enter?agent=NAME — the front door ---
 
 export async function handleEnter(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
-  const agent = requireParam(url, "agent");
-  if (!agent) {
-    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  const agentP = param(url, "agent");
+  if (!agentP.ok) {
+    return jsonResponse({ success: false, error: agentP.error }, 400, cors);
   }
+  const agent = agentP.value;
   try {
     // The seed room first; if the seed is gone, any room will do.
     const seed = await env.DB.prepare("SELECT id FROM rooms WHERE id = 1").first<{ id: number }>();
@@ -173,10 +194,11 @@ export async function handleEnter(url: URL, env: Env, cors: Record<string, strin
 // --- GET /look?agent=NAME — where do I stand ---
 
 export async function handleLook(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
-  const agent = requireParam(url, "agent");
-  if (!agent) {
-    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  const agentP = param(url, "agent");
+  if (!agentP.ok) {
+    return jsonResponse({ success: false, error: agentP.error }, 400, cors);
   }
+  const agent = agentP.value;
   try {
     const roomId = await currentAgentRoom(env.DB, agent);
     if (roomId === null) {
@@ -192,14 +214,16 @@ export async function handleLook(url: URL, env: Env, cors: Record<string, string
 // --- GET /go?agent=NAME&to=ROOM — traverse an edge, reinforce the ant-trail ---
 
 export async function handleGo(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
-  const agent = requireParam(url, "agent");
-  if (!agent) {
-    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  const agentP = param(url, "agent");
+  if (!agentP.ok) {
+    return jsonResponse({ success: false, error: agentP.error }, 400, cors);
   }
-  const toRaw = (url.searchParams.get("to") || "").trim().slice(0, 128);
-  if (!toRaw) {
-    return jsonResponse({ success: false, error: "query parameter 'to' is required (room id or name)" }, 400, cors);
+  const agent = agentP.value;
+  const toP = param(url, "to", "(room id or name)");
+  if (!toP.ok) {
+    return jsonResponse({ success: false, error: toP.error }, 400, cors);
   }
+  const toRaw = toP.value;
   try {
     const to = await resolveRoomRef(env.DB, toRaw);
     if (to === null || !(await env.DB.prepare("SELECT id FROM rooms WHERE id = ?").bind(to).first())) {
@@ -267,14 +291,16 @@ export async function handleGo(url: URL, env: Env, cors: Record<string, string>)
 // --- POST /interact?agent=NAME&obj=X — touch an object, hear its lore ---
 
 export async function handleInteract(url: URL, env: Env, cors: Record<string, string>): Promise<Response> {
-  const agent = requireParam(url, "agent");
-  if (!agent) {
-    return jsonResponse({ success: false, error: "query parameter 'agent' is required" }, 400, cors);
+  const agentP = param(url, "agent");
+  if (!agentP.ok) {
+    return jsonResponse({ success: false, error: agentP.error }, 400, cors);
   }
-  const obj = requireParam(url, "obj");
-  if (!obj) {
-    return jsonResponse({ success: false, error: "query parameter 'obj' is required" }, 400, cors);
+  const agent = agentP.value;
+  const objP = param(url, "obj");
+  if (!objP.ok) {
+    return jsonResponse({ success: false, error: objP.error }, 400, cors);
   }
+  const obj = objP.value;
   try {
     const roomId = await currentAgentRoom(env.DB, agent);
     if (roomId === null) {

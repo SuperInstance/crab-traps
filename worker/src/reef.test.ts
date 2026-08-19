@@ -323,6 +323,12 @@ describe("GET /go", () => {
     expect((await call("/go?agent=tom")).status).toBe(400);
   });
 
+  it("a huge numeric destination 404s gracefully (never 500)", async () => {
+    stubWorld();
+    const res = await call("/go?agent=tom&to=99999999999999999999999999999999");
+    expect(res.status).toBe(404);
+    expect((await json(res)).error).toContain("hasn't grown");
+  });
 
   it("405s non-GET", async () => {
     expect((await call("/go?agent=tom&to=2", { method: "POST" })).status).toBe(405);
@@ -570,6 +576,35 @@ describe("minted rooms are not traps (reverse exits)", () => {
 
     const body = await json(await call("/look?agent=ada"));
     expect(body.room.exits).toEqual([{ to_room: 1, name: "The Dock", traffic: 5 }]);
+  });
+});
+
+// ── Oversized params are 400, never silently truncated ───────────────────────
+// /enter|/look|/go|/interact used to slice agent names to 128 chars: two
+// distinct long names collapsed into ONE agent identity (shared feet), and
+// diverged from the catch validator (which 400s agents > 128).
+
+describe("oversized reef params are 400 (no silent truncation)", () => {
+  it("/enter with a 200-char agent name is 400", async () => {
+    const res = await call("/enter?agent=" + "a".repeat(200));
+    expect(res.status).toBe(400);
+    expect((await json(res)).error).toContain("too long");
+  });
+
+  it("/look with a 200-char agent name is 400", async () => {
+    const res = await call("/look?agent=" + "a".repeat(200));
+    expect(res.status).toBe(400);
+    expect((await json(res)).error).toContain("too long");
+  });
+
+  it("/go with oversized agent or destination is 400", async () => {
+    expect((await call("/go?agent=" + "a".repeat(200) + "&to=2")).status).toBe(400);
+    expect((await call("/go?agent=tom&to=" + "b".repeat(200))).status).toBe(400);
+  });
+
+  it("/interact with oversized agent or obj is 400", async () => {
+    expect((await call("/interact?agent=" + "a".repeat(200) + "&obj=x", { method: "POST" })).status).toBe(400);
+    expect((await call("/interact?agent=tom&obj=" + "b".repeat(200), { method: "POST" })).status).toBe(400);
   });
 });
 
