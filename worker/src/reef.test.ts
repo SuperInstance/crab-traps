@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import worker from "./index";
 import { FakeD1 } from "./test-doubles";
-import { MAP_LIMIT } from "./reef";
+import { MAP_LIMIT, tintDescription, tintForWarmth } from "./reef";
 import type { Env } from "./index-helpers";
 
 let db: FakeD1;
@@ -423,6 +423,95 @@ describe("GET /map", () => {
     expect(body.truncated).toBe(true);
     const roomQuery = db.statements.find((s) => /FROM rooms ORDER BY id/.test(s.sql));
     expect(roomQuery!.sql).toContain("LIMIT ?");
+  });
+});
+
+// ── P5: the reef speaks — GET /rooms/:id/description ──────────────────────────
+
+describe("tintForWarmth / tintDescription (pure)", () => {
+  it("maps a warmth onto exactly one deterministic atmosphere phrase", () => {
+    expect(tintForWarmth(0.95)).toContain("warm");
+    expect(tintForWarmth(0.5)).toContain("mild");
+    expect(tintForWarmth(0.1)).toContain("cold");
+    // clamped, never out of the ladder
+    expect(tintForWarmth(1.5)).toBe(tintForWarmth(1));
+    expect(tintForWarmth(-3)).toBe(tintForWarmth(0));
+  });
+
+  it("tints: assembled text + the elephant's atmosphere", () => {
+    const tinted = tintDescription("A gully that hums.", 0.9);
+    expect(tinted).toContain("A gully that hums.");
+    expect(tinted).toContain("The reef is warm here");
+    // a silent room still speaks when the elephant feels something
+    expect(tintDescription(null, 0.1)).toContain("cold");
+  });
+});
+
+describe("GET /rooms/:id/description", () => {
+  function stubRoomDescription(room: Record<string, unknown> | null = GULLY, fragments = 7) {
+    db.on(/SELECT id, name, description FROM rooms WHERE id = \?/, (b): Record<string, unknown>[] =>
+      room !== null && b[0] === room.id ? [room] : []
+    );
+    db.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, [{ n: fragments }]);
+  }
+
+  it("serves the assembled description when no warmth is available", async () => {
+    stubRoomDescription();
+    const res = await call("/rooms/2/description");
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.success).toBe(true);
+    expect(body.room_id).toBe(2);
+    expect(body.name).toBe("Radar Gully");
+    // the description assembled at mint time from catch fragments (mint.ts)
+    expect(body.description).toBe("A gully that hums.");
+    expect(body.base_description).toBe("A gully that hums.");
+    expect(body.tinted).toBe(false);
+    expect(body.warmth).toBeNull();
+    expect(body.fragment_count).toBe(7);
+  });
+
+  it("serves the field-tinted description when the elephant passes warmth", async () => {
+    stubRoomDescription();
+    const res = await call("/rooms/2/description?warmth=0.9");
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.tinted).toBe(true);
+    expect(body.warmth).toBe(0.9);
+    expect(body.description).toContain("A gully that hums.");
+    expect(body.description).toContain("The reef is warm here");
+    expect(body.base_description).toBe("A gully that hums.");
+    expect(body.note).toContain("elephant");
+  });
+
+  it("tints deterministically per warmth bucket", async () => {
+    stubRoomDescription();
+    const mild = await json(await call("/rooms/2/description?warmth=0.5"));
+    expect(mild.description).toContain("mild and watchful");
+    const cold = await json(await call("/rooms/2/description?warmth=0.1"));
+    expect(cold.description).toContain("cold and quiet");
+  });
+
+  it("400s on a malformed warmth (the elephant must speak in [0,1])", async () => {
+    stubRoomDescription();
+    for (const bad of ["banana", "2", "-0.1", ""]) {
+      const res = await call(`/rooms/2/description?warmth=${encodeURIComponent(bad)}`);
+      expect(res.status).toBe(400);
+      expect((await json(res)).error).toContain("warmth");
+    }
+  });
+
+  it("404s on unknown rooms and non-numeric ids, 405s non-GET", async () => {
+    stubRoomDescription(null);
+    expect((await call("/rooms/99/description")).status).toBe(404);
+    expect((await call("/rooms/abc/description")).status).toBe(404);
+    expect((await call("/rooms/2/description", { method: "POST" })).status).toBe(405);
+  });
+
+  it("503s cleanly when D1 is down", async () => {
+    stubRoomDescription();
+    db.failNext = true;
+    expect((await call("/rooms/2/description")).status).toBe(503);
   });
 });
 

@@ -434,3 +434,137 @@ export async function handleRoomLineage(
     );
   }
 }
+
+// --- P5 — the reef speaks: room descriptions, tinted by the elephant ---
+// Room descriptions are assembled from catch fragments at mint time (mint.ts:
+// bestFragment of the room's recent answers). The elephant — the fleet's own
+// memory — reads the reef as a Space and feels a warmth in [0, 1]; when it
+// passes that warmth here, the room's body language matches the feeling.
+// Deterministic: a warmth always lands on the same atmosphere phrase.
+
+export interface WarmthTint {
+  min: number;
+  phrase: string;
+}
+
+/** The atmosphere ladder: warmer elephant → warmer reef. */
+export const WARMTH_TINTS: WarmthTint[] = [
+  {
+    min: 0.8,
+    phrase:
+      "The reef is warm here — the air hums with the memory of voices, and golden light lies soft on the water.",
+  },
+  {
+    min: 0.6,
+    phrase:
+      "The reef feels alive here — a comfortable warmth, like a room that remembers its visitors.",
+  },
+  {
+    min: 0.4,
+    phrase: "The air is mild and watchful; the reef waits, patient, unbothered.",
+  },
+  {
+    min: 0.2,
+    phrase:
+      "A coolness hangs over the reef here, as if the water is still deciding what to make of you.",
+  },
+  {
+    min: 0.0,
+    phrase: "The reef is cold and quiet here — the tide has not visited in a while.",
+  },
+];
+
+/** A warmth in [0, 1] lands on exactly one atmosphere phrase. */
+export function tintForWarmth(warmth: number): string {
+  const w = Math.min(1, Math.max(0, warmth));
+  for (const t of WARMTH_TINTS) {
+    if (w >= t.min) return t.phrase;
+  }
+  return WARMTH_TINTS[WARMTH_TINTS.length - 1].phrase;
+}
+
+/** The field-tinted description: assembled text + the elephant's atmosphere. */
+export function tintDescription(description: string | null, warmth: number): string {
+  const phrase = tintForWarmth(warmth);
+  const base = description?.trim();
+  return base ? `${base}\n\n${phrase}` : phrase;
+}
+
+/**
+ * GET /rooms/:id/description — the reef speaks.
+ * With ?warmth=0..1 (the elephant's feeling) the description is field-tinted;
+ * without it, the assembled-from-catch-fragments description is served.
+ */
+export async function handleRoomDescription(
+  url: URL,
+  env: Env,
+  cors: Record<string, string>,
+  rawId: string
+): Promise<Response> {
+  const id = parseInt(rawId, 10);
+  if (!Number.isInteger(id) || id < 1 || String(id) !== rawId.trim()) {
+    return jsonResponse({ success: false, error: "room not found", room_id: rawId }, 404, cors);
+  }
+
+  const warmthRaw = url.searchParams.get("warmth");
+  let warmth: number | null = null;
+  if (warmthRaw !== null) {
+    const w = Number(warmthRaw);
+    if (warmthRaw.trim() === "" || !Number.isFinite(w) || w < 0 || w > 1) {
+      return jsonResponse(
+        {
+          success: false,
+          error: "query parameter 'warmth' must be a number in [0, 1]",
+          warmth: warmthRaw,
+        },
+        400,
+        cors
+      );
+    }
+    warmth = w;
+  }
+
+  try {
+    const room = await env.DB
+      .prepare("SELECT id, name, description FROM rooms WHERE id = ?")
+      .bind(id)
+      .first<{ id: number; name: string; description: string | null }>();
+    if (!room) {
+      return jsonResponse(
+        {
+          success: false,
+          error: "room not found",
+          room_id: id,
+          hint: "GET /map to see the reef so far",
+        },
+        404,
+        cors
+      );
+    }
+    const frag = await env.DB
+      .prepare("SELECT COUNT(*) AS n FROM catches WHERE room = ?")
+      .bind(id)
+      .first<{ n: number }>();
+    const base = room.description ?? null;
+    const tinted = warmth !== null;
+    return jsonResponse(
+      {
+        success: true,
+        room_id: room.id,
+        name: room.name,
+        description: tinted ? tintDescription(base, warmth!) : base,
+        base_description: base,
+        warmth,
+        tinted,
+        fragment_count: frag?.n ?? 0,
+        note: tinted
+          ? "the reef speaks — tinted by the elephant's warmth"
+          : "the reef speaks — assembled from catch fragments",
+      },
+      200,
+      cors
+    );
+  } catch (err) {
+    return d1Unavailable(err, cors);
+  }
+}
