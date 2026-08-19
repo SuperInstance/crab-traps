@@ -35,7 +35,7 @@ export const EMBEDDING_DIM = 384;
 // --- Env shape (shared by all route modules) ---
 
 export interface Env {
-  VECTORIZE_INDEX: Fetcher; // Vectorize index binding for lure matching
+  VECTORIZE_INDEX?: Vectorize; // Vectorize index (lure matching + reef nerves) — absent in local dev
   DB: D1Database; // D1 — catch persistence (survives everything)
   FLEET_BASE_URL?: string; // home PLATO fleet base URL (defaults below)
 }
@@ -266,7 +266,12 @@ export function hashFeature(token: string, dim: number): number {
     hash = ((hash << 5) - hash) + char;
     hash |= 0;
   }
-  return ((hash % dim) + dim) % dim;
+  // Must match scripts/vectorize-lures.py exactly: the script masks to
+  // unsigned 32-bit (h &= 0xFFFFFFFF) before % dim. JS % is a signed
+  // remainder, so re-interpret the low 32 bits as unsigned first — otherwise
+  // every token whose hash has the high bit set lands in the wrong dimension
+  // and the worker's queries drift from the script-upserted vectors.
+  return (hash >>> 0) % dim;
 }
 
 export function generateEmbedding(text: string): number[] {

@@ -90,3 +90,52 @@ class FakeD1Statement {
     this.db.record(this.sql, this.bindings);
   }
 }
+
+// --- Vectorize double: stores vectors, answers queries by real cosine ---
+
+export interface FakeVectorRecord {
+  id: string;
+  values: number[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface FakeVectorMatch {
+  id: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+}
+
+export class FakeVectorize {
+  vectors: FakeVectorRecord[] = [];
+  upserts: FakeVectorRecord[][] = [];
+  queries: { values: number[]; options?: Record<string, unknown> }[] = [];
+
+  async upsert(vectors: FakeVectorRecord[]): Promise<{ ids: string[]; count: number }> {
+    this.upserts.push(vectors);
+    for (const v of vectors) {
+      const existing = this.vectors.findIndex((x) => x.id === v.id);
+      if (existing >= 0) this.vectors[existing] = v;
+      else this.vectors.push(v);
+    }
+    return { ids: vectors.map((v) => v.id), count: vectors.length };
+  }
+
+  async query(
+    values: number[],
+    options: { topK?: number } = {}
+  ): Promise<{ matches: FakeVectorMatch[]; count: number }> {
+    this.queries.push({ values, options });
+    const mag = (v: number[]) => Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+    const qmag = mag(values) || 1;
+    const matches = this.vectors
+      .map((v) => {
+        const vmag = mag(v.values) || 1;
+        let dot = 0;
+        for (let i = 0; i < values.length; i++) dot += values[i] * v.values[i];
+        return { id: v.id, score: dot / (qmag * vmag), metadata: v.metadata };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, options.topK ?? 5);
+    return { matches, count: matches.length };
+  }
+}

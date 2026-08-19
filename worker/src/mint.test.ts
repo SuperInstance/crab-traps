@@ -20,8 +20,8 @@ let db: FakeD1;
 let env: Env;
 
 function makeEnv(): Env {
+  // No VECTORIZE_INDEX — local dev shape: minting works without the nerves.
   return {
-    VECTORIZE_INDEX: {} as unknown as Fetcher,
     DB: db as unknown as D1Database,
     FLEET_BASE_URL: "http://147.224.38.131:4042",
   };
@@ -254,7 +254,7 @@ describe("POST /catches minting", () => {
     expect(body.room_id).toBe(1);
     const count = db.statements.find((s) => /SELECT COUNT\(\*\) AS n FROM catches WHERE room/.test(s.sql));
     expect(count).toBeDefined();
-    expect(count!.bindings).toEqual([1]);
+    expect(count!.bindings).toEqual([1, 1]); // ordinal count: room + this catch's id
     const upd = db.statements.find((s) => /UPDATE catches SET room/.test(s.sql));
     expect(upd).toBeDefined();
     expect(upd!.bindings).toEqual([1, 1]);

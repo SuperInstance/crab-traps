@@ -44,6 +44,7 @@ import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
 import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
+import { handleSearch, handleRoomVector, vectorizeAvailable } from "./vectors";
 
 const VERSION = "6.0.0";
 
@@ -118,8 +119,10 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /look?agent=NAME": "The agent's current room: name, description, objects, exits",
       "GET /go?agent=NAME&to=ROOM": "Traverse an edge (id or name); reinforces the ant-trail traffic",
       "POST /interact?agent=NAME&obj=X": "Touch an object — returns its lore",
-      "GET /map": "The reef so far: all rooms + edges",
+      "GET /map": "The reef so far: all rooms + edges (traffic and kind: traveled vs discovered)",
       "GET /lineage/room/:id": "Which catches built this room — the genealogy is public",
+      "GET /search?q=...": "Semantic search over catch embeddings (Vectorize top-8; room names + snippets joined from D1)",
+      "GET /rooms/:id/vector": "A room's meaning: normalized centroid of its catch vectors, recomputed + upserted on demand",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
       "GET /wander": "The human front door — dual-pane MUD + rendered scene, one command drives both, state downloadable as JSON",
@@ -169,6 +172,7 @@ async function handleHealth(env: Env, cors: Record<string, string>): Promise<Res
     fleet_checked_at: new Date(fleet.checkedAt).toISOString(),
     d1,
     catch_layer: catchLayer,
+    vectorize: vectorizeAvailable(env) ? "on" : "off",
     lures_loaded: LURES.length,
   }, 200, cors);
 }
@@ -370,6 +374,20 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleRoomLineage(env, cors, pathname.slice("/lineage/room/".length));
+    }
+
+    // --- Vector nerves: semantic search + room centroids (P3) ---
+    if (pathname === "/search") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleSearch(url, env, cors);
+    }
+    if (pathname.startsWith("/rooms/") && pathname.endsWith("/vector")) {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleRoomVector(env, cors, pathname.slice("/rooms/".length, pathname.length - "/vector".length));
     }
 
     // --- Stats layer: D1 aggregates ---

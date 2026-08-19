@@ -295,8 +295,8 @@ export async function handleMap(env: Env, cors: Record<string, string>): Promise
       .prepare("SELECT id, name, description, created_from_catch, created_at FROM rooms ORDER BY id")
       .all<{ id: number; name: string; description: string | null; created_from_catch: number | null; created_at: string }>();
     const edges = await env.DB
-      .prepare("SELECT from_room, to_room, traffic FROM edges ORDER BY traffic DESC, from_room, to_room")
-      .all<{ from_room: number; to_room: number; traffic: number }>();
+      .prepare("SELECT from_room, to_room, traffic, kind FROM edges ORDER BY traffic DESC, from_room, to_room")
+      .all<{ from_room: number; to_room: number; traffic: number; kind: string | null }>();
     return jsonResponse(
       {
         success: true,

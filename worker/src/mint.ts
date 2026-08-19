@@ -139,9 +139,14 @@ export type MintDetail =
  * O(recent), never O(world). Returns what the reef grew, or null.
  */
 export async function mintWorld(db: D1Database, input: MintInput): Promise<MintDetail | null> {
+  // The catch's ORDINAL among its room's catches, computed from ids — a
+  // plain COUNT(*) races: two concurrent catches in a 4-catch room can both
+  // commit before either counts, the count jumps 4→6, and the 5th-catch
+  // mint is skipped forever. Ordinals are stable per catch (ids only move
+  // up), so exactly one catch is ever the 5th and one the 12th.
   const countRow = await db
-    .prepare("SELECT COUNT(*) AS n FROM catches WHERE room = ?")
-    .bind(input.room)
+    .prepare("SELECT COUNT(*) AS n FROM catches WHERE room = ? AND id <= ?")
+    .bind(input.room, input.catchId)
     .first<{ n: number }>();
   const n = countRow?.n ?? 0;
   if (n !== OBJECT_MINT_N && n !== ROOM_MINT_N) return null;

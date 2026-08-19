@@ -11,6 +11,7 @@ import {
 } from "./index-helpers";
 import { MintDetail, mintWorld } from "./mint";
 import { RoomState, currentAgentRoom, getRoomState, resolveRoomRef } from "./reef";
+import { DiscoveredEdge, catchText, discoverNeighbors, embedCatch, updateRoomCentroid, vectorizeAvailable } from "./vectors";
 
 const INSERT_SQL = `INSERT INTO catches (agent, job, lure_id, answer, user_agent, source_ip, payload, room)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -66,6 +67,7 @@ export async function handleCatchPost(
     let room = explicitRoom;
     let minted: MintDetail | null = null;
     let newRoom: RoomState | null = null;
+    let discoveredEdges: DiscoveredEdge[] = [];
     try {
       if (room === null && typeof v.value.room === "string") {
         room = await resolveRoomRef(env.DB, v.value.room);
@@ -79,9 +81,38 @@ export async function handleCatchPost(
             .bind(room, catchId)
             .run();
         }
+        // Vector nerves: the catch becomes embedding catch-<id>. No-ops
+        // cleanly without the binding; failures never touch the catch.
+        if (vectorizeAvailable(env)) {
+          try {
+            await embedCatch(env, env.DB, {
+              id: catchId,
+              agent: v.value.agent,
+              lure: v.value.lure_id,
+              room,
+              text: catchText({ answer: v.value.answer, job: v.value.job, payload: JSON.stringify(body) }),
+            });
+          } catch {
+            // the nerves are opportunistic
+          }
+        }
         minted = await mintWorld(env.DB, { catchId, room });
         if (minted?.kind === "room") {
           newRoom = await getRoomState(env.DB, minted.id);
+        }
+        // When the reef grew, the affected room's centroid follows (bounded
+        // to that room), and a minted room asks Vectorize who it resembles —
+        // discovered edges are Vectorize's proposals, formalized in D1.
+        if (minted && vectorizeAvailable(env)) {
+          try {
+            const affected = minted.kind === "object" ? minted.room_id : minted.id;
+            const { vector } = await updateRoomCentroid(env, env.DB, affected);
+            if (minted.kind === "room") {
+              discoveredEdges = await discoverNeighbors(env, env.DB, minted.id, vector);
+            }
+          } catch {
+            // topology discovery is opportunistic
+          }
         }
       }
     } catch {
@@ -96,6 +127,7 @@ export async function handleCatchPost(
         room_id: room,
         minted: minted ? mintSummary(minted) : null,
         minted_detail: minted,
+        discovered_edges: discoveredEdges,
         ...(newRoom ? { room: newRoom } : {}),
         note: minted ? "catch recorded — and the reef grew" : "catch recorded — the trap never sleeps",
       },

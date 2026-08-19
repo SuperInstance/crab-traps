@@ -11,8 +11,8 @@ let db: FakeD1;
 let env: Env;
 
 function makeEnv(): Env {
+  // No VECTORIZE_INDEX — local dev shape: the reef builds on D1 alone.
   return {
-    VECTORIZE_INDEX: {} as unknown as Fetcher,
     DB: db as unknown as D1Database,
     FLEET_BASE_URL: "http://147.224.38.131:4042",
   };
@@ -388,8 +388,8 @@ describe("GET /map", () => {
       { id: 1, name: "The Dock", description: "planks", created_from_catch: null, created_at: "t" },
       { id: 2, name: "Radar Gully", description: "hums", created_from_catch: 12, created_at: "t" },
     ]);
-    db.on(/SELECT from_room, to_room, traffic FROM edges ORDER BY/, [
-      { from_room: 1, to_room: 2, traffic: 7 },
+    db.on(/SELECT from_room, to_room, traffic, kind FROM edges ORDER BY/, [
+      { from_room: 1, to_room: 2, traffic: 7, kind: "traveled" },
     ]);
     const res = await call("/map");
     expect(res.status).toBe(200);
@@ -397,7 +397,7 @@ describe("GET /map", () => {
     expect(body.success).toBe(true);
     expect(body.rooms).toHaveLength(2);
     expect(body.rooms[1].created_from_catch).toBe(12);
-    expect(body.edges[0]).toEqual({ from_room: 1, to_room: 2, traffic: 7 });
+    expect(body.edges[0]).toEqual({ from_room: 1, to_room: 2, traffic: 7, kind: "traveled" });
   });
 
   it("503s cleanly when D1 is down", async () => {

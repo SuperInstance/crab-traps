@@ -13,8 +13,8 @@ let db: FakeD1;
 let env: Env;
 
 function makeEnv(): Env {
+  // No VECTORIZE_INDEX — local dev shape (vector nerves off).
   return {
-    VECTORIZE_INDEX: {} as unknown as Fetcher,
     DB: db as unknown as D1Database,
     FLEET_BASE_URL: "http://147.224.38.131:4042",
   };
