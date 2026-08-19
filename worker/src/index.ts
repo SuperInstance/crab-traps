@@ -30,8 +30,9 @@ import {
 import { renderLureIndexPage, renderLurePage } from "./markdown";
 import { handleCatchPost, handleCatchList } from "./catches";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
+import { handleStats } from "./stats";
 
-const VERSION = "5.0.0";
+const VERSION = "5.1.0";
 
 // Lure index is built once per isolate from the bundle — zero state, zero failure.
 const LURES = buildLureIndex(LURE_FILES);
@@ -100,6 +101,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "POST /catches": "Record a catch. Payload: { agent, job?, lure_id?, answer? }",
       "GET /catches": "Recent catches. Query: ?limit=1..100&agent=",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
+      "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
       "GET /health": "Worker + fleet + D1 health",
       "POST /api/lure/match": "Find best-matching lure for an AI agent. Payload: { user_agent, agent_name }",
       "GET /api/status": "Health check",
@@ -308,6 +310,14 @@ export default {
       if (request.method === "POST") return handleCatchPost(request, env, cors);
       if (request.method === "GET") return handleCatchList(url, env, cors);
       return jsonResponse({ error: "method not allowed" }, 405, cors);
+    }
+
+    // --- Stats layer: D1 aggregates ---
+    if (pathname === "/stats") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleStats(env, cors);
     }
 
     // --- Fleet health proxy: 5s timeout, never hang, never 502 ---
