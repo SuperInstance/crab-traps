@@ -219,6 +219,26 @@ describe("POST /catches", () => {
     expect((await json(res)).error).toContain("too large");
     expect(db.statements.filter((s) => /INSERT INTO catches/.test(s.sql))).toHaveLength(0);
   });
+
+  it("100KB boundary: exactly 100_000 bytes passes the gate; one byte more is 413", async () => {
+    // The gate is inclusive at MAX_CATCH_BODY_BYTES: a legitimately full
+    // payload records (unknown fields ride in the payload column, capped at
+    // 64KB there), and the next byte trips the guard — never a 500.
+    const pad = 100_000 - JSON.stringify({ agent: "tom-crab", junk: "" }).length;
+    const at = await call("/catch", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ agent: "tom-crab", junk: "x".repeat(pad) }),
+    });
+    expect(at.status).toBe(201);
+
+    const over = await call("/catch", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ agent: "tom-crab", junk: "x".repeat(pad + 1) }),
+    });
+    expect(over.status).toBe(413);
+  });
 });
 
 describe("GET /catches", () => {

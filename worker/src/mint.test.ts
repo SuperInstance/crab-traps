@@ -170,6 +170,56 @@ describe("mintWorld", () => {
       expect(await mintWorld(fresh as unknown as D1Database, { catchId: 1, room: 1 })).toBeNull();
     }
   });
+
+  it("the 13th catch through the endpoint mints nothing (exact thresholds only)", async () => {
+    // Lock-in: the 12th-catch room spawn must not repeat on the 13th — n must
+    // be EXACTLY 5 or 12, never >=.
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 1 ? [{ id: 1 }] : []));
+    db.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, (b) =>
+      b[0] === 1 ? [{ n: 13 }] : [{ n: 0 }]
+    );
+    db.on(
+      /SELECT id, answer, job, payload FROM catches WHERE room = \? ORDER BY id DESC LIMIT 50/,
+      []
+    );
+    const body = await json(await post({ agent: "tom", room: 1, answer: "thirteenth" }));
+    expect(body.minted).toBeNull();
+    expect(
+      db.statements.filter((s) => /INSERT OR IGNORE INTO (objects|rooms|edges)/.test(s.sql))
+    ).toHaveLength(0);
+  });
+
+  it("concurrent 5th-catch race: exactly one object mint", async () => {
+    // Two POSTs land in a 4-catch room. The ordinal (id <= catchId) is stable:
+    // catch 12's count is 5 (mints), catch 13's count is 6 (skips) — even if
+    // both committed before either counted. One brick, never two.
+    const fresh = new FakeD1();
+    fresh.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, (b) => [{ n: b[1] as number }]);
+    fresh.on(/SELECT id, answer, job, payload FROM catches WHERE room = \?/, []);
+    const a = await mintWorld(fresh as unknown as D1Database, { catchId: 5, room: 1 });
+    const b = await mintWorld(fresh as unknown as D1Database, { catchId: 6, room: 1 });
+    expect(a).toMatchObject({ kind: "object", room_id: 1, created_from_catch: 5 });
+    expect(b).toBeNull();
+    expect(fresh.statements.filter((s) => /INSERT OR IGNORE INTO objects/.test(s.sql))).toHaveLength(1);
+  });
+
+  it("concurrent 12th-catch race: exactly one room and one edge", async () => {
+    // Same race at the room threshold: catch 12 mints the neighbor room and its
+    // parent edge; catch 13 skips. The provenance re-read (created_from_catch)
+    // resolves the real id even if OR IGNORE swallowed a duplicate insert.
+    const fresh = new FakeD1();
+    fresh.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, (b) => [{ n: b[1] as number }]);
+    fresh.on(/SELECT id, answer, job, payload FROM catches WHERE room = \?/, []);
+    fresh.on(/SELECT id FROM rooms WHERE created_from_catch = \?/, (b) =>
+      b[0] === 12 ? [{ id: 9 }] : []
+    );
+    const a = await mintWorld(fresh as unknown as D1Database, { catchId: 12, room: 1 });
+    const b = await mintWorld(fresh as unknown as D1Database, { catchId: 13, room: 1 });
+    expect(a).toMatchObject({ kind: "room", id: 9, parent_room: 1, created_from_catch: 12 });
+    expect(b).toBeNull();
+    expect(fresh.statements.filter((s) => /INSERT OR IGNORE INTO rooms/.test(s.sql))).toHaveLength(1);
+    expect(fresh.statements.filter((s) => /INSERT OR IGNORE INTO edges/.test(s.sql))).toHaveLength(1);
+  });
 });
 
 // ── POST /catches → minting hot path ─────────────────────────────────────────

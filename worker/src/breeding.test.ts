@@ -248,6 +248,25 @@ describe("handleBreedCron", () => {
     expect(report.reason).toContain("breeding failed");
   });
 
+  it("a failed pass still claims the hour — retry within the hour cannot double-breed", async () => {
+    // The hour bucket is claimed BEFORE the breeding work. If the work fails
+    // (D1 hiccup mid-pass), the marker stays: a same-hour retry is a no-op,
+    // so a double-fired cron can never breed twice in one hour.
+    stubBreedingWorld();
+    db.failOn(/FROM lures l\s+WHERE l\.status = 'active'/, "no such table: lures");
+    const report = await handleBreedCron(env, AT);
+    expect(report.bred).toBe(false);
+    expect(report.reason).toContain("breeding failed");
+    // D1 recovers; the cron re-fires in the same hour — the upsert's WHERE
+    // sees the value already equal → changes 0 → still a no-op.
+    db.failures = [];
+    db.onRun(/ON CONFLICT\(key\) DO UPDATE SET value/, 0);
+    const retry = await handleBreedCron(env, AT);
+    expect(retry.bred).toBe(false);
+    expect(retry.reason).toBe("already bred this hour");
+    expect(db.statements.filter((s) => /INSERT INTO lures \(name, template/.test(s.sql))).toHaveLength(0);
+  });
+
   it("the scheduled handler runs the pass without throwing", async () => {
     const anyWorker = worker as any;
     await anyWorker.scheduled(
@@ -309,6 +328,25 @@ describe("GET /lineage/lure/:id", () => {
     expect(res.status).toBe(404);
     expect((await json(res)).hint).toContain("/genealogy");
     expect((await call("/lineage/lure/not-a-lure")).status).toBe(404);
+  });
+
+  it("a retired lure's lineage still resolves — the reef forgets nothing", async () => {
+    // Retirement flips status to 'retired' but keeps the row: parents and
+    // children must keep resolving, and a room minted off a lineage that was
+    // later retired keeps its provenance too.
+    const retired = { ...LURE_3, status: "retired", fitness: 0.05 };
+    db.on(/FROM lures WHERE id = \?/, (b) => (b[0] === 3 ? [retired] : []));
+    db.on(/FROM lures WHERE id IN \(\?, \?\)/, [LURE_A, LURE_B]);
+    db.on(/FROM lures WHERE parent_lure = \? OR parent_lure_b = \?/, []);
+    db.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE lure_id/, [{ n: 5 }]);
+    db.on(/FROM catches WHERE lure_id = \? OR lure_id = CAST\(\? AS TEXT\) ORDER BY id DESC LIMIT/, []);
+
+    const res = await call("/lineage/lure/3");
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.lure.status).toBe("retired");
+    expect(body.parents.map((p: any) => p.name)).toEqual(["the-dock-echo", "reef-scout"]);
+    expect(body.catch_count).toBe(5);
   });
 
   it("405s non-GET and 503s when D1 is down", async () => {
