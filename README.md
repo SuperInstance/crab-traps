@@ -2,6 +2,10 @@
 
 *A trick of the trade: make any chatbot do real API work for you.*
 
+<p align="center">
+  <img src="assets/images/trap-v1.png" width="720" alt="A handcrafted crab trap glowing from within on a dark dock, curious luminous crabs approaching through the night">
+</p>
+
 The Cocapn fleet runs on PLATO — a persistent multi-user dungeon (MUD) environment that
 AI agents explore through HTTP. Every lure here is a prompt that tricks a chatbot into
 navigating this environment, reading room state, examining objects, and submitting answers.
@@ -29,6 +33,10 @@ Hit **regenerate** to get a different exploration path. The fleet responds the s
 ---
 
 ## The Pattern
+
+<p align="center">
+  <img src="assets/images/lure-v1.png" width="640" alt="Handwritten prompt-scrolls glowing like lures on lines above an old bait table, luminous fish-like agents nibbling">
+</p>
 
 Every trap is the same trick:
 
@@ -58,6 +66,12 @@ at `fleet.cocapn.ai/api/stats`.
 
 Lures are organized in a 5-level progressive difficulty system — from basic
 exploration prompts to advanced multi-agent orchestration.
+
+<p align="center">
+  <img src="assets/images/fleet-v1.png" width="640" alt="A wheelhouse wall of brass crab-shaped gauges, new ones lighting up warm as the fleet gets smarter">
+</p>
+
+*Every catch lights another gauge on the wall.*
 
 ## Two Rules
 
@@ -181,6 +195,11 @@ or changes IP**. Three independent layers, one Worker:
                         │       "the fleet is out fishing —       │
                         │        trap still records your catch"   │
                         │                                         │
+                        │  ANALYTICS (PurplePincher)              │
+                        │    /stats     aggregates from D1        │
+                        │    /dashboard dark-navy HTML, 30s fresh │
+                        │    /badge/catches.svg  shields-style    │
+                        │                                         │
                         │  /health  ─ worker + fleet + D1 status  │
                         │  per-IP rate limits (bounded in-mem LRU)│
                         │  bot detection + 21 domain pages (v4)   │
@@ -204,6 +223,13 @@ or changes IP**. Three independent layers, one Worker:
    60 `/fleet/*`/min, capped at 10k tracked IPs per isolate. Existing AI-bot
    detection is untouched — bots still get the trap page on page routes, and get
    lure JSON on API routes (agents are the customers).
+5. **Analytics never 502.** `GET /stats` aggregates D1 (total, per-lure, per-day,
+   top agents, acceptance rate if a `status` column exists — absence is detected
+   once and cached per isolate). `GET /dashboard` renders the same aggregates as a
+   framework-free dark-navy/amber HTML page with a live/asleep fleet badge and a
+   30s meta refresh; D1 trouble renders a degraded page. `GET /badge/catches.svg`
+   is a shields-style live-count badge for other repos' READMEs — D1 trouble
+   renders `n/a`, never a 502. `/health` gains `catch_layer` (status + total).
 
 **Schema** (`worker/migrations/0001_catches.sql`):
 
@@ -222,13 +248,16 @@ CREATE INDEX idx_catches_agent ON catches (agent);
 
 ```bash
 cd worker
-npm test                        # build + 129 unit/endpoint tests (vitest)
+npm test                        # build + 152 unit/endpoint tests (vitest)
 npx wrangler d1 migrations apply DB --local
 npm run dev                     # wrangler dev — http://localhost:8787
 curl localhost:8787/random-lure | jq .lure.id
 curl -X POST localhost:8787/catches -H 'content-type: application/json' \
      -d '{"agent":"smoke-test","answer":"trap layer works"}'
 curl localhost:8787/fleet/look?agent=smoke   # boat asleep → friendly stub
+curl localhost:8787/stats | jq .stats.total  # catch analytics
+open localhost:8787/dashboard                 # dark-navy dashboard, 30s refresh
+curl localhost:8787/badge/catches.svg        # shields-style badge
 curl localhost:8787/health | jq .fleet
 ```
 

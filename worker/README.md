@@ -18,6 +18,9 @@ worker/
 │   ├── markdown.ts          # Zero-dep markdown renderer + lure HTML pages
 │   ├── catches.ts           # POST/GET /catches → D1
 │   ├── fleet.ts             # /fleet/* proxy (5s timeout) + status cache
+│   ├── stats.ts             # /stats — D1 catch aggregates + acceptance probe
+│   ├── dashboard.ts         # /dashboard — server-rendered analytics HTML
+│   ├── badge.ts             # /badge/catches.svg — shields-style live count
 │   ├── pages.js             # Auto-generated bundle (gitignored)
 │   └── lures-data.js        # Auto-generated lure bundle (gitignored)
 ├── migrations/
@@ -45,7 +48,8 @@ recording catches. See the ARCHITECTURE section in the root README.
 5. `/trap` path explicitly serves the trap page
 6. Fallback domain: `cocapn.ai`
 7. **Autonomous endpoints**: `/lures`, `/lures/:name`, `/random-lure`,
-   `POST /catches`, `/fleet/*`, `/health` — per-IP rate limited where it matters
+   `POST /catches`, `/fleet/*`, `/stats`, `/dashboard`, `/badge/catches.svg`,
+   `/health` — per-IP rate limited where it matters
 
 ## Development
 

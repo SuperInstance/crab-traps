@@ -211,3 +211,63 @@ describe("GET /dashboard", () => {
     expect((await call("/dashboard", { method: "POST" })).status).toBe(405);
   });
 });
+
+// ── GET /badge/catches.svg ───────────────────────────────────────────────────
+
+describe("GET /badge/catches.svg", () => {
+  it("serves a shields-style SVG with the live count", async () => {
+    db.on(/COUNT\(\*\) AS total/i, [{ total: 42 }]);
+    const res = await call("/badge/catches.svg");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("image/svg+xml");
+    expect(res.headers.get("cache-control")).toContain("max-age=60");
+    const svg = await res.text();
+    expect(svg).toContain("<svg");
+    expect(svg).toContain(">catches</text>");
+    expect(svg).toContain(">42</text>");
+    expect(svg).toContain("#0b1220"); // navy label half
+    expect(svg).toContain("#fbbf24"); // amber value half
+    expect(svg).toContain('aria-label="catches: 42"');
+  });
+
+  it("scales its width to the digit count", async () => {
+    db.on(/COUNT\(\*\) AS total/i, [{ total: 7 }]);
+    const one = await (await call("/badge/catches.svg")).text();
+    db.canned = [];
+    db.on(/COUNT\(\*\) AS total/i, [{ total: 12345 }]);
+    const five = await (await call("/badge/catches.svg")).text();
+    const w = (s: string) => parseInt(s.match(/width="(\d+)"/)![1], 10);
+    expect(w(five)).toBeGreaterThan(w(one));
+  });
+
+  it("renders an n/a badge (200, not 502) when D1 is down", async () => {
+    db.failNext = true;
+    const res = await call("/badge/catches.svg");
+    expect(res.status).toBe(200);
+    const svg = await res.text();
+    expect(svg).toContain(">n/a</text>");
+    expect(svg).not.toContain(">42</text>");
+  });
+
+  it("rejects non-GET methods", async () => {
+    expect((await call("/badge/catches.svg", { method: "POST" })).status).toBe(405);
+  });
+});
+
+// ── /health catch layer ──────────────────────────────────────────────────────
+
+describe("GET /health catch-layer status", () => {
+  it("reports catch_layer with the stored total", async () => {
+    db.on(/COUNT\(\*\) AS n/i, [{ n: 42 }]);
+    const body = await json(await call("/health"));
+    expect(body.catch_layer).toEqual({ status: "ok", total_catches: 42 });
+  });
+
+  it("marks catch_layer unavailable when the count query fails", async () => {
+    db.failOn(/COUNT\(\*\) AS n/i, "no such table: catches");
+    const body = await json(await call("/health"));
+    expect(body.catch_layer.status).toBe("unavailable");
+    expect(body.catch_layer.total_catches).toBeNull();
+    expect(body.status).toBe("ok"); // health itself never fails
+  });
+});

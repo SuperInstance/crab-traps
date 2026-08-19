@@ -32,6 +32,7 @@ import { handleCatchPost, handleCatchList } from "./catches";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
+import { handleCatchesBadge } from "./badge";
 
 const VERSION = "5.1.0";
 
@@ -104,6 +105,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
       "GET /dashboard": "HTML dashboard of the /stats aggregates (30s refresh)",
+      "GET /badge/catches.svg": "Shields-style SVG badge with the live catch count",
       "GET /health": "Worker + fleet + D1 health",
       "POST /api/lure/match": "Find best-matching lure for an AI agent. Payload: { user_agent, agent_name }",
       "GET /api/status": "Health check",
@@ -132,6 +134,14 @@ async function handleHealth(env: Env, cors: Record<string, string>): Promise<Res
   } catch {
     d1 = "unavailable";
   }
+  // Catch-layer status: same connection, one step further — can we count catches?
+  const catchLayer: Record<string, unknown> = { status: "ok", total_catches: null };
+  try {
+    const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM catches").first<{ n: number }>();
+    catchLayer.total_catches = row?.n ?? 0;
+  } catch {
+    catchLayer.status = "unavailable";
+  }
   return jsonResponse({
     status: "ok",
     worker: "crab-trap-funnel",
@@ -139,6 +149,7 @@ async function handleHealth(env: Env, cors: Record<string, string>): Promise<Res
     fleet: fleet.online ? "online" : "asleep",
     fleet_checked_at: new Date(fleet.checkedAt).toISOString(),
     d1,
+    catch_layer: catchLayer,
     lures_loaded: LURES.length,
   }, 200, cors);
 }
@@ -326,6 +337,12 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleDashboard(env, cors);
+    }
+    if (pathname === "/badge/catches.svg") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleCatchesBadge(env);
     }
 
     // --- Fleet health proxy: 5s timeout, never hang, never 502 ---
