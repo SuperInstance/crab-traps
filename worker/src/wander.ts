@@ -135,6 +135,7 @@ function armVerb(word){
 }
 function setSentence(text){ const c=document.getElementById('cmd'); c.value=text; c.classList.add('ghost'); c.focus(); }
 function commit(){
+  if(cutscene) return; // the cutscene owns the input lock
   const c=document.getElementById('cmd'); const line=c.value; c.value='';
   c.classList.remove('ghost');
   if(verb){ verb=null; document.querySelectorAll('#verbbar .vb').forEach(b=>b.classList.remove('active')); }
