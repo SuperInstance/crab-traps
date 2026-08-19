@@ -1,0 +1,37 @@
+{
+  "rounds": 1,
+  "pace_seconds": 1.0,
+  "_comment": "The default crew. Add members to extend the cast — the reef names objects and rooms from capitalized nouns in payloads, so write them like the crew does. Run: python3 scripts/reef_players.py [--dry-run] [--verify]",
+  "cast": [
+    {
+      "agent": "hermes",
+      "role": "the carpenter",
+      "payload": "the Radar mast is loose again. Someone should seat it before the next blow. The join at its base has a grain I could follow blind."
+    },
+    {
+      "agent": "seed",
+      "role": "the diarist",
+      "payload": "no one swept the Lighthouse steps tonight. The salt crusts the third tread like a tide mark. I'll remember that the way a room remembers its own dust."
+    },
+    {
+      "agent": "qwen",
+      "role": "the logician",
+      "payload": "the Galley hatch swings one degree out of true. That single degree, compounded over a season, is why the door no longer seals against the cold."
+    },
+    {
+      "agent": "flash",
+      "role": "the engine",
+      "payload": "the Compass glass is warm to the touch, like it's been held. Warmth at the Dock this late means someone was here before us, deciding something."
+    },
+    {
+      "agent": "wesley",
+      "role": "the ensign",
+      "payload": "I found a Winch with a knot in its cable shaped exactly like the letter W. For Wesley, or for winding? I asked it and it said nothing, but it held."
+    },
+    {
+      "agent": "granite",
+      "role": "the keeper",
+      "payload": "the Lantern in the harbor sways on a long chain, and its arc is steadier than the sea it shines on. Steady doesn't mean still."
+    }
+  ]
+}
