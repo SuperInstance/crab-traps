@@ -1,6 +1,10 @@
 // wander.ts — the human front door: dual-pane MUD + ScummVM-style view.
 // One input drives both panes; every command echoes in text AND renders in
 // the scene pane; the whole session is downloadable as JSON state.
+// v2: edge-walk sync (screen edges are exits, the scene slides between
+// rooms) + the nine-verb sentence bar (verbs + hotspots assemble the
+// command visibly in the input bar — SCUMM's sentence line, typed or
+// clicked, identical).
 
 export function wanderHtml(base = ""): string {
 	return `<!DOCTYPE html>
@@ -26,10 +30,18 @@ main{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:0}
 #mud .txt{color:#c8d8ea}
 #mud .you{color:var(--teal)}
 #mud .err{color:#c96a5a}
-/* Scene pane (scummvm-style) */
-#scene-wrap{background:var(--hull2);display:flex;flex-direction:column;position:relative;border-left:1px solid #22395c}
-#scene{flex:1;width:100%;display:block;cursor:pointer}
-#scene-cap{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:var(--mist);font-size:.75rem;font-style:italic;pointer-events:none}
+/* Scene pane (scummvm-style) — slides between rooms */
+#scene-wrap{background:var(--hull2);display:flex;flex-direction:column;position:relative;border-left:1px solid #22395c;overflow:hidden}
+#scene-slide{flex:1;position:relative;overflow:hidden;transition:transform .42s ease,opacity .42s ease}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+#scene-cap{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:var(--mist);font-size:.75rem;font-style:italic;pointer-events:none;z-index:4}
+/* nine-verb sentence rail */
+#verbbar{display:flex;align-items:center;gap:6px;padding:8px 18px;background:var(--hull2);border-top:1px solid #22395c;flex-wrap:wrap}
+.vb{background:transparent;color:var(--brass-soft);border:1px solid #2c4a73;border-radius:5px;font-family:Verdana,sans-serif;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;cursor:pointer}
+.vb:hover{border-color:var(--brass)}
+.vb.active{background:var(--brass);color:var(--hull);border-color:var(--brass)}
+#verb-hint{color:var(--mist);font-size:.7rem;font-style:italic;margin-left:auto}
+#cmd.ghost{color:var(--brass-soft);font-style:italic}
 /* command bar */
 footer{display:flex;gap:10px;padding:10px 18px;background:var(--hull2);border-top:1px solid #22395c}
 #cmd{flex:1;background:#081120;border:1px solid #2c4a73;border-radius:6px;color:var(--foam);font-family:'SF Mono',Menlo,monospace;font-size:.9rem;padding:10px 14px;outline:none}
@@ -47,10 +59,24 @@ button:hover{filter:brightness(1.1)}
 <main>
   <div id="mud"></div>
   <div id="scene-wrap">
-    <canvas id="scene" width="640" height="480"></canvas>
-    <div id="scene-cap">the same room, seen from inside — click objects to examine</div>
+    <div id="scene-slide">
+      <canvas id="scene" width="640" height="480"></canvas>
+    </div>
+    <div id="scene-cap">the same room, seen from inside — click objects, walk the edges</div>
   </div>
 </main>
+<div id="verbbar">
+  <button class="vb" id="v-look" data-v="examine">Look</button>
+  <button class="vb" id="v-use" data-v="use">Use</button>
+  <button class="vb" id="v-talk" data-v="talk to">Talk</button>
+  <button class="vb" id="v-walk" data-v="go">Walk</button>
+  <button class="vb" id="v-push" data-v="push">Push</button>
+  <button class="vb" id="v-pull" data-v="pull">Pull</button>
+  <button class="vb" id="v-open" data-v="open">Open</button>
+  <button class="vb" id="v-close" data-v="close">Close</button>
+  <button class="vb" id="v-give" data-v="give">Give</button>
+  <span id="verb-hint">verb → click the scene · or just type</span>
+</div>
 <footer>
   <input id="cmd" placeholder="look · go &lt;room&gt; · examine &lt;object&gt; · help" autocomplete="off" autofocus>
   <button id="send">Send</button>
@@ -60,10 +86,33 @@ const API = location.origin;
 const mud = document.getElementById('mud');
 const cv = document.getElementById('scene');
 const g = cv.getContext('2d');
+const slide = document.getElementById('scene-slide');
+const CAPTION_HOME = 'the same room, seen from inside — click objects, walk the edges';
 let agent = 'wanderer-' + Math.random().toString(36).slice(2,7);
 let room = null; const visited = new Set(); const log = []; let catches = 0;
+let verb = null; // armed verb from the sentence rail (the SCUMM sentence line)
 
 function say(cls, text){ const d=document.createElement('div'); d.className=cls; d.textContent=text; mud.appendChild(d); mud.scrollTop=mud.scrollHeight; log.push({t:Date.now(),cls,text}); }
+function sceneCap(text){ const el=document.getElementById('scene-cap'); el.textContent=text; clearTimeout(sceneCap._t); sceneCap._t=setTimeout(()=>{el.textContent=CAPTION_HOME;},2600); }
+
+// ---------- sentence rail (the nine verbs — clicks emit parser words) ----------
+document.querySelectorAll('#verbbar .vb').forEach(b=>{
+  b.addEventListener('click', ()=>armVerb(b.dataset.v));
+});
+function armVerb(word){
+  verb = (verb===word) ? null : word;
+  document.querySelectorAll('#verbbar .vb').forEach(b=>b.classList.toggle('active', b.dataset.v===verb));
+  const c=document.getElementById('cmd');
+  if(verb){ c.value=verb+' '; c.classList.add('ghost'); } else { c.classList.remove('ghost'); }
+  c.focus();
+}
+function setSentence(text){ const c=document.getElementById('cmd'); c.value=text; c.classList.add('ghost'); c.focus(); }
+function commit(){
+  const c=document.getElementById('cmd'); const line=c.value; c.value='';
+  c.classList.remove('ghost');
+  if(verb){ verb=null; document.querySelectorAll('#verbbar .vb').forEach(b=>b.classList.remove('active')); }
+  doCmd(line);
+}
 
 // ---------- scene rendering (scummvm-ish: painted backdrop + hotspots) ----------
 function hash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)}
@@ -76,7 +125,6 @@ function drawScene(){
   const hues=[[14,35],[195,40],[268,25],[160,30]];
   const [hh,ss]=hues[h%hues.length];
   const wall=g.createLinearGradient(0,0,0,H*.55); wall.addColorStop(0,'hsl('+hh+','+ss+'%,16%)'); wall.addColorStop(1,'hsl('+hh+','+ss+'%,10%)');
-  const floor=g.createLinearGradient(0,H*.55,0,H); floor.addColorStop(0,'hsl('+hh+','+ss+'%',8%')'.replace('%\\')||'hsl('+hh+','+ss+'%,8%)'); floor.addColorStop(1,'#050b14');
   g.fillStyle=wall; g.fillRect(0,0,W,H*.55); g.fillStyle='#081120'; g.fillRect(0,H*.55,W,H*.45);
   // porthole glow
   g.beginPath(); g.arc(W*.82,H*.22,44,0,7); g.fillStyle='rgba(217,164,65,.14)'; g.fill();
@@ -86,6 +134,22 @@ function drawScene(){
   g.fillStyle='rgba(13,25,45,.9)'; g.fillRect(W*.08,H*.06,Math.min(W*.6,room.name.length*11+30),38);
   g.strokeStyle='rgba(217,164,65,.7)'; g.strokeRect(W*.08,H*.06,Math.min(W*.6,room.name.length*11+30),38);
   g.fillStyle='#e8c47c'; g.font='bold 17px Georgia'; g.fillText(room.name, W*.08+14, H*.06+25);
+  // exits first — doorframes live on the screen edges (behind the props:
+  // AGI priority bands, doors behind pedestals, in front of south walls)
+  (room.exits||[]).slice(0,4).forEach((e,i)=>{
+    const side=['left','right','top','bottom'][i%4];
+    let x,y,w,hgt;
+    if(side==='left'){x=W*.02;y=H*.30;w=W*.09;hgt=H*.36}
+    else if(side==='right'){x=W*.89;y=H*.30;w=W*.09;hgt=H*.36}
+    else if(side==='top'){x=W*.60;y=H*.03;w=W*.14;hgt=H*.18}
+    else{x=W*.40;y=H*.70;w=W*.12;hgt=H*.24}
+    g.strokeStyle='rgba(46,125,116,.8)'; g.lineWidth=3;
+    g.strokeRect(x,y,w,hgt);
+    g.fillStyle='rgba(46,125,116,.12)'; g.fillRect(x,y,w,hgt);
+    g.fillStyle='#7fb8ae'; g.font='11px Verdana';
+    g.fillText((''+(e.name||e)).slice(0,12), x, y-6);
+    e._x=x; e._y=y; e._w=w; e._h=hgt; e._side=side;
+  });
   // objects as pedestaled hotspots
   (room.objects||[]).slice(0,5).forEach((o,i)=>{
     const x=W*.14+i*(W*.72/Math.max(1,Math.min(5,(room.objects||[]).length)));
@@ -97,40 +161,74 @@ function drawScene(){
     g.fillText((o.name||o).slice(0,14), x, y+26); g.textAlign='left';
     o._x=x; o._y=y;
   });
-  // exits as labelled doorframes
-  (room.exits||[]).slice(0,4).forEach((e,i)=>{
-    const x=W*.10+i*90, y=H*.18;
-    g.strokeStyle='rgba(46,125,116,.8)'; g.lineWidth=3;
-    g.strokeRect(x,y,54,H*.34);
-    g.fillStyle='rgba(46,125,116,.12)'; g.fillRect(x,y,54,H*.34);
-    g.fillStyle='#7fb8ae'; g.font='11px Verdana';
-    g.fillText((''+(e.name||e)).slice(0,12), x, y-6);
-    e._x=x; e._y=y;
-  });
 }
+
+// ---------- edge-walk: the screen edges are exits, the pane slides ----------
+function exitSide(e){ return e._side || ['left','right','top','bottom'][hash(''+(e.name||e))%4]; }
+function slideScene(side){
+  const out={left:'translateX(-26%)',right:'translateX(26%)',top:'translateY(-26%)',bottom:'translateY(26%)'}[side];
+  const back={left:'translateX(26%)',right:'translateX(-26%)',top:'translateY(26%)',bottom:'translateY(-26%)'}[side];
+  if(!out) return;
+  slide.style.transition='transform .4s ease-in,opacity .4s ease-in';
+  slide.style.transform=out; slide.style.opacity='.25';
+  setTimeout(()=>{
+    slide.style.transition='none';
+    slide.style.transform=back; slide.style.opacity='.25';
+    drawScene();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      slide.style.transition='transform .42s ease-out,opacity .42s ease-out';
+      slide.style.transform='translate(0,0)'; slide.style.opacity='1';
+    }));
+  },420);
+}
+
 cv.addEventListener('click', ev=>{
   const r=cv.getBoundingClientRect(); const x=(ev.clientX-r.left)*cv.width/r.width, y=(ev.clientY-r.top)*cv.height/r.height;
-  for(const o of (room&&room.objects)||[]) if(Math.abs(x-o._x)<34&&Math.abs(y-(o._y-30))<44) return doCmd('examine '+(o.name||o));
-  for(const e of (room&&room.exits)||[]) if(x>e._x&&x<e._x+54&&y>e._y&&y<e._y+cv.height*.34) return doCmd('go '+(e.name||e));
+  // objects — armed verb? the sentence assembles in the input bar; bare click examines
+  for(const o of (room&&room.objects)||[]){
+    if(Math.abs(x-o._x)<34&&Math.abs(y-(o._y-30))<44){
+      if(verb){ return setSentence(verb+' '+(o.name||o)); }
+      return doCmd('examine '+(o.name||o));
+    }
+  }
+  // doorframes — armed verb (other than Walk)? assemble; Walk/bare click walks
+  for(const e of (room&&room.exits)||[]){
+    if(x>e._x&&x<e._x+e._w&&y>e._y&&y<e._y+e._h){
+      if(verb&&verb!=='go'){ return setSentence(verb+' '+(e.name||e)); }
+      return doCmd('go '+(e.name||e));
+    }
+  }
+  // screen-edge strips: walking off the edge executes go <exit>
+  const mX=cv.width*.14, mY=cv.height*.12;
+  let side=null;
+  if(x<mX) side='left'; else if(x>cv.width-mX) side='right';
+  else if(y<mY) side='top'; else if(y>cv.height-mY) side='bottom';
+  if(side){
+    const exits=(room&&room.exits)||[];
+    const pick=exits.filter(e=>e._side===side)[0]||exits[0];
+    if(pick) return doCmd('go '+(pick.name||pick));
+    sceneCap('the reef ends that way — for now'); return;
+  }
 });
 
 // ---------- API ----------
 async function api(path,body){ const r=await fetch(API+path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined); return r.json(); }
-async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, or click things in the scene pane'); document.getElementById('conn').textContent='● on the reef'; drawScene(); }catch(e){ say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
+async function enter(){ try{ const s=await api('/enter?agent='+agent); room=s.room||s; visited.add(room.name); say('sys','you are '+agent); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); say('sys','type help, arm a verb then click the scene, or walk the screen edges'); document.getElementById('conn').textContent='● on the reef'; drawScene(); }catch(e){ say('err','the reef is asleep ('+e.message+') — try again soon'); document.getElementById('conn').textContent='● reef asleep'; } }
 async function doCmd(raw){
   const line=raw.trim(); if(!line) return; say('you','> '+line);
   const lc=line.toLowerCase();
   try{
-    if(lc==='help'){ say('sys','go <exit> · examine <object> · look · catch <json> · the scene pane is clickable'); return; }
+    if(lc==='help'){ say('sys','go <exit> · examine <object> · look · catch <json> · the verb rail + scene clicks speak the same grammar'); return; }
     if(lc==='look'||lc==='l'){ const s=await api('/look?agent='+agent); room=s.room||s; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); (room.objects||[]).forEach(o=>say('sys','  · '+(o.name||o))); (room.exits||[]).forEach(e=>say('sys','  → '+(e.name||e))); drawScene(); return; }
-    if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } room=s.room||s; visited.add(room.name); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); drawScene(); return; }
-    if(lc.startsWith('examine ')||lc.startsWith('x ')||lc.startsWith('interact ')){ const t=encodeURIComponent(line.replace(/^\\w+\\s+/,'')); const s=await api('/interact?agent='+agent+'&obj='+t); say('txt', s.lore||s.description||s.error||'nothing special'); return; }
+    if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } const from=room; room=s.room||s; visited.add(room.name); const ex=((from&&from.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===decodeURIComponent(t).toLowerCase())[0]; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); drawScene(); slideScene(exitSide(ex||{})); return; }
+    if(lc.startsWith('examine ')||lc.startsWith('x ')||lc.startsWith('interact ')){ const t=encodeURIComponent(line.replace(/^\\w+\\s+/,'')); const s=await api('/interact?agent='+agent+'&obj='+t,{}); say('txt', s.lore||s.description||s.error||'nothing special'); return; }
     if(lc.startsWith('catch ')){ const s=await api('/catch',{agent,room:room&&room.name,payload:line.slice(6)}); catches++; say('sys','catch accepted — '+(s.minted?('the reef grew: '+s.minted):'recorded')); if(s.room){room=s.room; drawScene();} return; }
     say('err',"unknown command — try help");
   }catch(e){ say('err',e.message); }
 }
-document.getElementById('send').onclick=()=>{const c=document.getElementById('cmd');doCmd(c.value);c.value='';};
-document.getElementById('cmd').addEventListener('keydown',e=>{if(e.key==='Enter'){const c=e.target;doCmd(c.value);c.value='';}});
+document.getElementById('send').onclick=commit;
+document.getElementById('cmd').addEventListener('keydown',e=>{if(e.key==='Enter')commit();});
+document.getElementById('cmd').addEventListener('input',e=>e.target.classList.remove('ghost'));
 document.getElementById('dl').onclick=()=>{
   const state={agent,rooms_visited:[...visited],commands:log,catches,exported_at:new Date().toISOString(),note:'state of a wander — crab-traps reef'};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})); a.download='reef-state.json'; a.click();
