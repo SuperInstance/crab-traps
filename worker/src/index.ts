@@ -40,7 +40,9 @@ import {
   handleInteract,
   handleMap,
   handleRoomLineage,
+  handleRoomDescription,
 } from "./reef";
+import { handleBreedCron, handleGenealogy, handleLureLineage } from "./breeding";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleScene } from "./scene";
 import { handleStats } from "./stats";
@@ -49,7 +51,7 @@ import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
 import { handleSearch, handleRoomVector, vectorizeAvailable } from "./vectors";
 
-const VERSION = "6.0.0";
+const VERSION = "6.1.0";
 
 // Lure index is built once per isolate from the bundle — zero state, zero failure.
 const LURES = buildLureIndex(LURE_FILES);
@@ -127,6 +129,9 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "POST /interact?agent=NAME&obj=X": "Touch an object — returns its lore",
       "GET /map": "The reef so far: all rooms + edges (traffic and kind: traveled vs discovered)",
       "GET /lineage/room/:id": "Which catches built this room — the genealogy is public",
+      "GET /lineage/lure/:id": "One lure's breeding record: parents, children, catches",
+      "GET /genealogy": "The whole lure breeding tree as JSON (bounded)",
+      "GET /rooms/:id/description": "The reef speaks: the room's assembled description, field-tinted when the elephant passes ?warmth=0..1",
       "GET /scene/:room": "Reef room → terrain scene.json (the contract terrain_core.py compiles: room, description, theme, floor/walls/ceiling, objects, exits, lights, camera)",
       "GET /search?q=...": "Semantic search over catch embeddings (Vectorize top-8; room names + snippets joined from D1)",
       "GET /rooms/:id/vector": "A room's meaning: normalized centroid of its catch vectors, recomputed + upserted on demand",
@@ -386,6 +391,18 @@ export default {
       }
       return handleRoomLineage(env, cors, pathname.slice("/lineage/room/".length));
     }
+    if (pathname.startsWith("/lineage/lure/")) {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleLureLineage(env, cors, pathname.slice("/lineage/lure/".length));
+    }
+    if (pathname === "/genealogy") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleGenealogy(env, cors);
+    }
 
     // --- Vector nerves: semantic search + room centroids (P3) ---
     if (pathname === "/search") {
@@ -399,6 +416,12 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleRoomVector(env, cors, pathname.slice("/rooms/".length, pathname.length - "/vector".length));
+    }
+    if (pathname.startsWith("/rooms/") && pathname.endsWith("/description")) {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleRoomDescription(url, env, cors, pathname.slice("/rooms/".length, pathname.length - "/description".length));
     }
 
     // --- Terrain beam: reef room → scene.json (the compile contract) ---
@@ -473,5 +496,21 @@ export default {
 
     // Fallback
     return htmlResponse(PAGES["cocapn.ai"] || PAGES["trap"]);
+  },
+
+  // --- Scheduled: the cold-path flywheel (P4, hourly cron) ---
+  async scheduled(_controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
+    try {
+      const report = await handleBreedCron(env);
+      const bred = report.child
+        ? ` child ${report.child.id} (${report.child.name}, gen ${report.child.generation})`
+        : "";
+      console.log(
+        `[breeding] ${report.hour}: ${report.bred ? "bred" : "skipped"} — ${report.reason ?? "ok"}` +
+          `${bred} · retired ${report.retired.length} · fitness updated ${report.fitness_updated}`
+      );
+    } catch (err) {
+      console.error("[breeding] cron failed:", err);
+    }
   },
 };
