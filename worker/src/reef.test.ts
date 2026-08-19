@@ -323,6 +323,7 @@ describe("GET /go", () => {
     expect((await call("/go?agent=tom")).status).toBe(400);
   });
 
+
   it("405s non-GET", async () => {
     expect((await call("/go?agent=tom&to=2", { method: "POST" })).status).toBe(405);
   });
@@ -512,6 +513,63 @@ describe("GET /rooms/:id/description", () => {
     stubRoomDescription();
     db.failNext = true;
     expect((await call("/rooms/2/description")).status).toBe(503);
+  });
+});
+
+// ── Minted rooms are not traps: reverse edges render as exits ────────────────
+// A freshly minted room's only edge is parent→child (points AT it). /go already
+// travels it in reverse, so /look and /scene must show it too — or the new room
+// is a trap and a human on /wander sees no way out.
+
+describe("minted rooms are not traps (reverse exits)", () => {
+  it("/look shows the way home when a room's only edge points at it", async () => {
+    stubRooms();
+    db.on(/SELECT id FROM rooms WHERE id = 1/, [{ id: 1 }]);
+    db.on(
+      /SELECT id FROM rooms WHERE id = \?/,
+      (b) => (b[0] === 1 ? [{ id: 1 }] : b[0] === 2 ? [{ id: 2 }] : [])
+    );
+    db.on(/SELECT room_id FROM agents WHERE agent = \?/, (b) =>
+      b[0] === "ada" ? [{ room_id: 2 }] : []
+    );
+    db.on(/SELECT id, name, kind FROM objects WHERE room_id = \?/, []);
+    // Radar Gully (2) was minted off The Dock: the only edge row is 1→2.
+    db.on(
+      /SELECT e\.to_room, r\.name, e\.traffic FROM edges e LEFT JOIN rooms r ON r\.id = e\.to_room WHERE e\.from_room = \?/,
+      (b) => (b[0] === 2 ? [] : [])
+    );
+    db.on(
+      /SELECT e\.from_room AS to_room, r\.name, e\.traffic FROM edges e LEFT JOIN rooms r ON r\.id = e\.from_room WHERE e\.to_room = \?/,
+      (b) => (b[0] === 2 ? [{ to_room: 1, name: "The Dock", traffic: 1 }] : [])
+    );
+
+    const body = await json(await call("/look?agent=ada"));
+    expect(body.success).toBe(true);
+    expect(body.room.exits).toEqual([{ to_room: 1, name: "The Dock", traffic: 1 }]);
+  });
+
+  it("a bidirectional pair lists one exit per destination (busiest route)", async () => {
+    stubRooms();
+    db.on(/SELECT id FROM rooms WHERE id = 1/, [{ id: 1 }]);
+    db.on(
+      /SELECT id FROM rooms WHERE id = \?/,
+      (b) => (b[0] === 1 ? [{ id: 1 }] : b[0] === 2 ? [{ id: 2 }] : [])
+    );
+    db.on(/SELECT room_id FROM agents WHERE agent = \?/, (b) =>
+      b[0] === "ada" ? [{ room_id: 2 }] : []
+    );
+    db.on(/SELECT id, name, kind FROM objects WHERE room_id = \?/, []);
+    db.on(
+      /SELECT e\.to_room, r\.name, e\.traffic FROM edges e LEFT JOIN rooms r ON r\.id = e\.to_room WHERE e\.from_room = \?/,
+      (b) => (b[0] === 2 ? [{ to_room: 1, name: "The Dock", traffic: 5 }] : [])
+    );
+    db.on(
+      /SELECT e\.from_room AS to_room, r\.name, e\.traffic FROM edges e LEFT JOIN rooms r ON r\.id = e\.from_room WHERE e\.to_room = \?/,
+      (b) => (b[0] === 2 ? [{ to_room: 1, name: "The Dock", traffic: 1 }] : [])
+    );
+
+    const body = await json(await call("/look?agent=ada"));
+    expect(body.room.exits).toEqual([{ to_room: 1, name: "The Dock", traffic: 5 }]);
   });
 });
 

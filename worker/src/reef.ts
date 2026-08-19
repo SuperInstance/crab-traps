@@ -39,18 +39,36 @@ export async function getRoomState(db: D1Database, roomId: number): Promise<Room
     .prepare("SELECT id, name, kind FROM objects WHERE room_id = ? ORDER BY id")
     .bind(roomId)
     .all<RoomObject>();
-  const exits = await db
+  // Exits are every TRAVERSABLE direction: the out edges PLUS any edge that
+  // points at this room. A freshly minted room's only edge is parent→child —
+  // the way home must be visible, or the new room is a trap. /go already
+  // travels both ways; /look and /scene must show both ways.
+  const out = await db
     .prepare(
-      "SELECT e.to_room, r.name, e.traffic FROM edges e LEFT JOIN rooms r ON r.id = e.to_room WHERE e.from_room = ? ORDER BY e.traffic DESC, e.to_room"
+      "SELECT e.to_room, r.name, e.traffic FROM edges e LEFT JOIN rooms r ON r.id = e.to_room WHERE e.from_room = ?"
     )
     .bind(roomId)
     .all<RoomExit>();
+  const inc = await db
+    .prepare(
+      "SELECT e.from_room AS to_room, r.name, e.traffic FROM edges e LEFT JOIN rooms r ON r.id = e.from_room WHERE e.to_room = ?"
+    )
+    .bind(roomId)
+    .all<RoomExit>();
+  // Merge, dedup by destination (a bidirectional pair lists one exit — the
+  // busier route), then the room's original ordering (traffic desc, id asc).
+  const byRoom = new Map<number, RoomExit>();
+  for (const e of [...(out.results ?? []), ...(inc.results ?? [])]) {
+    const prev = byRoom.get(e.to_room);
+    if (!prev || e.traffic > prev.traffic) byRoom.set(e.to_room, e);
+  }
+  const exits = [...byRoom.values()].sort((a, b) => b.traffic - a.traffic || a.to_room - b.to_room);
   return {
     id: room.id,
     name: room.name,
     description: room.description ?? null,
     objects: objects.results ?? [],
-    exits: exits.results ?? [],
+    exits,
   };
 }
 

@@ -326,6 +326,42 @@ describe("GET /scene/:room", () => {
     expect(body.error).toBe("room not found");
   });
 
+  it("shows a minted room's way home — reverse edges render as exits", async () => {
+    // Radar Gully (2) was minted off The Dock: its only edge row is 1→2, so
+    // from the gully the way home must still render (or the room is a trap).
+    db.on(
+      /SELECT id, name, description, x, y, created_from_catch, created_at FROM rooms WHERE id = \?/,
+      (b) =>
+        b[0] === 2
+          ? [
+              {
+                id: 2,
+                name: "Radar Gully",
+                description: "A gully that hums.",
+                x: null,
+                y: null,
+                created_from_catch: 12,
+                created_at: "2026-08-18T01:00:00Z",
+              },
+            ]
+          : []
+    );
+    db.on(/SELECT id, name, kind FROM objects WHERE room_id = \?/, []);
+    db.on(/SELECT e\.to_room, r\.name, e\.traffic FROM edges e/, []); // no out edges
+    db.on(
+      /SELECT e\.from_room AS to_room, r\.name, e\.traffic FROM edges e/,
+      (b) => (b[0] === 2 ? [{ to_room: 1, name: "The Dock", traffic: 1 }] : [])
+    );
+
+    const res = await call("/scene/2");
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.success).toBeUndefined();
+    expect(body.exits).toHaveLength(1);
+    expect(body.exits[0].target).toBe("The Dock");
+    expect(body.exits[0].direction).toBe("north");
+  });
+
   it("404s when the id exists in no room", async () => {
     stubWorld();
     const res = await call("/scene/999");
