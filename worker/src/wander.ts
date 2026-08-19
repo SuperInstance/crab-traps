@@ -43,6 +43,12 @@ main{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:0}
 #scene-slide{flex:1;position:relative;overflow:hidden;transition:transform .42s ease,opacity .42s ease}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
 #scene-cap{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:var(--mist);font-size:.75rem;font-style:italic;pointer-events:none;z-index:4}
+/* mint cutscene letterbox (input-lock + esc-skip by design, SCUMM cutscene opcode) */
+#letterbox{position:absolute;inset:0;pointer-events:none;z-index:3}
+.lb-bar{position:absolute;left:0;right:0;height:0;background:#04070d;transition:height .5s ease}
+.lb-top{top:0}
+.lb-bot{bottom:0}
+#letterbox.on .lb-bar{height:13%}
 /* nine-verb sentence rail */
 #verbbar{display:flex;align-items:center;gap:6px;padding:8px 18px;background:var(--hull2);border-top:1px solid #22395c;flex-wrap:wrap}
 .vb{background:transparent;color:var(--brass-soft);border:1px solid #2c4a73;border-radius:5px;font-family:Verdana,sans-serif;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;cursor:pointer}
@@ -77,6 +83,7 @@ button:hover{filter:brightness(1.1)}
       <canvas id="scene" width="640" height="480"></canvas>
     </div>
     <div id="scene-cap">the same room, seen from inside — click objects, walk the edges</div>
+    <div id="letterbox" class="letterbox"><div class="lb-bar lb-top"></div><div class="lb-bar lb-bot"></div></div>
   </div>
 </main>
 <div id="verbbar">
@@ -202,7 +209,45 @@ function slideScene(side){
   },420);
 }
 
+// ---------- mint cutscene (law 5: growth is the drama) ----------
+let cutscene = null; // {end} while the reef is being born
+function mintCutscene(detail, after){
+  const lb=document.getElementById('letterbox'); lb.classList.add('on');
+  const cmd=document.getElementById('cmd'); cmd.disabled=true; // input lock — cutscene opcode
+  const W=cv.width,H=cv.height;
+  const cols=9,rows=5,gap=3,total=cols*rows;
+  const bw=(W*.56-gap*(cols-1))/cols, bh=(H*.30-gap*(rows-1))/rows, ox=W*.22, oy=H*.36;
+  const seed=hash(detail&&detail.name||'brick');
+  g.fillStyle='rgba(4,9,16,.6)'; g.fillRect(0,0,W,H);
+  g.textAlign='center';
+  g.fillStyle='#e8c47c'; g.font='bold 18px Georgia';
+  g.fillText((detail&&detail.kind==='room'?'a room is born: ':'an object surfaces: ')+((detail&&detail.name)||'?'), W/2, H*.24);
+  g.fillStyle='#9db4c9'; g.font='italic 12px Georgia';
+  g.fillText('brick by brick — esc or click to skip', W/2, H*.72);
+  g.textAlign='left';
+  let i=0;
+  const timer=setInterval(()=>{
+    if(i>=total){ end(); return; }
+    const bx=ox+(i%cols)*(bw+gap), by=oy+((i/cols)|0)*(bh+gap);
+    g.fillStyle='hsla('+((seed+i*47)%360)+',45%,'+(38+(i%3)*8)+'%,.95)';
+    g.fillRect(bx,by,bw,bh);
+    g.strokeStyle='rgba(217,164,65,.5)'; g.strokeRect(bx,by,bw,bh);
+    i++;
+  },50);
+  function end(){
+    if(!cutscene) return;
+    clearInterval(timer); cutscene=null;
+    lb.classList.remove('on'); cmd.disabled=false; cmd.focus();
+    drawScene();
+    if(after) after();
+  }
+  cutscene={end:end};
+  setTimeout(()=>{ if(cutscene) end(); }, 50*total+2500); // never wedge the player
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&cutscene) cutscene.end(); }); // skip is by design
+
 cv.addEventListener('click', ev=>{
+  if(cutscene){ cutscene.end(); return; }
   const r=cv.getBoundingClientRect(); const x=(ev.clientX-r.left)*cv.width/r.width, y=(ev.clientY-r.top)*cv.height/r.height;
   // objects — armed verb? the sentence assembles in the input bar; bare click examines
   for(const o of (room&&room.objects)||[]){
@@ -243,7 +288,15 @@ async function doCmd(raw){
     if(lc==='look'||lc==='l'){ const s=await api('/look?agent='+agent); room=s.room||s; hudRoom(room.name); say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); (room.objects||[]).forEach(o=>say('sys','  · '+(o.name||o))); (room.exits||[]).forEach(e=>say('sys','  → '+(e.name||e))); drawScene(); return; }
     if(lc.startsWith('go ')||lc.startsWith('move ')){ const t=encodeURIComponent(line.slice(3).trim()); const s=await api('/go?agent='+agent+'&to='+t); if(s.error){ say('err',s.error); return; } const from=room; room=s.room||s; visited.add(room.name); hudRoom(room.name); const ex=((from&&from.exits)||[]).filter(e=>(''+(e.name||e)).toLowerCase()===decodeURIComponent(t).toLowerCase())[0]; say('room','— '+room.name+' —'); if(room.description) say('txt',room.description); drawScene(); slideScene(exitSide(ex||{})); return; }
     if(lc.startsWith('examine ')||lc.startsWith('x ')||lc.startsWith('interact ')){ const t=encodeURIComponent(line.replace(/^\\w+\\s+/,'')); const s=await api('/interact?agent='+agent+'&obj='+t,{}); say('txt', s.lore||s.description||s.error||'nothing special'); return; }
-    if(lc.startsWith('catch ')){ const s=await api('/catch',{agent,room:room&&room.name,payload:line.slice(6)}); hudCatch(); say('sys','catch accepted — '+(s.minted?('the reef grew: '+s.minted):'recorded')); if(s.room){room=s.room; drawScene();} return; }
+    if(lc.startsWith('catch ')){ const s=await api('/catch',{agent,room:room&&room.name,payload:line.slice(6)}); hudCatch();
+      if(s.minted){
+        const d=s.minted_detail||{};
+        say('sys','catch accepted — the reef grew: '+s.minted);
+        say('txt','this '+(d.kind==='room'?'room':'object')+' exists because '+agent+' submitted catch #'+(d.created_from_catch||'?')+' — your name is on the birth certificate');
+        sceneCap('the reef grew');
+        mintCutscene(d, async()=>{ try{ const s2=await api('/look?agent='+agent); if(s2.room){ room=s2.room; drawScene(); } }catch(e){} refreshBricks(); });
+      } else { say('sys','catch accepted — recorded'); }
+      return; }
     say('err',"unknown command — try help");
   }catch(e){ say('err',e.message); }
 }
