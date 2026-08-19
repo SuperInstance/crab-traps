@@ -31,6 +31,7 @@ import { renderLureIndexPage, renderLurePage } from "./markdown";
 import { handleCatchPost, handleCatchList } from "./catches";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleStats } from "./stats";
+import { handleDashboard } from "./dashboard";
 
 const VERSION = "5.1.0";
 
@@ -102,6 +103,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /catches": "Recent catches. Query: ?limit=1..100&agent=",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
+      "GET /dashboard": "HTML dashboard of the /stats aggregates (30s refresh)",
       "GET /health": "Worker + fleet + D1 health",
       "POST /api/lure/match": "Find best-matching lure for an AI agent. Payload: { user_agent, agent_name }",
       "GET /api/status": "Health check",
@@ -318,6 +320,12 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleStats(env, cors);
+    }
+    if (pathname === "/dashboard") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleDashboard(env, cors);
     }
 
     // --- Fleet health proxy: 5s timeout, never hang, never 502 ---

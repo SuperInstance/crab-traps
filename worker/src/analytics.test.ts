@@ -138,3 +138,76 @@ describe("GET /stats", () => {
     expect((await call("/stats", { method: "POST" })).status).toBe(405);
   });
 });
+
+// ── GET /dashboard ───────────────────────────────────────────────────────────
+
+describe("GET /dashboard", () => {
+  it("renders the aggregates as HTML tables", async () => {
+    seedCatches();
+    const res = await call("/dashboard");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    const html = await res.text();
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("Crab Trap Dashboard");
+    expect(html).toContain("creative/dream-a-room");
+    expect(html).toContain("2026-08-17");
+    expect(html).toContain("tom-crab");
+    expect(html).toContain('class="total"');
+  });
+
+  it("is on-brand (dark navy + amber) and framework-free", async () => {
+    seedCatches();
+    const html = await (await call("/dashboard")).text();
+    expect(html).toContain("#0b1220");
+    expect(html).toContain("#fbbf24");
+    expect(html).not.toContain("<script");
+  });
+
+  it("auto-refreshes every 30 seconds", async () => {
+    seedCatches();
+    const html = await (await call("/dashboard")).text();
+    expect(html).toContain('http-equiv="refresh" content="30"');
+  });
+
+  it("shows a live fleet badge when the boat answers", async () => {
+    seedCatches();
+    const html = await (await call("/dashboard")).text();
+    expect(html).toContain("fleet live");
+  });
+
+  it("shows an asleep fleet badge when the boat is unreachable", async () => {
+    seedCatches();
+    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new Error("ECONNREFUSED"))));
+    const html = await (await call("/dashboard")).text();
+    expect(html).toContain("fleet asleep");
+    expect(html).toContain("traps still record");
+  });
+
+  it("renders a degraded page (not a 502) when D1 is down", async () => {
+    db.failNext = true;
+    const res = await call("/dashboard");
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("catch storage unavailable");
+  });
+
+  it("notes the missing acceptance column instead of a table", async () => {
+    seedCatches();
+    db.failOn(/GROUP BY status/i, "no such column: status");
+    const html = await (await call("/dashboard")).text();
+    expect(html).toContain("no status column");
+  });
+
+  it("escapes agent names (no HTML injection from D1 data)", async () => {
+    db.on(/COUNT\(\*\) AS total/i, [{ total: 1 }]);
+    db.on(/GROUP BY agent/i, [{ agent: '<script>alert("x")</script>', count: 1 }]);
+    const html = await (await call("/dashboard")).text();
+    expect(html).not.toContain("<script>alert");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("rejects non-GET methods", async () => {
+    expect((await call("/dashboard", { method: "POST" })).status).toBe(405);
+  });
+});
