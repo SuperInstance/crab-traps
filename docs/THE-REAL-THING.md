@@ -71,6 +71,13 @@ Each: terminal form / scene form. Build in this order.
    body language, the scene's lighting matches it. — *beam to elephant, later.*
 8. **Inventory grid ↔ `inventory`** (Seed): minted objects you've examined
    appear in a 3×3 grid; drag = `use X with Y`. — *later.*
+9. **The Punchline Parser** (SCUMM study): `Huh?` is banned. Every failed
+   verb+object combo earns a Guybrush-grade refusal — minted per-object, so
+   the humor grows with the reef, and every refusal is secretly a hint.
+   — *cheap build, highest charm-per-token; build early.*
+10. **Look-at deep focus** (SCUMM study): `examine X` zooms the scene camera
+    into the object while the terminal prints its lore — the SCUMM
+    `panCameraTo` grammar, input-locked until the narration ends. — *later.*
 
 ## Architecture (what repo owns what — no new repos)
 
@@ -87,8 +94,10 @@ Each: terminal form / scene form. Build in this order.
 
 ## Build order
 
-- **Now (this week):** mechanics 1-3 in /wander (edge-walk, verb bar, HUD) —
-  pure client work against the shipped API.
+- **Now (this week):** mechanics 1-3 + 9 in /wander (edge-walk, verb bar, HUD,
+  punchline parser) — pure client work against the shipped API. The SCUMM
+  study's cutscene archaeology (input-lock as opcode, ESC-skip by design)
+  is the spec for the mint cutscene.
 - **Next:** `/scene/:room` (terrain contract port) + 3D pane toggle; mint
   cutscene (4).
 - **Then:** island map (5), NPC casting via roundtable (6), zeitgeist tint (7).
