@@ -32,6 +32,7 @@ import { handleCatchPost, handleCatchList } from "./catches";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
+import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
 
 const VERSION = "5.1.0";
@@ -104,6 +105,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /catches": "Recent catches. Query: ?limit=1..100&agent=",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
+      "GET /wander": "The human front door — dual-pane MUD + rendered scene, one command drives both, state downloadable as JSON",
       "GET /dashboard": "HTML dashboard of the /stats aggregates (30s refresh)",
       "GET /badge/catches.svg": "Shields-style SVG badge with the live catch count",
       "GET /health": "Worker + fleet + D1 health",
@@ -331,6 +333,9 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleStats(env, cors);
+    }
+    if (pathname === "/wander") {
+      return htmlResponse(wanderHtml(), cors);
     }
     if (pathname === "/dashboard") {
       if (request.method !== "GET") {
