@@ -51,7 +51,7 @@ import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
 import { handleSearch, handleRoomVector, vectorizeAvailable } from "./vectors";
 
-const VERSION = "6.1.0";
+const VERSION = "6.1.1";
 
 // Lure index is built once per isolate from the bundle — zero state, zero failure.
 const LURES = buildLureIndex(LURE_FILES);
