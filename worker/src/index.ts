@@ -335,7 +335,13 @@ export default {
       return handleStats(env, cors);
     }
     if (pathname === "/wander") {
-      return htmlResponse(wanderHtml(), cors);
+      return new Response(wanderHtml(), {
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-cache",
+          ...cors,
+        },
+      });
     }
     if (pathname === "/dashboard") {
       if (request.method !== "GET") {
