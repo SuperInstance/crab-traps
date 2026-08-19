@@ -170,11 +170,11 @@ describe("POST /catches", () => {
     expect(body.recorded).toBe(true);
     expect(body.id).toBe(1);
 
-    const stmt = db.statements[0];
-    expect(stmt.sql).toContain("INSERT INTO catches");
-    expect(stmt.bindings).toContain("tom-crab");
-    expect(stmt.bindings).toContain("GPTBot/1.0"); // bot detection feeds the record
-    expect(stmt.bindings).toContain("203.0.113.1");
+    const stmt = db.statements.find((s) => /INSERT INTO catches/.test(s.sql));
+    expect(stmt).toBeDefined();
+    expect(stmt!.bindings).toContain("tom-crab");
+    expect(stmt!.bindings).toContain("GPTBot/1.0"); // bot detection feeds the record
+    expect(stmt!.bindings).toContain("203.0.113.1");
   });
 
   it("returns 400 on invalid JSON", async () => {

@@ -278,12 +278,13 @@ describe("POST /catches minting", () => {
 
     const body = await json(await post({ agent: "tom", room: "The Dock", answer: "x" }));
     expect(body.room_id).toBe(1);
+    const ins = db.statements.find((s) => /INSERT INTO catches/.test(s.sql));
+    expect(ins).toBeDefined();
+    expect(ins!.bindings[7]).toBe(1); // born with its room — no backfill race
+    expect(db.statements.find((s) => /UPDATE catches SET room/.test(s.sql))).toBeUndefined();
     const count = db.statements.find((s) => /SELECT COUNT\(\*\) AS n FROM catches WHERE room/.test(s.sql));
     expect(count).toBeDefined();
     expect(count!.bindings).toEqual([1, body.id]); // room, then the catch's ordinal anchor
-    const upd = db.statements.find((s) => /UPDATE catches SET room/.test(s.sql));
-    expect(upd).toBeDefined();
-    expect(upd!.bindings).toEqual([1, 1]);
   });
 
   it("a catch with no room lands where the agent stands (seed default)", async () => {
@@ -294,8 +295,9 @@ describe("POST /catches minting", () => {
 
     const body = await json(await post({ agent: "tom", answer: "drifting" }));
     expect(body.room_id).toBe(2);
-    const upd = db.statements.find((s) => /UPDATE catches SET room/.test(s.sql));
-    expect(upd!.bindings).toEqual([2, 1]);
+    const ins = db.statements.find((s) => /INSERT INTO catches/.test(s.sql));
+    expect(ins!.bindings[7]).toBe(2); // born where the agent stands
+    expect(db.statements.find((s) => /UPDATE catches SET room/.test(s.sql))).toBeUndefined();
   });
 
   it("keeps the catch safe when minting storage fails", async () => {

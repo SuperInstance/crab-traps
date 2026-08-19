@@ -46,8 +46,18 @@ export async function handleCatchPost(
   const ua = (request.headers.get("user-agent") || "").slice(0, 512);
 
   try {
-    // Explicit numeric room is known up front; names/defaults resolve after.
-    const explicitRoom = typeof v.value.room === "number" ? v.value.room : null;
+    // Resolve the room BEFORE the insert so the row is born with its room.
+    // The old post-insert backfill (UPDATE ... SET room WHERE room IS NULL)
+    // raced mintWorld's ordinal count: a concurrent catch in the same room
+    // could count this row before its backfill committed, undercount its own
+    // ordinal, and skip a threshold mint forever.
+    let room: number | null = typeof v.value.room === "number" ? v.value.room : null;
+    if (room === null && typeof v.value.room === "string") {
+      room = await resolveRoomRef(env.DB, v.value.room);
+    }
+    if (room === null) {
+      room = await currentAgentRoom(env.DB, v.value.agent);
+    }
     const res = await env.DB.prepare(INSERT_SQL)
       .bind(
         v.value.agent,
@@ -57,30 +67,17 @@ export async function handleCatchPost(
         ua,
         getClientIp(request),
         JSON.stringify(body).slice(0, 64_000),
-        explicitRoom
+        room
       )
       .run();
     const catchId = res?.meta?.last_row_id ?? null;
 
-    // Reef provenance: name rooms resolve by name, otherwise the catch lands
-    // where the agent stands. Best-effort — a catch never fails for the reef.
-    let room = explicitRoom;
+    // Reef growth: best-effort — a catch never fails for the reef.
     let minted: MintDetail | null = null;
     let newRoom: RoomState | null = null;
     let discoveredEdges: DiscoveredEdge[] = [];
     try {
-      if (room === null && typeof v.value.room === "string") {
-        room = await resolveRoomRef(env.DB, v.value.room);
-      }
-      if (room === null) {
-        room = await currentAgentRoom(env.DB, v.value.agent);
-      }
       if (room !== null && catchId !== null) {
-        if (room !== explicitRoom) {
-          await env.DB.prepare("UPDATE catches SET room = ? WHERE id = ? AND room IS NULL")
-            .bind(room, catchId)
-            .run();
-        }
         // Vector nerves: the catch becomes embedding catch-<id>. No-ops
         // cleanly without the binding; failures never touch the catch.
         if (vectorizeAvailable(env)) {
