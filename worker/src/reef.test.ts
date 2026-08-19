@@ -425,3 +425,19 @@ describe("GET /map", () => {
     expect(roomQuery!.sql).toContain("LIMIT ?");
   });
 });
+
+// ── Rate limiting on world writes ─────────────────────────────────────────────
+
+describe("rate limit on /enter and /go", () => {
+  it("allows 120 world moves per IP per minute, then 429s", async () => {
+    stubWorld();
+    let fourTwentyNines = 0;
+    for (let i = 0; i < 125; i++) {
+      const res = await call("/enter?agent=flood", { headers: { "cf-connecting-ip": "198.51.100.9" } });
+      if (res.status === 429) fourTwentyNines++;
+    }
+    expect(fourTwentyNines).toBeGreaterThanOrEqual(5);
+    // a different IP is unaffected
+    expect((await call("/enter?agent=calm", { headers: { "cf-connecting-ip": "198.51.100.10" } })).status).toBeLessThan(429);
+  });
+});

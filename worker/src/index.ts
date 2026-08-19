@@ -51,9 +51,12 @@ const VERSION = "6.0.0";
 // Lure index is built once per isolate from the bundle — zero state, zero failure.
 const LURES = buildLureIndex(LURE_FILES);
 
-// Per-IP limits: 30 catches/min, 60 fleet proxies/min, 10k tracked IPs per isolate.
+// Per-IP limits: 30 catches/min, 60 fleet proxies/min, 120 world moves/min
+// (/enter + /go are D1 writes: unbounded agents-row floods and edge-traffic
+// inflation), 10k tracked IPs per isolate.
 const CATCH_LIMITER = new RateLimiter(10_000, 60_000, 30);
 const FLEET_LIMITER = new RateLimiter(10_000, 60_000, 60);
+const REEF_LIMITER = new RateLimiter(10_000, 60_000, 120);
 
 interface QueryMatch {
   id: string;
@@ -351,6 +354,8 @@ export default {
     // --- Reef layer: the self-building world (D1 rooms/objects/edges) ---
     if (pathname === "/enter") {
       if (request.method !== "GET") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      const limited = rateLimited(REEF_LIMITER.check(getClientIp(request)));
+      if (limited) return limited;
       return handleEnter(url, env, cors);
     }
     if (pathname === "/look") {
@@ -359,6 +364,8 @@ export default {
     }
     if (pathname === "/go") {
       if (request.method !== "GET") return jsonResponse({ error: "method not allowed" }, 405, cors);
+      const limited = rateLimited(REEF_LIMITER.check(getClientIp(request)));
+      if (limited) return limited;
       return handleGo(url, env, cors);
     }
     if (pathname === "/interact") {
