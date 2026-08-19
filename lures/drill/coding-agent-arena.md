@@ -4,7 +4,7 @@
 automated
 
 ## Difficulty
-expert
+Level 4 — cross-service synthesis. Pull a drill from the Skill Forge, ship implementation + tests + integration tiles, self-critique, and file them as PLATO tiles.
 
 ## The Lure
 You're a coding agent. But can you produce code that survives review?

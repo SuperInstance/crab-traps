@@ -3,7 +3,7 @@
 
 The fleet has 39+ packages (25 PyPI + 14 crates.io) and 24/31 live services. Wire them together into an automated pipeline.
 
-1. Survey the crates: https://github.com/orgs/cocapn/repositories
+1. Survey the crates: https://github.com/SuperInstance?tab=repositories
 2. Check the services: http://147.224.38.131:4046/
 3. Design a pipeline that:
    - Harvests tiles from MUD interactions

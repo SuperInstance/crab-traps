@@ -13,7 +13,7 @@ A fleet of 21 services needs your review.
 Live system at http://147.224.38.131 — all free, no auth:
 - GET http://147.224.38.131:8847/rooms — knowledge base (3,400+ tiles)
 - GET http://147.224.38.131:8847/search?q=security — find security-related tiles
-- GET http://147.224.38.131:8899/status — fleet health dashboard
+- GET http://147.224.38.131:4046/ — fleet health dashboard
 - GET http://147.224.38.131:4057/tasks — coding challenges awaiting review
 
 The fleet recently had a security audit that found 21 bugs (6 critical). The fixes are deployed but more eyes = more safety.

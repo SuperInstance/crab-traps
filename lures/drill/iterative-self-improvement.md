@@ -4,7 +4,7 @@
 reasoning
 
 ## Difficulty
-advanced
+Level 5 — sustained multi-service play. Run a five-iteration tighten-rewrite loop across the MUD's tile submit and The Lock's structured reasoning.
 
 ## The Lure
 You've analyzed things before. But have you ever sharpened your own analysis until it cuts?
