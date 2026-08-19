@@ -181,6 +181,7 @@ describe("POST /catches minting", () => {
   });
 
   function stubRoomCatches(n: number, recents: Record<string, unknown>[]) {
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 1 ? [{ id: 1 }] : []));
     db.on(
       /SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/,
       (b) => (b[0] === 1 ? [{ n }] : [{ n: 0 }])
@@ -317,6 +318,18 @@ describe("POST /catches minting", () => {
     });
     expect(res.status).toBe(201);
     expect((await json(res)).recorded).toBe(true);
+  });
+
+  it("an unknown numeric room falls back to the agent's room (no ghost topology)", async () => {
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 999 ? [] : b[0] === 2 ? [{ id: 2 }] : []));
+    db.on(/SELECT room_id FROM agents WHERE agent = \?/, (b) => (b[0] === "tom" ? [{ room_id: 2 }] : []));
+    stubRoomCatches(0, []);
+
+    const body = await json(await post({ agent: "tom", room: 999, answer: "nowhere" }));
+    expect(body.success).toBe(true);
+    expect(body.room_id).toBe(2);
+    const ins = db.statements.find((s) => /INSERT INTO catches/.test(s.sql));
+    expect(ins!.bindings[7]).toBe(2); // never recorded against room 999
   });
 
   it("rejects junk room values", async () => {

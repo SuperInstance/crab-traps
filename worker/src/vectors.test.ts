@@ -103,6 +103,7 @@ describe("meanVector", () => {
 
 describe("POST /catches catch embeddings", () => {
   it("embeds the catch as catch-<id> with {agent, lure, room} metadata and links embedding_id", async () => {
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 1 ? [{ id: 1 }] : []));
     const res = await post({ agent: "ada", lure_id: "creative/dream-a-room", room: 1, answer: "radar static hums in the gully" });
     expect(res.status).toBe(201);
 
@@ -117,6 +118,7 @@ describe("POST /catches catch embeddings", () => {
   });
 
   it("falls back to the raw payload text when the player said nothing", async () => {
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 1 ? [{ id: 1 }] : []));
     const body = { agent: "quiet-crab", room: 1 };
     const res = await post(body);
     expect(res.status).toBe(201);
@@ -141,6 +143,7 @@ describe("mint-path room centroids", () => {
   ];
 
   function stubRoom(id: number, name: string, createdFrom: number | null) {
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 1 || b[0] === id ? [{ id: b[0] }] : []));
     db.on(
       /SELECT id, name, created_from_catch FROM rooms WHERE id = \?/,
       (b) => (b[0] === id ? [{ id, name, created_from_catch: createdFrom }] : [])
@@ -362,6 +365,7 @@ describe("graceful degradation (no VECTORIZE_INDEX binding)", () => {
   });
 
   it("catches still record and mint — zero vector traffic, zero nerve queries", async () => {
+    db.on(/SELECT id FROM rooms WHERE id = \?/, (b) => (b[0] === 1 ? [{ id: 1 }] : []));
     db.on(/SELECT COUNT\(\*\) AS n FROM catches WHERE room = \?/, [{ n: OBJECT_MINT_N }]);
     db.on(/SELECT id, answer, job, payload FROM catches WHERE room = \? ORDER BY id DESC LIMIT 50/, [
       { id: 1, answer: "radar static", job: null, payload: null },

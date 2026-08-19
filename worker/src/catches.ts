@@ -51,7 +51,17 @@ export async function handleCatchPost(
     // raced mintWorld's ordinal count: a concurrent catch in the same room
     // could count this row before its backfill committed, undercount its own
     // ordinal, and skip a threshold mint forever.
-    let room: number | null = typeof v.value.room === "number" ? v.value.room : null;
+    let room: number | null = null;
+    if (typeof v.value.room === "number") {
+      // Unknown ids must not create ghost topology: catches in a room that
+      // doesn't exist would still count toward its thresholds and mint a
+      // neighbor off a nonexistent parent. Fall through to the agent's feet.
+      const known = await env.DB
+        .prepare("SELECT id FROM rooms WHERE id = ?")
+        .bind(v.value.room)
+        .first<{ id: number }>();
+      room = known?.id ?? null;
+    }
     if (room === null && typeof v.value.room === "string") {
       room = await resolveRoomRef(env.DB, v.value.room);
     }
