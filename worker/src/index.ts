@@ -4,6 +4,8 @@
 //   POST /catches — D1 persistence (catches survive everything)
 //   /enter, /look, /go, /interact, /map, /lineage/room/:id — the self-building
 //   reef: world = D1 rooms/objects/edges, every catch may mint a brick
+//   /scene/:room — reef room → terrain scene.json (the beam: the MUD stays the
+//   truth, terrain's contract makes it walkable)
 //   /fleet/* — 5s-timeout proxy to the home PLATO boat, friendly stub when asleep
 //   /health — worker + fleet + d1 status
 //   per-IP rate limiting on /catches and /fleet/* (bounded in-memory LRU)
@@ -40,6 +42,7 @@ import {
   handleRoomLineage,
 } from "./reef";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
+import { handleScene } from "./scene";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
 import { wanderHtml } from "./wander";
@@ -124,6 +127,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "POST /interact?agent=NAME&obj=X": "Touch an object — returns its lore",
       "GET /map": "The reef so far: all rooms + edges (traffic and kind: traveled vs discovered)",
       "GET /lineage/room/:id": "Which catches built this room — the genealogy is public",
+      "GET /scene/:room": "Reef room → terrain scene.json (the contract terrain_core.py compiles: room, description, theme, floor/walls/ceiling, objects, exits, lights, camera)",
       "GET /search?q=...": "Semantic search over catch embeddings (Vectorize top-8; room names + snippets joined from D1)",
       "GET /rooms/:id/vector": "A room's meaning: normalized centroid of its catch vectors, recomputed + upserted on demand",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
@@ -395,6 +399,14 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleRoomVector(env, cors, pathname.slice("/rooms/".length, pathname.length - "/vector".length));
+    }
+
+    // --- Terrain beam: reef room → scene.json (the compile contract) ---
+    if (pathname.startsWith("/scene/")) {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleScene(env, cors, pathname.slice("/scene/".length));
     }
 
     // --- Stats layer: D1 aggregates ---
