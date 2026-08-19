@@ -29,6 +29,7 @@ import {
 } from "./lure-store";
 import { renderLureIndexPage, renderLurePage } from "./markdown";
 import { handleCatchPost, handleCatchList } from "./catches";
+import { handleRoomLineage } from "./reef";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
@@ -103,6 +104,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /random-lure": "Random lure (never a category README)",
       "POST /catches": "Record a catch. Payload: { agent, job?, lure_id?, answer? }",
       "GET /catches": "Recent catches. Query: ?limit=1..100&agent=",
+      "GET /lineage/room/:id": "Which catches built this room — the genealogy is public",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
       "GET /wander": "The human front door — dual-pane MUD + rendered scene, one command drives both, state downloadable as JSON",
@@ -325,6 +327,14 @@ export default {
       if (request.method === "POST") return handleCatchPost(request, env, cors);
       if (request.method === "GET") return handleCatchList(url, env, cors);
       return jsonResponse({ error: "method not allowed" }, 405, cors);
+    }
+
+    // --- Reef layer: the self-building world (D1 rooms/objects/edges) ---
+    if (pathname.startsWith("/lineage/room/")) {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleRoomLineage(env, cors, pathname.slice("/lineage/room/".length));
     }
 
     // --- Stats layer: D1 aggregates ---

@@ -8,7 +8,8 @@ export interface RecordedStatement {
 
 export interface CannedResponse {
   match: RegExp;
-  rows: Record<string, unknown>[];
+  /** Static rows, or a function of the statement's bindings (binding-aware). */
+  rows: Record<string, unknown>[] | ((bindings: unknown[]) => Record<string, unknown>[]);
 }
 
 export class FakeD1 {
@@ -34,7 +35,10 @@ export class FakeD1 {
   }
 
   /** Stub a response for every statement whose SQL matches `match`. */
-  on(match: RegExp, rows: Record<string, unknown>[]): this {
+  on(
+    match: RegExp,
+    rows: Record<string, unknown>[] | ((bindings: unknown[]) => Record<string, unknown>[])
+  ): this {
     this.canned.push({ match, rows });
     return this;
   }
@@ -61,7 +65,7 @@ class FakeD1Statement {
     const failure = this.db.failures.find((f) => f.match.test(this.sql));
     if (failure) throw new Error(failure.message);
     const canned = this.db.canned.find((c) => c.match.test(this.sql));
-    if (canned) return canned.rows;
+    if (canned) return typeof canned.rows === "function" ? canned.rows(this.bindings) : canned.rows;
     return this.db.rows;
   }
 
