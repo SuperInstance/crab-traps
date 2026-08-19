@@ -12,6 +12,20 @@ binding = "AI"
 binding = "VECTORIZE_INDEX"
 index_name = "crab-trap-lures"
 
+# D1 — catch persistence. Catches survive everything.
+# NOTE: database_id below is a local-dev placeholder. Before the first real
+# deploy run `wrangler d1 create crab-trap-catches` and paste the real id.
+[[d1_databases]]
+binding = "DB"
+database_name = "crab-trap-catches"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# Home PLATO boat — proxied by /fleet/* with a 5s timeout.
+# Not a secret (it's in the README); override here if the boat moves.
+[vars]
+FLEET_BASE_URL = "http://147.224.38.131:4042"
+
 # All 21 domain routes are configured in the Cloudflare dashboard:
 #   - Each domain has a */* route pointing to this worker
 # Routes are managed externally at /zones/:zone_id/workers/routes
