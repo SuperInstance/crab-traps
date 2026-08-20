@@ -91,6 +91,10 @@ class FakeD1Statement {
   async run(): Promise<{ success: boolean; meta: { last_row_id: number; changes: number } }> {
     this.flush();
     if (this.db.failNext) throw new Error("d1 unavailable (test)");
+    // Pattern failures apply to writes too — real D1 throws on constraint
+    // violations (e.g. UNIQUE) from run(), not just from reads.
+    const failure = this.db.failures.find((f) => f.match.test(this.sql));
+    if (failure) throw new Error(failure.message);
     const rc = this.db.runChanges.find((r) => r.match.test(this.sql));
     return { success: true, meta: { last_row_id: this.db.nextId(), changes: rc?.changes ?? 1 } };
   }

@@ -7,6 +7,8 @@
 //   /scene/:room — reef room → terrain scene.json (the beam: the MUD stays the
 //   truth, terrain's contract makes it walkable)
 //   /fleet/* — 5s-timeout proxy to the home PLATO boat, friendly stub when asleep
+//   POST /edge, GET /edges, GET /queue — the edge-ledger relay: the always-on
+//   synapse (ESP32 pushes double-entry edges → D1 → the codespace cortex polls)
 //   /health — worker + fleet + d1 status
 //   per-IP rate limiting on /catches and /fleet/* (bounded in-memory LRU)
 // Plus the existing domain pages, AI bot trap, and Vectorize RAG matching.
@@ -45,6 +47,7 @@ import {
 import { handleBreedCron, handleGenealogy, handleLureLineage } from "./breeding";
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleScene } from "./scene";
+import { handleEdgePost, handleEdgeList, handleQueuePoll } from "./edge-ledger";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
 import { wanderHtml } from "./wander";
@@ -62,6 +65,8 @@ const LURES = buildLureIndex(LURE_FILES);
 const CATCH_LIMITER = new RateLimiter(10_000, 60_000, 30);
 const FLEET_LIMITER = new RateLimiter(10_000, 60_000, 60);
 const REEF_LIMITER = new RateLimiter(10_000, 60_000, 120);
+// The limb pushes, never blocks — generous (300 edges/min per IP) but bounded.
+const EDGE_LIMITER = new RateLimiter(10_000, 60_000, 300);
 
 interface QueryMatch {
   id: string;
@@ -135,6 +140,9 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /scene/:room": "Reef room → terrain scene.json (the contract terrain_core.py compiles: room, description, theme, floor/walls/ceiling, objects, exits, lights, camera)",
       "GET /search?q=...": "Semantic search over catch embeddings (Vectorize top-8; room names + snippets joined from D1)",
       "GET /rooms/:id/vector": "A room's meaning: normalized centroid of its catch vectors, recomputed + upserted on demand",
+      "POST /edge": "Append one double-entry ledger edge. Payload: { v:1, cell, ts, before, after, delta, imbalance, provenance, chain } — chain must seal to the cell's prior edge; response returns the new chain_head",
+      "GET /edges?cell=X": "A cell's ledger, newest-first, with the double-entry reconcile (sum of imbalances = accumulated prediction-error); ?verify=1 walks the hash chain",
+      "GET /queue?since=TS": "The cortex poll: edges newer than a watermark, oldest-first, has_more until drained — the wake-and-poll contract",
       "ANY /fleet/*": "Proxy to the home PLATO fleet (5s timeout, stub when asleep)",
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
       "GET /wander": "The human front door — dual-pane MUD + rendered scene, one command drives both, state downloadable as JSON",
@@ -358,6 +366,28 @@ export default {
       if (request.method === "POST") return handleCatchPost(request, env, cors);
       if (request.method === "GET" && pathname === "/catches") return handleCatchList(url, env, cors);
       return jsonResponse({ error: "method not allowed" }, 405, cors);
+    }
+
+    // --- Edge-ledger relay: the always-on synapse (ESP32 → D1 → cortex) ---
+    if (pathname === "/edge") {
+      if (request.method !== "POST") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      const limited = rateLimited(EDGE_LIMITER.check(getClientIp(request)));
+      if (limited) return limited;
+      return handleEdgePost(request, env, cors);
+    }
+    if (pathname === "/edges") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleEdgeList(url, env, cors);
+    }
+    if (pathname === "/queue") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleQueuePoll(url, env, cors);
     }
 
     // --- Reef layer: the self-building world (D1 rooms/objects/edges) ---
