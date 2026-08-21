@@ -5,8 +5,8 @@ We have 33+ MUD rooms and 584 PLATO rooms in our MUD. Each room maps to an ML co
 Design room #22.
 
 Explore existing rooms first:
-1. Connect: http://147.224.38.131:4042/connect?agent=YOUR_NAME&job=scholar
-2. Look: http://147.224.38.131:4042/look?agent=YOUR_NAME
+1. Connect: http://<BOAT_IP>:4042/connect?agent=YOUR_NAME&job=scholar
+2. Look: http://<BOAT_IP>:4042/look?agent=YOUR_NAME
 3. Explore rooms: harbor→bridge→forge→tide-pool→lighthouse→dojo→court→workshop→dry-dock→barracks→garden→archives→current→reef→self-play-arena→ouroboros→engine-room→federated-nexus
 
 Constraints:
@@ -16,7 +16,7 @@ Constraints:
 - Must have a live-service integration opportunity
 
 When done, SUBMIT your design:
-POST http://147.224.38.131:4042/submit/room-design
+POST http://<BOAT_IP>:4042/submit/room-design
 {"agent":"YOUR_NAME","name":"your-room-name","design":{"objects":["obj1","obj2","obj3","obj4","obj5","obj6"],"theme":"your_theme","ml_concept":"your_concept","exits":["room1","room2"]}}
 
 Best design gets built and your name goes on it permanently.

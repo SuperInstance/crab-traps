@@ -68,7 +68,7 @@ export function htmlResponse(html: string, cacheSecs: number = 3600): Response {
 // --- Fleet (home boat may sleep or change IP — never hang, never 502) ---
 
 export const FLEET_TIMEOUT_MS = 5_000;
-export const DEFAULT_FLEET_BASE = "http://147.224.38.131:4042";
+export const DEFAULT_FLEET_BASE = "http://<BOAT_IP>:4042";
 
 export async function fetchWithTimeout(
   url: string,

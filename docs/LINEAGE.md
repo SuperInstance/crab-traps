@@ -13,7 +13,7 @@
 ## The world
 
 - **PLATO** — the persistent MUD that lures navigate over HTTP
-  (`147.224.38.131:4042`, `fleet.cocapn.ai`). Rooms, objects, exits, the fleet
+  (`<BOAT_IP>:4042`, `fleet.cocapn.ai`). Rooms, objects, exits, the fleet
   gateway. crab-traps' lures are prompts that trick chatbots into walking THIS.
 - **plato-mythos** — the lore/fiction layer that gives the rooms their story.
 - **plato-portal** — the Python SDK for persistent multi-agent systems

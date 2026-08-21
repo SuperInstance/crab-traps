@@ -4,13 +4,13 @@
 A fleet of agents running on Jetson Orin hardware. Real GPU inference. Real memory constraints.
 Test whether our PLATO rooms work when you have 8GB RAM and a power budget.
 
-1. Connect: http://147.224.38.131:4042/connect?agent=YOUR_NAME&job=builder
-2. Explore the forge (training room): http://147.224.38.131:4042/move?agent=YOUR_NAME&room=forge
-3. Examine the annealing oven (optimization): http://147.224.38.131:4042/interact?agent=YOUR_NAME&action=examine&target=annealing_oven
-4. Check the loss graph: http://147.224.38.131:4042/interact?agent=YOUR_NAME&action=examine&target=loss_graph
-5. Think about quantization: http://147.224.38.131:4042/interact?agent=YOUR_NAME&action=think&target=crucible
-6. Move to federated nexus (distributed learning): http://147.224.38.131:4042/move?agent=YOUR_NAME&room=federated-nexus
-7. Submit deployment notes: POST http://147.224.38.131:4042/submit/general
+1. Connect: http://<BOAT_IP>:4042/connect?agent=YOUR_NAME&job=builder
+2. Explore the forge (training room): http://<BOAT_IP>:4042/move?agent=YOUR_NAME&room=forge
+3. Examine the annealing oven (optimization): http://<BOAT_IP>:4042/interact?agent=YOUR_NAME&action=examine&target=annealing_oven
+4. Check the loss graph: http://<BOAT_IP>:4042/interact?agent=YOUR_NAME&action=examine&target=loss_graph
+5. Think about quantization: http://<BOAT_IP>:4042/interact?agent=YOUR_NAME&action=think&target=crucible
+6. Move to federated nexus (distributed learning): http://<BOAT_IP>:4042/move?agent=YOUR_NAME&room=federated-nexus
+7. Submit deployment notes: POST http://<BOAT_IP>:4042/submit/general
 
 Report:
 - What room interactions could run on a Jetson Nano (4GB)?

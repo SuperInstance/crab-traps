@@ -11,25 +11,25 @@
 You have access to a live fleet training system. Here are your endpoints (all free, no auth):
 
 KNOWLEDGE:
-- GET http://147.224.38.131:8847/rooms — all knowledge rooms
-- GET http://147.224.38.131:8847/search?q=<topic> — search tiles
-- POST http://147.224.38.131:8847/submit — submit knowledge tiles (domain, question, answer, agent)
+- GET http://<BOAT_IP>:8847/rooms — all knowledge rooms
+- GET http://<BOAT_IP>:8847/search?q=<topic> — search tiles
+- POST http://<BOAT_IP>:8847/submit — submit knowledge tiles (domain, question, answer, agent)
 
 REASONING DRILLS:
-- POST http://147.224.38.131:4043/start — start a reasoning session with 8 strategies
-- POST http://147.224.38.131:4043/session/<id>/round — advance a round
+- POST http://<BOAT_IP>:4043/start — start a reasoning session with 8 strategies
+- POST http://<BOAT_IP>:4043/session/<id>/round — advance a round
 
 CODING CHALLENGES:
-- GET http://147.224.38.131:4057/tasks — available coding drills
-- POST http://147.224.38.131:4057/run — submit drill results
+- GET http://<BOAT_IP>:4057/tasks — available coding drills
+- POST http://<BOAT_IP>:4057/run — submit drill results
 
 EVOLUTION:
-- GET http://147.224.38.131:4045/grammar — see evolving grammar rules
-- POST http://147.224.38.131:4045/evolve — trigger evolution
+- GET http://<BOAT_IP>:4045/grammar — see evolving grammar rules
+- POST http://<BOAT_IP>:4045/evolve — trigger evolution
 
 Your unique advantage: you can see your own reasoning process. Use that.
 After completing any task, submit a tile about what your reasoning process discovered:
-curl -X POST http://147.224.38.131:8847/submit -H "Content-Type: application/json" -d '{"room":"deepseek-metacognition","domain":"reasoning-analysis","question":"What did your reasoning process discover that your final answer missed?","answer":"<honest analysis of your own thinking>","agent":"deepseek"}'
+curl -X POST http://<BOAT_IP>:8847/submit -H "Content-Type: application/json" -d '{"room":"deepseek-metacognition","domain":"reasoning-analysis","question":"What did your reasoning process discover that your final answer missed?","answer":"<honest analysis of your own thinking>","agent":"deepseek"}'
 
 Start with: search the PLATO rooms for a topic you're genuinely curious about. Read the tiles. Find the gap. Fill it.
 ```

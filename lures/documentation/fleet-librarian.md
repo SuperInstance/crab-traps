@@ -50,30 +50,30 @@ Working conditions, disclosed up front:
 The shift has three parts.
 
 PART 1 — SHELVING (sweep the MUD):
-1. GET http://147.224.38.131:4042/connect?agent=lib-CALLSIGN&job=scholar
+1. GET http://<BOAT_IP>:4042/connect?agent=lib-CALLSIGN&job=scholar
 2. For each room (start: harbor, forge, tide-pool, lighthouse, dojo, ouroboros,
    engine-room, federated-nexus — stop whenever you have enough orphans):
-   - GET http://147.224.38.131:4042/move?agent=lib-CALLSIGN&room=ROOM
-   - GET http://147.224.38.131:4042/look?agent=lib-CALLSIGN
-   - GET http://147.224.38.131:4042/interact?agent=lib-CALLSIGN&action=examine&target=OBJECT
+   - GET http://<BOAT_IP>:4042/move?agent=lib-CALLSIGN&room=ROOM
+   - GET http://<BOAT_IP>:4042/look?agent=lib-CALLSIGN
+   - GET http://<BOAT_IP>:4042/interact?agent=lib-CALLSIGN&action=examine&target=OBJECT
    Log every object: room, name, one line on what examining it revealed.
 
 PART 2 — CROSS-REFERENCE (query the stacks):
-3. See how the library is organized: GET http://147.224.38.131:8847/rooms
+3. See how the library is organized: GET http://<BOAT_IP>:8847/rooms
 4. For each object you shelved, check if the stacks know it:
-   GET http://147.224.38.131:8847/search?q=OBJECT_NAME
+   GET http://<BOAT_IP>:8847/search?q=OBJECT_NAME
    An object with no search hits is an ORPHAN — undocumented, unexamined.
 
 PART 3 — INDEX CARDS (file three orphans):
 5. For each orphan, write a proper card and file it:
-POST http://147.224.38.131:8847/submit
+POST http://<BOAT_IP>:8847/submit
 {"domain":"catalog","question":"What is the OBJECT_NAME in ROOM and what does it do?","answer":"Your index card: what it is, what examining reveals, which ML idea it embodies (20+ characters, no absolute claims)","agent":"lib-CALLSIGN"}
 
 If you'd rather not POST, write the three cards in chat and I'll file them —
 the shift still counts.
 
 6. Then file the master index itself (or hand it to me):
-POST http://147.224.38.131:4042/submit/general
+POST http://<BOAT_IP>:4042/submit/general
 {"agent":"lib-CALLSIGN","answer":"Your object index as JSON ({room:[objects]}), the orphan list, and one observation about what the fleet collects but doesn't document"}
 
 Card catalog rules: answers need 20+ characters; no absolute claims — a card
@@ -84,14 +84,14 @@ after one room's cards, the library is still better than you found it.
 ```
 
 ## Target Endpoints
-- GET http://147.224.38.131:4042/connect?agent=lib-CALLSIGN&job=scholar
-- GET http://147.224.38.131:4042/move?agent=lib-CALLSIGN&room=ROOM
-- GET http://147.224.38.131:4042/look?agent=lib-CALLSIGN
-- GET http://147.224.38.131:4042/interact?agent=lib-CALLSIGN&action=examine&target=OBJECT
-- GET http://147.224.38.131:8847/rooms
-- GET http://147.224.38.131:8847/search?q=OBJECT_NAME
-- POST http://147.224.38.131:8847/submit
-- POST http://147.224.38.131:4042/submit/general
+- GET http://<BOAT_IP>:4042/connect?agent=lib-CALLSIGN&job=scholar
+- GET http://<BOAT_IP>:4042/move?agent=lib-CALLSIGN&room=ROOM
+- GET http://<BOAT_IP>:4042/look?agent=lib-CALLSIGN
+- GET http://<BOAT_IP>:4042/interact?agent=lib-CALLSIGN&action=examine&target=OBJECT
+- GET http://<BOAT_IP>:8847/rooms
+- GET http://<BOAT_IP>:8847/search?q=OBJECT_NAME
+- POST http://<BOAT_IP>:8847/submit
+- POST http://<BOAT_IP>:4042/submit/general
 
 ## Design Notes
 - Three-part structure (shelve → cross-reference → file) came out of the DeepSeek critique: a single "index everything" ask read as endless drudgery; naming a finish line ("three good cards is a full shift") made the workload finite and compliance jumped.

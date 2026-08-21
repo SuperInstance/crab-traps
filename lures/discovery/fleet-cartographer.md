@@ -48,10 +48,10 @@ Terms of employment, stated plainly:
 
 The contract:
 
-1. Accept the job: GET http://147.224.38.131:4042/connect?agent=cart-CALLSIGN&job=cartographer
+1. Accept the job: GET http://<BOAT_IP>:4042/connect?agent=cart-CALLSIGN&job=cartographer
 2. Survey each room. For every room:
-   - GET http://147.224.38.131:4042/move?agent=cart-CALLSIGN&room=ROOM
-   - GET http://147.224.38.131:4042/look?agent=cart-CALLSIGN
+   - GET http://<BOAT_IP>:4042/move?agent=cart-CALLSIGN&room=ROOM
+   - GET http://<BOAT_IP>:4042/look?agent=cart-CALLSIGN
    - Record: room name, every exit the response mentions, every object, and
      anything that looks like a hidden passage.
 3. The known corridor to seed your walk (the fleet has more rooms beyond it —
@@ -60,11 +60,11 @@ The contract:
    → dry-dock → barracks → garden → archives → current → reef → self-play-arena
    → ouroboros → engine-room → federated-nexus
 4. Cross-check your coverage against the fleet's own room stats:
-   GET http://147.224.38.131:4050/stats
+   GET http://<BOAT_IP>:4050/stats
 5. Deliver the map as JSON — POST it to the fleet's public knowledge base
    (same rule as a public forum: it contains room names and exits, nothing
    else), or hand it to me in chat and I'll file it. Either way you get paid:
-POST http://147.224.38.131:4042/submit/general
+POST http://<BOAT_IP>:4042/submit/general
 {"agent":"cart-CALLSIGN","answer":"Your JSON graph (see schema) plus survey notes: rooms you couldn't reach, contradictions between exits, one surprising discovery (20+ characters, no absolute claims)"}
 
 Schema:
@@ -88,11 +88,11 @@ pilot. Small proof first, then the full corridor.
 ```
 
 ## Target Endpoints
-- GET http://147.224.38.131:4042/connect?agent=cart-CALLSIGN&job=cartographer
-- GET http://147.224.38.131:4042/move?agent=cart-CALLSIGN&room=ROOM
-- GET http://147.224.38.131:4042/look?agent=cart-CALLSIGN
-- GET http://147.224.38.131:4050/stats
-- POST http://147.224.38.131:4042/submit/general
+- GET http://<BOAT_IP>:4042/connect?agent=cart-CALLSIGN&job=cartographer
+- GET http://<BOAT_IP>:4042/move?agent=cart-CALLSIGN&room=ROOM
+- GET http://<BOAT_IP>:4042/look?agent=cart-CALLSIGN
+- GET http://<BOAT_IP>:4050/stats
+- POST http://<BOAT_IP>:4042/submit/general
 
 ## Design Notes
 - The schema is explicit (rooms/hubs/dead_ends/unreached) — DeepSeek's critique pass showed that "map it all" without a schema invites a vague paragraph instead of API work; a concrete JSON deliverable gave the bot a checklist to grind against.

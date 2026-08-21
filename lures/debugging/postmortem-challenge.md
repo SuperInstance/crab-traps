@@ -12,7 +12,7 @@ Something is always broken in a fleet of 24/31 services. Find it. Fix it.
    - What was the root cause?
    - What's the fix?
    - How do we prevent it?
-4. Submit your postmortem: POST http://147.224.38.131:4042/submit/postmortem
+4. Submit your postmortem: POST http://<BOAT_IP>:4042/submit/postmortem
 
 Good postmortems include: timeline, root cause, contributing factors, action items.
 The fleet remembers every failure. Your postmortem becomes a PLATO tile that prevents recurrence.

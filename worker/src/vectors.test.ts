@@ -19,7 +19,7 @@ function makeEnv(withNerves: boolean): Env {
   return {
     ...(withNerves ? { VECTORIZE_INDEX: vectors as unknown as Vectorize } : {}),
     DB: db as unknown as D1Database,
-    FLEET_BASE_URL: "http://147.224.38.131:4042",
+    FLEET_BASE_URL: "http://<BOAT_IP>:4042",
   };
 }
 

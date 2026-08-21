@@ -91,13 +91,13 @@ class TestFleetHostRules(unittest.TestCase):
         return rules_in(issues)
 
     def test_known_port_passes(self):
-        self.assertNotIn("unknown_fleet_port", self._rules("GET http://147.224.38.131:4046/"))
+        self.assertNotIn("unknown_fleet_port", self._rules("GET http://<BOAT_IP>:4046/"))
 
     def test_off_map_port_8899_flagged(self):
-        self.assertIn("unknown_fleet_port", self._rules("GET http://147.224.38.131:8899/status"))
+        self.assertIn("unknown_fleet_port", self._rules("GET http://<BOAT_IP>:8899/status"))
 
     def test_https_on_fleet_host_flagged(self):
-        self.assertIn("https_on_fleet_host", self._rules("GET https://147.224.38.131:4042/"))
+        self.assertIn("https_on_fleet_host", self._rules("GET https://<BOAT_IP>:4042/"))
 
     def test_unknown_host_flagged(self):
         self.assertIn("unknown_endpoint_host", self._rules("GET http://evil.example.com/submit"))
@@ -197,7 +197,7 @@ class TestAuditFixesPinned(unittest.TestCase):
     def test_claude_reviewer_uses_dashboard_port_not_8899(self):
         text = (LURES_DIR / "agent-specific/claude-code-reviewer.md").read_text()
         self.assertNotIn("8899", text)
-        self.assertIn("147.224.38.131:4046/", text)
+        self.assertIn("<BOAT_IP>:4046/", text)
 
     def test_night_watch_dashboard_path_is_live_one(self):
         text = (LURES_DIR / "audit/night-watch.md").read_text()

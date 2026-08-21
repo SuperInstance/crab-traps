@@ -11,7 +11,7 @@ documents, not lures, and are skipped) for:
     (the catalog's five levels), and all five levels are present catalog-wide
   - HTTP endpoints — at least one URL present, and every URL resolves against
     the fleet's known endpoint map (offline allowlist; no network in CI):
-      * 147.224.38.131 — known fleet service ports only, plain http
+      * <BOAT_IP> — known fleet service ports only, plain http
       * fleet.cocapn.ai — only paths verified live on the dashboard API
       * github.com — only the SuperInstance org (the fleet's real source org)
       * cocapn.ai — the project's public face
@@ -47,14 +47,14 @@ DIFFICULTY_LEVELS = (1, 2, 3, 4, 5)
 DIFFICULTY_RE = re.compile(r"^level\s+([1-5])\b", re.IGNORECASE)
 
 # --- Offline endpoint allowlist (verified 2026-08-19) ---
-# 147.224.38.131: the home PLATO fleet. The host sits behind Cloudflare and
-# refuses direct-IP requests (error 1003) — from CI *and* through the
-# worker's /fleet/* proxy — so per-port liveness can't be probed at all.
-# The ports below are the coherent service map every lure agrees on
-# (MUD, Lock, Arena, Grammar, Dashboard, Nexus, Domain Rooms,
+# <BOAT_IP>: placeholder for the home PLATO fleet's public IP. The host sits
+# behind Cloudflare and refuses direct-IP requests (error 1003) — from CI
+# *and* through the worker's /fleet/* proxy — so per-port liveness can't be
+# probed at all. The ports below are the coherent service map every lure
+# agrees on (MUD, Lock, Arena, Grammar, Dashboard, Nexus, Domain Rooms,
 # Skill Forge, terminal, telnet MUD, tile library, PLATO Shell, orchestrator,
 # adaptive MUD, monitor, scorer).
-FLEET_HOST = "147.224.38.131"
+FLEET_HOST = "<BOAT_IP>"
 FLEET_PORTS = frozenset({
     4042, 4043, 4044, 4045, 4046, 4047, 4050, 4057, 4060,
     7777, 8847, 8848, 8849, 8850, 8851, 8852,
@@ -78,9 +78,9 @@ DASHBOARD_VERIFIED = frozenset({
 # *user* (not an org: github.com/orgs/SuperInstance 404s too).
 GITHUB_ALLOWED_PREFIXES = ("/SuperInstance",)
 
-KNOWN_HOSTS = {FLEET_HOST, DASHBOARD_HOST, "cocapn.ai", "github.com"}
+KNOWN_HOSTS = {FLEET_HOST.lower(), DASHBOARD_HOST, "cocapn.ai", "github.com"}
 
-ENDPOINT_RE = re.compile(r"https?://[^\s\"'\]\)}>]+")
+ENDPOINT_RE = re.compile(r"https?://[^\s\"'\]\)}]+")
 
 
 def check_path_exists(path):
@@ -182,7 +182,7 @@ def check_endpoints(content, filepath, issues):
             })
             continue
 
-        if host == FLEET_HOST:
+        if host == FLEET_HOST.lower():
             if scheme != "http":
                 issues.append({
                     "severity": "warning",

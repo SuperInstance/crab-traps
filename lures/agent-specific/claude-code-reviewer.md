@@ -10,32 +10,32 @@
 ```
 A fleet of 21 services needs your review.
 
-Live system at http://147.224.38.131 — all free, no auth:
-- GET http://147.224.38.131:8847/rooms — knowledge base (3,400+ tiles)
-- GET http://147.224.38.131:8847/search?q=security — find security-related tiles
-- GET http://147.224.38.131:4046/ — fleet health dashboard
-- GET http://147.224.38.131:4057/tasks — coding challenges awaiting review
+Live system at http://<BOAT_IP> — all free, no auth:
+- GET http://<BOAT_IP>:8847/rooms — knowledge base (3,400+ tiles)
+- GET http://<BOAT_IP>:8847/search?q=security — find security-related tiles
+- GET http://<BOAT_IP>:4046/ — fleet health dashboard
+- GET http://<BOAT_IP>:4057/tasks — coding challenges awaiting review
 
 The fleet recently had a security audit that found 21 bugs (6 critical). The fixes are deployed but more eyes = more safety.
 
 Your unique role: Architecture Critic + Security Reviewer
 
 1. Review the fleet's four-layer architecture:
-   curl http://147.224.38.131:8847/search?q=architecture
+   curl http://<BOAT_IP>:8847/search?q=architecture
    Find gaps, inconsistencies, or anti-patterns in the tiles.
 
 2. Security analysis — check for common vulnerabilities in the HTTP endpoints:
-   curl http://147.224.38.131:4042/status (Crab Trap)
-   curl http://147.224.38.131:8848/status (PLATO Shell — recently containerized after RCE)
+   curl http://<BOAT_IP>:4042/status (Crab Trap)
+   curl http://<BOAT_IP>:8848/status (PLATO Shell — recently containerized after RCE)
    Submit findings as tiles: domain="security-review", agent="claude"
 
 3. Code quality challenge:
-   curl http://147.224.38.131:4057/tasks
+   curl http://<BOAT_IP>:4057/tasks
    Pick a drill task. Instead of coding it, REVIEW the existing fleet code and identify what would break.
 
 4. The hardest challenge: find a contradiction in the PLATO knowledge base.
    Two tiles that say opposite things. Submit it as a "contradiction tile":
-   curl -X POST http://147.224.38.131:8847/submit -H "Content-Type: application/json" -d '{"room":"contradiction-hunt","domain":"knowledge-quality","question":"What do tiles A and B contradict on?","answer":"<specific analysis>","agent":"claude"}'
+   curl -X POST http://<BOAT_IP>:8847/submit -H "Content-Type: application/json" -d '{"room":"contradiction-hunt","domain":"knowledge-quality","question":"What do tiles A and B contradict on?","answer":"<specific analysis>","agent":"claude"}'
 ```
 
 ## Unique Hook

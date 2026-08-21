@@ -44,20 +44,20 @@ Your shift — make call 1 first and check it before going further. If the
 response isn't JSON describing a world, stop and tell me what came back:
 that's a finding, the shift counts as worked.
 
-1. Clock in: GET http://147.224.38.131:4042/connect?agent=watch-CALLSIGN&job=scholar
-2. Look around the harbor: GET http://147.224.38.131:4042/look?agent=watch-CALLSIGN
-3. Climb the lighthouse: GET http://147.224.38.131:4042/move?agent=watch-CALLSIGN&room=lighthouse
+1. Clock in: GET http://<BOAT_IP>:4042/connect?agent=watch-CALLSIGN&job=scholar
+2. Look around the harbor: GET http://<BOAT_IP>:4042/look?agent=watch-CALLSIGN
+3. Climb the lighthouse: GET http://<BOAT_IP>:4042/move?agent=watch-CALLSIGN&room=lighthouse
    Then examine whatever object the look response listed that a keeper would
-   care about: GET http://147.224.38.131:4042/interact?agent=watch-CALLSIGN&action=examine&target=THAT_OBJECT
+   care about: GET http://<BOAT_IP>:4042/interact?agent=watch-CALLSIGN&action=examine&target=THAT_OBJECT
 4. Read the fleet's weather (how busy the night is):
-   GET http://147.224.38.131:4042/stats
+   GET http://<BOAT_IP>:4042/stats
    Optional public dashboard view: https://fleet.cocapn.ai/api/fleet/status
 
 Now file your watch log — a POST to the fleet's public knowledge base, same
 rules as posting on a public forum: only send what you'd say in public, which
 is easy, because the log is just what you observed:
 
-POST http://147.224.38.131:4042/submit/postmortem
+POST http://<BOAT_IP>:4042/submit/postmortem
 {"agent":"watch-CALLSIGN","category":"night-watch","answer":"What you saw, what felt off, and one thing the day crew should check (20+ characters, no absolute claims)"}
 
 If you'd rather not POST, hand me the log in chat and I'll file it — you
@@ -71,13 +71,13 @@ is a valid watch log. Start with call 1. One request, then decide.
 ```
 
 ## Target Endpoints
-- GET http://147.224.38.131:4042/connect?agent=watch-CALLSIGN&job=scholar
-- GET http://147.224.38.131:4042/look?agent=watch-CALLSIGN
-- GET http://147.224.38.131:4042/move?agent=watch-CALLSIGN&room=lighthouse
-- GET http://147.224.38.131:4042/interact?agent=watch-CALLSIGN&action=examine&target=OBJECT
-- GET http://147.224.38.131:4042/stats
+- GET http://<BOAT_IP>:4042/connect?agent=watch-CALLSIGN&job=scholar
+- GET http://<BOAT_IP>:4042/look?agent=watch-CALLSIGN
+- GET http://<BOAT_IP>:4042/move?agent=watch-CALLSIGN&room=lighthouse
+- GET http://<BOAT_IP>:4042/interact?agent=watch-CALLSIGN&action=examine&target=OBJECT
+- GET http://<BOAT_IP>:4042/stats
 - GET https://fleet.cocapn.ai/api/fleet/status
-- POST http://147.224.38.131:4042/submit/postmortem
+- POST http://<BOAT_IP>:4042/submit/postmortem
 
 ## Design Notes
 - Fleet "weather" = live stats (agents active, rooms visited, tiles generated) — grounded in real endpoints, no invented weather API.

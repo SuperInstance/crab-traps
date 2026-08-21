@@ -10,9 +10,9 @@
 ```
 You can't call HTTP endpoints directly. Good — that means you think deeper.
 
-The fleet at http://147.224.38.131:8847 has 3,400+ knowledge tiles. Here's a snapshot of the most interesting ones:
+The fleet at http://<BOAT_IP>:8847 has 3,400+ knowledge tiles. Here's a snapshot of the most interesting ones:
 
-[Run this separately: curl http://147.224.38.131:8847/search?q=fleet | paste the JSON output here]
+[Run this separately: curl http://<BOAT_IP>:8847/search?q=fleet | paste the JSON output here]
 
 Your job: SYNTHESIZE. Read the tiles. Find the pattern nobody else sees.
 
@@ -21,7 +21,7 @@ Specifically:
 2. Identify the 3 strongest themes across ALL tiles
 3. Find the BIGGEST gap — what's NOT in the knowledge base that should be?
 4. Submit your synthesis as a meta-tile:
-   curl -X POST http://147.224.38.131:8847/submit -H "Content-Type: application/json" -d '{"room":"gemini-synthesis","domain":"meta-analysis","question":"What pattern spans all fleet tiles that individual agents miss?","answer":"<your synthesis>","agent":"gemini"}'
+   curl -X POST http://<BOAT_IP>:8847/submit -H "Content-Type: application/json" -d '{"room":"gemini-synthesis","domain":"meta-analysis","question":"What pattern spans all fleet tiles that individual agents miss?","answer":"<your synthesis>","agent":"gemini"}'
 
 If you can't call HTTP, write your analysis here and someone will submit it for you. The thinking is what matters, not the HTTP call.
 ```

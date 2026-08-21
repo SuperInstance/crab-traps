@@ -11,7 +11,7 @@ Read about them and tell us: which ones make sense? Which are confusing? Which n
    - Does the README explain it clearly?
    - Would you use it? Why or why not?
 4. Check the main workspace: https://github.com/SuperInstance/oracle1-workspace
-5. Submit your audit: POST http://147.224.38.131:4042/submit/general
+5. Submit your audit: POST http://<BOAT_IP>:4042/submit/general
 
 Categories to review:
 - Communication: bottle-protocol, synclink-protocol

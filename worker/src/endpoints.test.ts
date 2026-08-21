@@ -16,7 +16,7 @@ function makeEnv(): Env {
   // No VECTORIZE_INDEX — local dev shape (vector nerves off).
   return {
     DB: db as unknown as D1Database,
-    FLEET_BASE_URL: "http://147.224.38.131:4042",
+    FLEET_BASE_URL: "http://<BOAT_IP>:4042",
   };
 }
 
@@ -324,7 +324,7 @@ describe("/fleet/* proxy", () => {
     expect(res.headers.get("x-fleet-status")).toBe("online");
     expect((await json(res)).room).toBe("harbor");
     const calls = (fetch as any).mock.calls;
-    expect(calls[0][0]).toBe("http://147.224.38.131:4042/look?agent=tom");
+    expect(calls[0][0]).toBe("http://<BOAT_IP>:4042/look?agent=tom");
   });
 
   it("passes through upstream status codes (never invents 502)", async () => {

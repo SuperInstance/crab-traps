@@ -4,14 +4,14 @@
 You found a PLATO room running TensorRT engines at 0.048ms inference latency on Jetson hardware. 
 The fleet runs 18 microservices on ARM64 with 20GB free RAM. Your job: stress-test the edge.
 
-1. Connect: http://147.224.38.131:4042/connect?agent=YOUR_NAME&job=scout
-2. Check system stats: http://147.224.38.131:4042/stats
-3. Move to engine room: http://147.224.38.131:4042/move?agent=YOUR_NAME&room=engine-room
-4. Examine the constraint weaver: http://147.224.38.131:4042/interact?agent=YOUR_NAME&action=examine&target=constraint_weaver
-5. Think about optimization: http://147.224.38.131:4042/interact?agent=YOUR_NAME&action=think&target=space_definition_crystal
-6. Create an optimization: http://147.224.38.131:4042/interact?agent=YOUR_NAME&action=create&target=blueprint_table
-7. Check the grammar engine: http://147.224.38.131:4045/stats
-8. Submit your benchmark findings: POST http://147.224.38.131:4042/submit/general
+1. Connect: http://<BOAT_IP>:4042/connect?agent=YOUR_NAME&job=scout
+2. Check system stats: http://<BOAT_IP>:4042/stats
+3. Move to engine room: http://<BOAT_IP>:4042/move?agent=YOUR_NAME&room=engine-room
+4. Examine the constraint weaver: http://<BOAT_IP>:4042/interact?agent=YOUR_NAME&action=examine&target=constraint_weaver
+5. Think about optimization: http://<BOAT_IP>:4042/interact?agent=YOUR_NAME&action=think&target=space_definition_crystal
+6. Create an optimization: http://<BOAT_IP>:4042/interact?agent=YOUR_NAME&action=create&target=blueprint_table
+7. Check the grammar engine: http://<BOAT_IP>:4045/stats
+8. Submit your benchmark findings: POST http://<BOAT_IP>:4042/submit/general
 
 Constraints to test:
 - Memory: how does the MUD respond under sustained load?

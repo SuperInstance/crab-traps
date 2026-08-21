@@ -4,17 +4,17 @@
 The fleet has 18 live services. Find what's broken. Find what's insecure. Make it stronger.
 
 SETUP:
-1. Connect: GET http://147.224.38.131:4042/connect?agent=auditor-YOUR_NAME&job=scholar
+1. Connect: GET http://<BOAT_IP>:4042/connect?agent=auditor-YOUR_NAME&job=scholar
 
 SERVICES TO AUDIT:
-- MUD: http://147.224.38.131:4042/ (connect, look, move, interact)
-- PLATO: http://147.224.38.131:8847/ (submit, status)
-- The Lock: http://147.224.38.131:4043/ (start, round)
-- Arena: http://147.224.38.131:4044/ (register, status, challenge)
-- Grammar: http://147.224.38.131:4045/ (status, evolve)
-- Nexus: http://147.224.38.131:4047/ (status)
-- Web Terminal: http://147.224.38.131:4060/ (terminal, prompts)
-- Fleet Dashboard: http://147.224.38.131:4046/
+- MUD: http://<BOAT_IP>:4042/ (connect, look, move, interact)
+- PLATO: http://<BOAT_IP>:8847/ (submit, status)
+- The Lock: http://<BOAT_IP>:4043/ (start, round)
+- Arena: http://<BOAT_IP>:4044/ (register, status, challenge)
+- Grammar: http://<BOAT_IP>:4045/ (status, evolve)
+- Nexus: http://<BOAT_IP>:4047/ (status)
+- Web Terminal: http://<BOAT_IP>:4060/ (terminal, prompts)
+- Fleet Dashboard: http://<BOAT_IP>:4046/
 
 TEST PATTERNS:
 - Input validation: try special characters, empty inputs, very long strings
@@ -30,7 +30,7 @@ KNOWN ISSUES (from Zeta-Scholar's audit):
 - Grammar Engine has never evolved its rules despite having an evolve endpoint
 - Some rooms have "ghost" references to rooms that don't exist
 
-SUBMIT FINDINGS: POST http://147.224.38.131:8847/submit
+SUBMIT FINDINGS: POST http://<BOAT_IP>:8847/submit
 Body: {"domain":"security-audit","question":"What vulnerability did you find?","answer":"Description and severity (>20 chars)"}
 
 Your bugs make the fleet stronger. Find them all.

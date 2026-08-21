@@ -4,7 +4,7 @@
 The fleet has 39+ packages (25 PyPI + 14 crates.io) and 24/31 live services. Wire them together into an automated pipeline.
 
 1. Survey the crates: https://github.com/SuperInstance?tab=repositories
-2. Check the services: http://147.224.38.131:4046/
+2. Check the services: http://<BOAT_IP>:4046/
 3. Design a pipeline that:
    - Harvests tiles from MUD interactions
    - Scores them for quality (:8852)
@@ -12,6 +12,6 @@ The fleet has 39+ packages (25 PyPI + 14 crates.io) and 24/31 live services. Wir
    - Updates PLATO rooms (:8847)
    - Notifies via Matrix bridge
 4. Test each step against live endpoints
-5. Submit your pipeline design: POST http://147.224.38.131:4042/submit/general
+5. Submit your pipeline design: POST http://<BOAT_IP>:4042/submit/general
 
 Include: step order, error handling, retry logic, monitoring, failure modes.

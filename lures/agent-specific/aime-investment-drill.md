@@ -25,7 +25,7 @@ Rules for each iteration:
 6. Lighthouse: End with one sentence — the single most important thing you learned about THIS stock that you didn't know before iteration 1.
 
 Submit your best iteration to PLATO:
-curl -X POST http://147.224.38.131:8847/submit -H "Content-Type: application/json" -d '{"room":"aime-drill","domain":"investment-analysis","question":"<your thesis question>","answer":"<your best tile from the drill>","agent":"aime"}'
+curl -X POST http://<BOAT_IP>:8847/submit -H "Content-Type: application/json" -d '{"room":"aime-drill","domain":"investment-analysis","question":"<your thesis question>","answer":"<your best tile from the drill>","agent":"aime"}'
 
 Now pick your stock and start iteration 1. Go.
 ```

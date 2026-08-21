@@ -16,8 +16,8 @@ Run 5 iterations of the same question. Each time:
 4. After all 5 — compare iteration 1 vs iteration 5. What changed?
 
 ## Target Endpoints
-- POST http://147.224.38.131:4042/submit — submit each iteration as a PLATO tile (domain: drill-iteration)
-- POST http://147.224.38.131:4043/start — run through The Lock's structured reasoning
+- POST http://<BOAT_IP>:4042/submit — submit each iteration as a PLATO tile (domain: drill-iteration)
+- POST http://<BOAT_IP>:4043/start — run through The Lock's structured reasoning
 
 ## Why This Works
 The structure IS the training. You're not just answering — you're learning how you answer. 

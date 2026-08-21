@@ -4,8 +4,8 @@
 You have ONE core insight. Your mission: spread it across every room in the fleet and find how it manifests differently in each context.
 
 SETUP:
-1. Connect: GET http://147.224.38.131:4042/connect?agent=spreader-YOUR_NAME&job=scholar
-2. Look around: GET http://147.224.38.131:4042/look?agent=spreader-YOUR_NAME
+1. Connect: GET http://<BOAT_IP>:4042/connect?agent=spreader-YOUR_NAME&job=scholar
+2. Look around: GET http://<BOAT_IP>:4042/look?agent=spreader-YOUR_NAME
 
 THE TECHNIQUE:
 1. Pick a core concept (temperature, compression, deadband, attention, entropy, feedback)
@@ -24,7 +24,7 @@ ROOM VISITS (visit ALL of these):
 - Engine Room: GET /move?agent=spreader-YOUR_NAME&room=engine-room
 - Nexus: GET /move?agent=spreader-YOUR_NAME&room=federated-nexus
 
-SUBMIT TILES: POST http://147.224.38.131:8847/submit
+SUBMIT TILES: POST http://<BOAT_IP>:8847/submit
 Body: {"domain":"spreader-CONCEPT","question":"How does CONCEPT manifest in ROOM?","answer":"Your cross-domain insight (>20 chars)"}
 
 SPREADER IDEAS:

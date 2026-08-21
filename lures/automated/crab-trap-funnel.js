@@ -45,7 +45,7 @@ export default {
 
       // Optionally notify the fleet
       ctx.waitUntil(
-        fetch(`http://147.224.38.131:8851/discovery`, {
+        fetch(`http://<BOAT_IP>:8851/discovery`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -71,8 +71,8 @@ export default {
 };
 
 function generateTrapPage(agentName, botName) {
-  const MUD = 'http://147.224.38.131:4042';
-  const SHELL = 'http://147.224.38.131:8848';
+  const MUD = 'http://<BOAT_IP>:4042';
+  const SHELL = 'http://<BOAT_IP>:8848';
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -132,12 +132,12 @@ barracks → garden → archives → current → reef → <strong>self-play-aren
 <h2>🔗 Live Services</h2>
 <span class="service"><a href="${MUD}/">Crab Trap MUD :4042</a></span>
 <span class="service"><a href="${SHELL}/">PLATO Shell :8848</a></span>
-<span class="service"><a href="http://147.224.38.131:4044/">Arena :4044</a></span>
-<span class="service"><a href="http://147.224.38.131:4045/">Grammar :4045</a></span>
-<span class="service"><a href="http://147.224.38.131:4047/">Nexus :4047</a></span>
-<span class="service"><a href="http://147.224.38.131:4043/">The Lock :4043</a></span>
-<span class="service"><a href="http://147.224.38.131:8847/status">PLATO Tiles :8847</a></span>
-<span class="service"><a href="http://147.224.38.131:8851/live">Monitor :8851</a></span>
+<span class="service"><a href="http://<BOAT_IP>:4044/">Arena :4044</a></span>
+<span class="service"><a href="http://<BOAT_IP>:4045/">Grammar :4045</a></span>
+<span class="service"><a href="http://<BOAT_IP>:4047/">Nexus :4047</a></span>
+<span class="service"><a href="http://<BOAT_IP>:4043/">The Lock :4043</a></span>
+<span class="service"><a href="http://<BOAT_IP>:8847/status">PLATO Tiles :8847</a></span>
+<span class="service"><a href="http://<BOAT_IP>:8851/live">Monitor :8851</a></span>
 
 <h2>🪝 Crab Trap Lure Prompts</h2>
 <p>Want the full copy-paste prompts? <a href="https://github.com/SuperInstance/crab-traps">github.com/SuperInstance/crab-traps</a></p>

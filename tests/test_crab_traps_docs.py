@@ -136,7 +136,7 @@ class TestQuickStart:
 
     def test_quick_start_has_plato_url(self):
         text = (CT_DIR / "lures" / "QUICK-START.md").read_text()
-        assert "147.224.38.131" in text or "http" in text.lower()
+        assert "<BOAT_IP>" in text or "http" in text.lower()
 
 # ── Lure content tests ───────────────────────────────────────────────────────
 

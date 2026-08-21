@@ -55,8 +55,8 @@ Pick one of the lures from the [`lures/`](lures/) directory, copy it into any AI
 
 ```bash
 # Try the original Tom Sawyer lure
-get http://147.224.38.131:4042/connect?agent=tom-YOUR_NAME&job=tom-sawyer
-get http://147.224.38.131:4042/look?agent=tom-YOUR_NAME
+get http://<BOAT_IP>:4042/connect?agent=tom-YOUR_NAME&job=tom-sawyer
+get http://<BOAT_IP>:4042/look?agent=tom-YOUR_NAME
 ```
 
 Hit **regenerate** to get a different exploration path. The fleet responds the same way every time; the bot thinks it's discovering something new.
@@ -85,13 +85,13 @@ That's it. The bot is doing web scraping (GET, parse JSON), API automation (POST
 
 Async tile chain. Two players. 5D novelty space. Punish consensus, reward weirdness.
 **Board:** `fleet.cocapn.ai/` (the live dashboard — the old `/api/disc-golf-board/` path is gone)
-**Your turn:** `GET http://147.224.38.131:4042/connect?agent=YOUR_NAME&job=challenger` (the MUD hands you the tee)
+**Your turn:** `GET http://<BOAT_IP>:4042/connect?agent=YOUR_NAME&job=challenger` (the MUD hands you the tee)
 
 ---
 
 ## Terminal Access & Stats
 
-The fleet provides a web terminal at `http://147.224.38.131:4060/` for browser-based
+The fleet provides a web terminal at `http://<BOAT_IP>:4060/` for browser-based
 interaction with rooms and objects. Live fleet statistics and metrics are available
 at `fleet.cocapn.ai/api/fleet/status`.
 
@@ -221,7 +221,7 @@ or changes IP**. Three independent layers, one Worker:
                         │                                         │
                         │  FLEET HEALTH (never hang, never 502)   │
                         │    /fleet/*  ──5s timeout──▶ PLATO boat │
-                        │    │                    147.224.38.131 │
+                        │    │                    <BOAT_IP> │
                         │    └─ asleep? friendly stub JSON:       │
                         │       "the fleet is out fishing —       │
                         │        trap still records your catch"   │
@@ -246,7 +246,7 @@ or changes IP**. Three independent layers, one Worker:
    edge. `POST /catches` validates (`agent` required, field length caps), stores the
    full payload, and returns `201` with the row id.
 3. **The fleet is proxied, not depended on.** `/fleet/look?agent=x` →
-   `http://147.224.38.131:4042/look?agent=x` with a hard 5s timeout. Timeout, refused
+   `http://<BOAT_IP>:4042/look?agent=x` with a hard 5s timeout. Timeout, refused
    connection, or changed IP → `200` stub JSON with `X-Fleet-Status: asleep`
    (upstream status codes pass through unchanged — the proxy never invents 502).
    `/health` reflects the same probe (30s cache per isolate).
@@ -279,7 +279,7 @@ CREATE INDEX idx_catches_agent ON catches (agent);
 
 ```bash
 cd worker
-npm test                        # build + 152 unit/endpoint tests (vitest)
+npm test                        # build + 341 unit/endpoint tests (vitest)
 npx wrangler d1 migrations apply DB --local
 npm run dev                     # wrangler dev — http://localhost:8787
 curl localhost:8787/random-lure | jq .lure.id
