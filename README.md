@@ -279,7 +279,7 @@ CREATE INDEX idx_catches_agent ON catches (agent);
 
 ```bash
 cd worker
-npm test                        # build + 341 unit/endpoint tests (vitest)
+npm test                        # build + 341 unit/endpoint tests (vitest) — count from CI, not hand-maintained
 npx wrangler d1 migrations apply DB --local
 npm run dev                     # wrangler dev — http://localhost:8787
 curl localhost:8787/random-lure | jq .lure.id
