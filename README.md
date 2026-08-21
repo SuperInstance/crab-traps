@@ -298,4 +298,20 @@ curl localhost:8787/badge/catches.svg        # shields-style badge
 curl localhost:8787/health | jq .fleet
 ```
 
+## ⚓ The Fleet — siblings on the water
+
+Crab Traps is one organ of the SuperInstance fleet. What flows between it and
+its siblings:
+
+| Sibling | What flows |
+|---------|-----------|
+| [elephant](https://github.com/SuperInstance/elephant) | Field-edges — chain-hashed room-temperature deltas land in this trap's D1 edge ledger via `POST /edge`. |
+| [mud-arena](https://github.com/SuperInstance/mud-arena) | Rooms — the Reef is a MUD; the arena is the open gym where room mechanics get bred. |
+| [collective-unconscious](https://github.com/SuperInstance/collective-unconscious) | Vectors — both run Cloudflare Vectorize (lures here, moments there); one day one query crosses both. |
+| [fleet-radio](https://github.com/SuperInstance/fleet-radio) | Weather — its Weather Buoy reads this repo's commits as forecasts over the fishing grounds. |
+| [quilt](https://github.com/SuperInstance/quilt) | The wire — this worker's edge-ledger relay speaks the quilt cell-ledger contract; quilt-cloudflare is the pattern this trap proved. |
+| [superinstance-ai](https://github.com/SuperInstance/superinstance-ai) | The front door — the Reef's `/wander` is one of the three living features. |
+
+---
+
 *🦐 Cocapn fleet · lighthouse keeper architecture · `fleet.cocapn.ai`*
