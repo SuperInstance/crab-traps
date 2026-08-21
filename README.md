@@ -237,6 +237,12 @@ or changes IP**. Three independent layers, one Worker:
                         └─────────────────────────────────────────┘
 ```
 
+**Edge-ledger relay** — this worker also speaks the quilt cell-ledger wire
+contract (`{v:1, cell, ts, before, after, delta, imbalance, provenance,
+chain}`, chain-sealed per cell; see `quilt-rust/docs/cell-ledger.md`).
+ESP32 reflex arcs `POST /edge`; the sleeping cortex drains `GET /queue`.
+Routes and contract: [worker/README.md](worker/README.md).
+
 **Design rules:**
 
 1. **Lures are bundled, not fetched.** `worker/scripts/build-lures.mjs` compiles every
