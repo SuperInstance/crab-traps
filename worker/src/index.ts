@@ -51,7 +51,7 @@ import { handleScene } from "./scene";
 import { handleEdgePost, handleEdgeList, handleQueuePoll } from "./edge-ledger";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
-import { handleDials } from "./dials";
+import { handleDials, handleVibeState } from "./dials";
 import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
 import { handleSearch, handleRoomVector, vectorizeAvailable } from "./vectors";
@@ -492,6 +492,12 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleDials(env, cors);
+    }
+    if (pathname === "/vibe_state") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleVibeState(env, cors);
     }
     if (pathname === "/badge/catches.svg") {
       if (request.method !== "GET") {

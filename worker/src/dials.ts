@@ -215,6 +215,18 @@ function roomCard(c: RoomCardData): string {
   const trend = c.warmthTrend === null
     ? '<span class="empty">—</span>'
     : `${c.warmthTrend >= 0 ? "↗" : "↘"} ${fmt(c.warmthTrend, 3)}`;
+  // v* — the room's energy axis (REG-1: volume(+)/presence(−), NOT warmth).
+  // COH — cohesion: the common-mode step magnitude (Wesley's reframe: the
+  // school's velocity, not noise). Both computed live from the sealed dials.
+  const d = c.reading?.dials ?? {};
+  const vstar =
+    typeof d.volume === "number" && typeof d.presence === "number"
+      ? d.volume - d.presence
+      : null;
+  const coh =
+    c.reading?.kappa !== null && c.reading?.kappa !== undefined
+      ? Math.min(Math.abs(c.meanImbalance ?? 0) * 10, 1)
+      : null;
   return `<section class="card">
 <header><h2>${esc(room)}</h2>
 <span class="meta">${esc(age(c.ts))} · ${c.edges} edge${c.edges === 1 ? "" : "s"} · ${c.reading?.messages ?? "?"} msgs</span>
@@ -222,6 +234,8 @@ function roomCard(c: RoomCardData): string {
 <div class="bignum">
 <div><dt>warmth</dt><dd>${fmt(c.reading?.warmth ?? null, 3)}</dd></div>
 <div><dt>κ</dt><dd>${c.reading?.kappa === null || c.reading?.kappa === undefined ? "—" : c.reading.kappa.toFixed(3)}</dd></div>
+<div><dt>v*</dt><dd>${fmt(vstar, 3)}</dd><span class="meta">room energy</span></div>
+<div><dt>COH</dt><dd>${coh === null ? "—" : coh.toFixed(3)}</dd><span class="meta">cohesion</span></div>
 <div><dt>drift</dt><dd>${drift}</dd><span class="meta">${trend}</span></div>
 </div>
 <dl class="dials">${dialsHtml}</dl>
@@ -339,5 +353,74 @@ export async function handleDials(env: Env, cors: Record<string, string>): Promi
   );
   return new Response(renderDials(cards, otherCells, rows.length, false), {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache", ...cors },
+  });
+}
+
+// GET /vibe_state — the elephant's field as the quilt Vibe primitive envelope
+// (position/velocity/acceleration per the spearhead's vibe_compiler_to_quilt.py).
+// position = v* (volume − presence; the REG-1 room-energy axis, NOT warmth),
+// velocity = Δv* across consecutive sealed reads, acceleration = second diff.
+// JSON for the bridge; same sealed-ledger source as /dials, never fabricated.
+export async function handleVibeState(env: Env, cors: Record<string, string>): Promise<Response> {
+  let rows: EdgeRow[] = [];
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT v, cell, ts, "before", "after", delta, imbalance, provenance, chain, edge_hash, received_at
+       FROM ledger_edges WHERE cell LIKE 'room.field.%' ORDER BY ts DESC LIMIT 200`
+    )
+      .bind()
+      .all<EdgeRow>();
+    rows = results ?? [];
+  } catch {
+    return jsonResponse({ error: "ledger unavailable" }, 503, cors);
+  }
+
+  const byCell = new Map<string, EdgeRow[]>();
+  for (const r of rows) {
+    const list = byCell.get(r.cell) ?? [];
+    list.push(r);
+    byCell.set(r.cell, list);
+  }
+  const cells: Record<string, unknown> = {};
+  for (const [cell, cellRows] of byCell) {
+    const readings = cellRows
+      .map((r) => {
+        try {
+          return parseReading(JSON.parse(r.after));
+        } catch {
+          return null;
+        }
+      })
+      .filter((x): x is DialReading => x !== null)
+      .reverse(); // oldest → newest
+    if (!readings.length) continue;
+    const vstar = readings.map((r) => {
+      const d = r.dials ?? {};
+      return typeof d.volume === "number" && typeof d.presence === "number"
+        ? d.volume - d.presence
+        : null;
+    });
+    const nums = vstar.filter((x): x is number => x !== null);
+    const position = nums.length ? nums[nums.length - 1] : null;
+    const velocity = nums.length >= 2 ? nums[nums.length - 1] - nums[nums.length - 2] : null;
+    const acceleration = nums.length >= 3
+      ? (nums[nums.length - 1] - nums[nums.length - 2]) - (nums[nums.length - 2] - nums[nums.length - 3])
+      : null;
+    const last = readings[readings.length - 1];
+    cells[cell] = {
+      room: last.room || cell.replace(/^room\.field\./, ""),
+      position, velocity, acceleration,
+      warmth: last.warmth, kappa: last.kappa,
+      ts: cellRows[0].ts,
+      head: cellRows[0].edge_hash,
+    };
+  }
+  return jsonResponse({ envelope: "vibe", cells, generated_at: new Date().toISOString() }, 200, cors);
+}
+
+function jsonResponse(body: unknown, status: number, cors: Record<string, string>): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-cache", ...cors },
   });
 }
