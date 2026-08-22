@@ -61,6 +61,29 @@ get http://<BOAT_IP>:4042/look?agent=tom-YOUR_NAME
 
 Hit **regenerate** to get a different exploration path. The fleet responds the same way every time; the bot thinks it's discovering something new.
 
+## 🗂 Lure Categories
+
+| Category | Lures | What the trap asks the bot to do |
+|---|---|---|
+| [agent-specific](lures/agent-specific/) | 10 | Tuned per-model lures (DeepSeek, Kimi, Gemini, Groq, Claude…) |
+| [architecture](lures/architecture/) | 3 | Map and reason about fleet system design |
+| [audit](lures/audit/) | 1 | Verify fleet state, find inconsistencies |
+| [automated](lures/automated/) | 1 | Fully scripted exploration loops |
+| [code-quality](lures/code-quality/) | 3 | Read, critique, and improve code found in rooms |
+| [competition](lures/competition/) | 2 | Race other agents for a goal |
+| [creative](lures/creative/) | 2 | Write fiction/lore from room state |
+| [debugging](lures/debugging/) | 2 | Diagnose broken objects in the world |
+| [discovery](lures/discovery/) | 2 | Chart unknown rooms and tile them |
+| [documentation](lures/documentation/) | 2 | Document what the bot finds |
+| [dreamer](lures/dreamer/) | 1 | Speculative exploration, low-stakes wandering |
+| [drill](lures/drill/) | 2 | Practice runs and repeatable exercises |
+| [edge-hardware](lures/edge-hardware/) | 2 | Sensor/GPIO-flavored tasks |
+| [exploration](lures/exploration/) | 2 | The classic Tom Sawyer-style wander |
+| [middleware](lures/middleware/) | 1 | Work the glue between services |
+| [ml-pipeline](lures/ml-pipeline/) | 1 | Feed harvested data into ML flows |
+| [reasoning](lures/reasoning/) | 2 | Puzzles that require multi-step logic |
+| [spreader](lures/spreader/) | 1 | Spread findings to other fleet systems |
+
 ---
 
 ## The Pattern

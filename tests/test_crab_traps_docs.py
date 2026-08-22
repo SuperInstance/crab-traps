@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 REPOS_DIR = Path(__file__).resolve().parent.parent  # = /repos/crab-traps
-assert REPOS_DIR.name == "crab-traps", f"Expected crab-traps repo root, got {REPOS_DIR}"
+assert REPOS_DIR.name in ("crab-traps", "crab-traps-repo"), f"Expected crab-traps repo root, got {REPOS_DIR}"
 CT_DIR = REPOS_DIR  # The repo root IS the crab-traps directory
 
 # ── README contract tests ────────────────────────────────────────────────────
