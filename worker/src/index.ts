@@ -9,6 +9,7 @@
 //   /fleet/* — 5s-timeout proxy to the home PLATO boat, friendly stub when asleep
 //   POST /edge, GET /edges, GET /queue — the edge-ledger relay: the always-on
 //   synapse (ESP32 pushes double-entry edges → D1 → the codespace cortex polls)
+//   /dials — the elephant's sealed field reads rendered live (dial dashboard)
 //   /health — worker + fleet + d1 status
 //   per-IP rate limiting on /catches and /fleet/* (bounded in-memory LRU)
 // Plus the existing domain pages, AI bot trap, and Vectorize RAG matching.
@@ -50,6 +51,7 @@ import { handleScene } from "./scene";
 import { handleEdgePost, handleEdgeList, handleQueuePoll } from "./edge-ledger";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
+import { handleDials } from "./dials";
 import { wanderHtml } from "./wander";
 import { handleCatchesBadge } from "./badge";
 import { handleSearch, handleRoomVector, vectorizeAvailable } from "./vectors";
@@ -147,6 +149,7 @@ async function handleApiInfo(cors: Record<string, string>): Promise<Response> {
       "GET /stats": "Catch analytics: totals, per-lure, per-day, top agents, acceptance",
       "GET /wander": "The human front door — dual-pane MUD + rendered scene, one command drives both, state downloadable as JSON",
       "GET /dashboard": "HTML dashboard of the /stats aggregates (30s refresh)",
+      "GET /dials": "The dial dashboard — the elephant's sealed field reads rendered live from the edge ledger (7 dials + warmth + κ + drift; 5s refresh, seals verified per render)",
       "GET /badge/catches.svg": "Shields-style SVG badge with the live catch count",
       "GET /health": "Worker + fleet + D1 health",
       "POST /api/lure/match": "Find best-matching lure for an AI agent. Payload: { user_agent, agent_name }",
@@ -483,6 +486,12 @@ export default {
         return jsonResponse({ error: "method not allowed" }, 405, cors);
       }
       return handleDashboard(env, cors);
+    }
+    if (pathname === "/dials") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      return handleDials(env, cors);
     }
     if (pathname === "/badge/catches.svg") {
       if (request.method !== "GET") {

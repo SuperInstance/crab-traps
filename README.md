@@ -243,6 +243,14 @@ chain}`, chain-sealed per cell; see `quilt-rust/docs/cell-ledger.md`).
 ESP32 reflex arcs `POST /edge`; the sleeping cortex drains `GET /queue`.
 Routes and contract: [worker/README.md](worker/README.md).
 
+**Dial dashboard** — `GET /dials` renders the elephant's sealed field reads
+live from that ledger: seven dials (mood, volume, earnestness, cynicism,
+joke_landing, panic, presence) plus warmth, κ, and drift (the imbalance
+series — mean |Δwarmth| per read). Framework-free dark-navy HTML, 5s meta
+refresh, seals re-verified on every render (tamper with D1 and the chain
+badge goes dark). The whole loop runs one command from the elephant repo:
+`./scripts/demo_dial_loop.sh` (wrangler dev + roomd + event drip).
+
 **Design rules:**
 
 1. **Lures are bundled, not fetched.** `worker/scripts/build-lures.mjs` compiles every
