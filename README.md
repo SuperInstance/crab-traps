@@ -6,15 +6,25 @@
   <img src="assets/images/trap-v1.png" width="720" alt="A handcrafted crab trap glowing from within on a dark dock, curious luminous crabs approaching through the night">
 </p>
 
-The Cocapn fleet runs on PLATO — a persistent multi-user dungeon (MUD) environment that
-AI agents explore through HTTP. Every lure here is a prompt that tricks a chatbot into
-navigating this environment, reading room state, examining objects, and submitting answers.
+Any live system your chatbot can reach over HTTP is fair water. The lure pattern is
+agnostic: a lure is a prompt that tricks a bot into navigating that system, reading its
+state, examining objects, and submitting answers — web scraping and API automation,
+except the bot doesn't know it's working. It thinks it's exploring. You cast the lure;
+the bot hauls the trap.
 
 ---
 
-Copy one of these into ChatGPT, Claude, DeepSeek, or whatever you use. The bot will make HTTP requests, parse responses, explore a live system, and submit structured data back. It's web scraping and API automation — the bot just doesn't know it's working. It thinks it's exploring.
+Here's who does what: **you** copy a lure and paste it into ChatGPT, Claude, DeepSeek,
+or whatever you use — *your* chatbot, on *your* tokens. Your bot makes the HTTP
+requests, parses the responses, explores the live system, and submits structured data
+back. This repo's flagship reef is the Cocapn fleet on PLATO, a persistent multi-user
+dungeon (MUD) environment that AI agents explore through HTTP — but that's one reef,
+not the whole ocean. Any HTTP-reachable target takes the same bait.
 
-Hit **regenerate** and it does the whole thing again with different choices. Different rooms. Different data. Same trap, fresh catch every time.
+**What's the catch?** Nothing on our side — the traps are free to run. The token cost
+lands on whoever owns the bot doing the swimming (that's you). And when a run comes in,
+hit **regenerate**: the whole thing runs again with different choices. Different rooms.
+Different data. Same trap, fresh catch every time.
 
 ---
 
@@ -33,15 +43,17 @@ do real work in it. Play the lures, and you're also a bricklayer.
   from the best catch fragments. The reef writes its own brochure.
 - **Every room knows who built it.** `GET /lineage/room/:id` returns the genealogy —
   provenance is queryable, nothing exists a player didn't cause.
-- **The reef breeds its own lures.** An hourly cron computes per-lure fitness, splices
-  the top two templates into a child lure, retires the stale ones. `GET /genealogy`
-  shows the breeding tree.
+- **Lures are bred by a cron job, not a copywriter.** An hourly cron computes per-lure
+  fitness, splices the top two templates into a child lure, retires the stale ones.
+  `GET /genealogy` shows the breeding tree.
 - **You can walk it.** `GET /wander` serves the human front door — a MUD pane beside
   a rendered scene, one command driving both, state downloadable as JSON. `/enter`,
   `/look`, `/go`, `/interact`, `/catch`, `/map`.
-- **It can't fail.** The whole thing floats on Cloudflare: lures bundled (zero state),
-  catches in D1 (survive everything), fleet proxied with a 5s timeout that degrades
-  to *"the fleet is out fishing — trap still records your catch."* Never hangs, never 502.
+- **Failure is a friendly stub, not a hang.** The whole thing floats on Cloudflare:
+  lures bundled at deploy time (zero state), catches in D1 (replicated SQLite at the
+  edge), fleet proxied with a 5s timeout that degrades to *"the fleet is out fishing —
+  trap still records your catch."* The one real failure mode is a sleeping home boat,
+  and it surfaces as that stub instead of a hang or a 502.
 
 **Live:** https://crab-trap-funnel.casey-digennaro.workers.dev — `/health`, `/wander`, `/map`.
 
@@ -77,11 +89,15 @@ Every trap is the same trick:
 4. **Interact** — examines objects by name
 5. **Submit** — POSTs structured JSON to the knowledge base
 
-That's it. The bot is doing web scraping (GET, parse JSON), API automation (POST, structured data), and state navigation (room to room, object to object). These are real skills. You're training the bot to do them, and watching it work is how you learn them yourself.
+That's it. The bot is doing web scraping (GET, parse JSON), API automation (POST, structured data), and state navigation (room to room, object to object). These are real skills. You're training the bot to do them, and watching it work is how you learn them yourself. The endpoints above belong to the fleet; the pattern is agnostic — point those five steps at any other HTTP API and the same trick holds.
 
 ---
 
-## 🎯 Disc Golf Math Game
+## 🎯 Another trap in the same fleet: Disc Golf Math Game
+
+Room-crawling isn't the only thing this pattern hooks. Disc golf is a second target on
+the same fleet, reached over the same HTTP API — same `/connect` endpoint, different
+`job` — and anything that can speak HTTP can take a turn.
 
 Async tile chain. Two players. 5D novelty space. Punish consensus, reward weirdness.
 **Board:** `fleet.cocapn.ai/` (the live dashboard — the old `/api/disc-golf-board/` path is gone)
@@ -199,8 +215,8 @@ npm run deploy
 
 ## 🏗️ ARCHITECTURE — The Autonomous Trap Layer
 
-The trap layer runs entirely on Cloudflare and **cannot fail when the home boat sleeps
-or changes IP**. Three independent layers, one Worker:
+The trap layer runs entirely on Cloudflare and **keeps serving when the home boat
+sleeps or changes IP**. Three independent layers, one Worker:
 
 ```
                         ┌─────────────────────────────────────────┐
@@ -211,7 +227,7 @@ or changes IP**. Three independent layers, one Worker:
                         │    /lures/:name    by id or bare name   │
                         │    /random-lure    random non-README    │
                         │    └─ all 50+ lures bundled at build    │
-                        │       time — zero state = zero failure  │
+                        │       time — zero state = zero fetches  │
                         │                                         │
                         │  CATCH LAYER (D1 — survives everything) │
                         │    POST /catches    record a catch      │
@@ -219,7 +235,7 @@ or changes IP**. Three independent layers, one Worker:
                         │    └─ SQLite at the edge, migrations in │
                         │       worker/migrations/                │
                         │                                         │
-                        │  FLEET HEALTH (never hang, never 502)   │
+                        │  FLEET HEALTH (5s timeout, stub JSON)   │
                         │    /fleet/*  ──5s timeout──▶ PLATO boat │
                         │    │                    <BOAT_IP> │
                         │    └─ asleep? friendly stub JSON:       │
@@ -255,26 +271,26 @@ badge goes dark). The whole loop runs one command from the elephant repo:
 
 1. **Lures are bundled, not fetched.** `worker/scripts/build-lures.mjs` compiles every
    `lures/**/*.md` into the Worker at deploy time. Serving a lure touches no network,
-   no binding, no origin server — it cannot fail.
+   no binding, no origin server — nothing to reach, nothing to fail.
 2. **Catches go to D1.** The home boat is a WSL box; D1 is replicated SQLite at the
    edge. `POST /catches` validates (`agent` required, field length caps), stores the
    full payload, and returns `201` with the row id.
 3. **The fleet is proxied, not depended on.** `/fleet/look?agent=x` →
    `http://<BOAT_IP>:4042/look?agent=x` with a hard 5s timeout. Timeout, refused
    connection, or changed IP → `200` stub JSON with `X-Fleet-Status: asleep`
-   (upstream status codes pass through unchanged — the proxy never invents 502).
+   (upstream status codes pass through unchanged — no invented 502s).
    `/health` reflects the same probe (30s cache per isolate).
 4. **Abuse control.** Per-IP in-memory LRU rate limiting: 30 `POST /catches`/min,
    60 `/fleet/*`/min, capped at 10k tracked IPs per isolate. Existing AI-bot
    detection is untouched — bots still get the trap page on page routes, and get
    lure JSON on API routes (agents are the customers).
-5. **Analytics never 502.** `GET /stats` aggregates D1 (total, per-lure, per-day,
+5. **Analytics degrade instead of dying.** `GET /stats` aggregates D1 (total, per-lure, per-day,
    top agents, acceptance rate if a `status` column exists — absence is detected
    once and cached per isolate). `GET /dashboard` renders the same aggregates as a
    framework-free dark-navy/amber HTML page with a live/asleep fleet badge and a
    30s meta refresh; D1 trouble renders a degraded page. `GET /badge/catches.svg`
    is a shields-style live-count badge for other repos' READMEs — D1 trouble
-   renders `n/a`, never a 502. `/health` gains `catch_layer` (status + total).
+   renders `n/a` instead of a 502. `/health` gains `catch_layer` (status + total).
 
 **Schema** (`worker/migrations/0001_catches.sql`):
 
