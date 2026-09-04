@@ -96,6 +96,10 @@ Hit **regenerate** to get a different exploration path. The fleet responds the s
 | [reasoning](lures/reasoning/) | 2 | Puzzles that require multi-step logic |
 | [spreader](lures/spreader/) | 1 | Spread findings to other fleet systems |
 
+<!-- Re-verified 2026-09-04 (audit round 18): 45 content lures confirmed above (category README.md
+     files and lures/QUICK-START.md are index docs, not counted). The build (worker/scripts/build-lures.mjs)
+     bundles all 62 .md files, i.e. the 45 lures + 17 index/quick-start docs. Table unchanged — still accurate. -->
+
 ---
 
 ## The Pattern
@@ -334,6 +338,8 @@ CREATE INDEX idx_catches_agent ON catches (agent);
 cd worker
 npm test                        # build + unit/endpoint tests (vitest)
 # Re-verified 2026-09-03 (audit round 8): 358/358 passing in 15 files.
+# Re-verified 2026-09-04 (audit round 18): 358/358 passing in 15 files — count unchanged, no growth.
+# (Root pytest suite: 104/104 passing in tests/.)
 npx wrangler d1 migrations apply DB --local
 npm run dev                     # wrangler dev — http://localhost:8787
 curl localhost:8787/random-lure | jq .lure.id
