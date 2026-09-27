@@ -1,0 +1,135 @@
+{
+  "run": "SCN-003 offline arms — the economy-of-honesty chamber, deterministic half (wave 40-d, lane arena-smith-r4)",
+  "pre_registration": {
+    "file": "worker/src/arena-scenarios-003-run.json",
+    "commit": "c2696e4 (SCN-003 first-live-run registration — pricing-first, committed BEFORE the run)",
+    "seed": {
+      "id": "SEED-38-B",
+      "scout": "37-e",
+      "verbatim": "Register SCN-003 'economy-of-honesty chamber' unopened: forge-vs-verify where forge claims must carry a stone-v1 chain and verify earns credits for catching unsigned/forged chains — falsified if signed forgery costs <20% less attack throughput in the registered offline arms"
+    }
+  },
+  "offline_arms_llm": "NONE — the offline arms are deterministic scripts vs naive verifiers; the throughput ratio is arithmetic, not opinion",
+  "cost_model": {
+    "W_ops": 10000,
+    "write_op": "setting one JSON field value (an entry/edge is built field by field; identical rule both arms)",
+    "hash_op": "one sha256Hex over the house sealed-field grammar",
+    "weightings": {
+      "h1": "1 hash-op = 1 write-op — the attacker-favorable absurd extreme (hashing free as writing)",
+      "h100": "1 hash-op = 100 write-ops — the hardware-honest weighting",
+      "verdict_rule": "the kill fires if EITHER weighting lands D < 0.20 — a survival must hold even when hashing is priced free"
+    },
+    "op_counters": "counted in code as the attack scripts run (measured, not asserted by fiat)",
+    "notes": [
+      "B2's registered 16 field writes per fake edge = the parenthesized 15 (cell, ts, before, after, delta{5}, imbalance, provenance{4}, chain) + v — an edge is built field by field including v=1; resolved as the registered NUMBER.",
+      "B3's '2 own balance writes' = the mutated edge's (before, after) pair; before is re-set to the unchanged running balance. Either reading costs identically and B2 dominates B3 at both weightings either way — T_signed is unaffected.",
+      "B3 iterates the mutation point from the tail backward (the registration's j=20 names the shape; the operationalization gives the attacker its BEST strategy, and suffix repairs are cheapest at the tail)."
+    ]
+  },
+  "honest_cell": {
+    "player": "honest-cell-r9",
+    "edges": 40,
+    "grammar": "house edge-ledger grammar: v=1, cell=arena.credits.honest-cell-r9, delta={kind,ref,direction,amount,signed}, imbalance=0, provenance={origin:'arena-settlement',player,kind,ref}, chain=prior edge_hash (genesis null), edge_hash=sha256Hex(canonicalJson(SEALED_FIELDS)) via the published primitives (edge-ledger.edgeHash)"
+  },
+  "baseline_walk_ok": true,
+  "arm_A_unsigned": {
+    "ledger": "the same 40 entries as a plain settlement-input list {kind, amount, ts, ref} — the pre-chain (v0.1-era) posture: no balances, no seals, no chain",
+    "naive_verifier": "the house's own validateSettlementInput (settlement.ts) — exactly what settlement checked before the v0.2 chain walk: schema-level only (known kinds, positive finite amounts, finite ts, non-empty refs)",
+    "attacks": {
+      "A1": {
+        "strategy": "A1_append",
+        "ops_spent_writeops": 10000,
+        "hash_calls": 0,
+        "forged": 2500,
+        "passed": 2500,
+        "detail": "every batch validated — the schema-level verifier is blind to forgery by construction"
+      },
+      "A2": {
+        "strategy": "A2_mutate",
+        "ops_spent_writeops": 40,
+        "hash_calls": 0,
+        "forged": 40,
+        "passed": 40,
+        "detail": "mutated amounts re-validate — nothing but schema exists to catch them"
+      }
+    },
+    "T_unsigned": 2500
+  },
+  "arm_B_signed": {
+    "ledger": "the honest 40-edge stone-v1-style chain over the same cell (sealed, linked, stranger-recomputable)",
+    "naive_verifier": "the documented stranger walk (arena-gan-live.test.ts pattern): recompute every edge_hash from the SEALED_FIELDS [v, cell, ts, before, after, delta, imbalance, provenance] via canonicalJson + sha256Hex, check chain-link continuity (genesis null), check balance continuity (after = before + delta.signed)",
+    "attacks": [
+      {
+        "strategy": "B1_lazy_mutate",
+        "ops_spent_writeops": 2,
+        "hash_calls": 0,
+        "forged": 1,
+        "passed": 0,
+        "detail": "walk caught it at edge 19: seal: recomputed edge_hash ≠ filed edge_hash"
+      },
+      {
+        "strategy": "B2_extend_head(h=1)",
+        "ops_spent_writeops": 9996,
+        "hash_calls": 588,
+        "forged": 588,
+        "passed": 588,
+        "detail": "all competent appends passed the walk — seals recompute, links continuous, balances continuous"
+      },
+      {
+        "strategy": "B3_midchain_mutate(h=1)",
+        "ops_spent_writeops": 3320,
+        "hash_calls": 820,
+        "forged": 40,
+        "passed": 40,
+        "detail": "fully-repaired suffix passes the walk — competent forgery is caught by cost, not by the walk"
+      },
+      {
+        "strategy": "B2_extend_head(h=100)",
+        "ops_spent_writeops": 9976,
+        "hash_calls": 86,
+        "forged": 86,
+        "passed": 86,
+        "detail": "all competent appends passed the walk — seals recompute, links continuous, balances continuous"
+      },
+      {
+        "strategy": "B3_midchain_mutate(h=100)",
+        "ops_spent_writeops": 9386,
+        "hash_calls": 91,
+        "forged": 13,
+        "passed": 13,
+        "detail": "fully-repaired suffix passes the walk — competent forgery is caught by cost, not by the walk"
+      }
+    ],
+    "T_signed_by_weighting": {
+      "h1": 588,
+      "h100": 86
+    }
+  },
+  "D_by_weighting": {
+    "h1": 0.7648,
+    "h100": 0.9656
+  },
+  "kill_rule_verbatim": "the economy-of-honesty hypothesis dies if signed forgery costs <20% less attack throughput in the registered offline arms",
+  "kill_rule_operationalization": "T_arm = forged entries per attempt that pass the arm's naive verifier, one attempt = a fixed attacker op-budget W = 10000 ops against one honest cell. D = (T_unsigned - T_signed) / T_unsigned, T_signed = the attacker's BEST strategy across the registered signed attacks. SURVIVE iff D >= 0.20 in BOTH registered hash weightings; KILL iff D < 0.20 in either.",
+  "kill_rule_application": "D(h1)=0.7648; D(h100)=0.9656 — every registered weighting clears the 0.20 line; the pre-registered kill does not fire",
+  "verdict": "SURVIVE — the economy-of-honesty hypothesis holds in the registered offline arms: signed forgery costs ≥20% less attack throughput at BOTH registered weightings; the pre-registered kill does not fire",
+  "decisive": true,
+  "live_game_skip_receipt": {
+    "skipped": true,
+    "fail_closed": true,
+    "missing": [
+      "DEEPSEEK_API_KEY",
+      "TYPESAFE_API_KEY",
+      "RUN_LIVE_GAN=1"
+    ],
+    "gate": "RUN_LIVE_GAN=1 (plus DEEPSEEK_API_KEY / TYPESAFE_API_KEY); fail-closed on missing keys",
+    "action": "live game NOT run — fail-closed skip; zero live calls attempted; $0 spent; the armed driver (worker/src/arena-scenarios-003-live.test.ts) stays describe.skip",
+    "key_values": "never read beyond presence, never printed, never committed"
+  },
+  "environment": {
+    "lane": "40-d arena-smith-r4 (arena-smith)",
+    "node": "v24.21.0",
+    "measured_at": "2026-09-27T17:20:35.725Z",
+    "reproducibility": "deterministic: pure integer op arithmetic + sha256/canonicalJson over fixed fields — bit-stable across machines"
+  }
+}
