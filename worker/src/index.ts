@@ -9,6 +9,9 @@
 //   /fleet/* — 5s-timeout proxy to the home PLATO boat, friendly stub when asleep
 //   POST /edge, GET /edges, GET /queue — the edge-ledger relay: the always-on
 //   synapse (ESP32 pushes double-entry edges → D1 → the codespace cortex polls)
+//   /.well-known/crab-plaque, /arena/* — arena v0: the honest crab-trap (plaque
+//   door, enter handshake, scenarios 001/002, crab-credits rates, settlement,
+//   tarpit shell)
 //   /dials — the elephant's sealed field reads rendered live (dial dashboard)
 //   /health — worker + fleet + d1 status
 //   per-IP rate limiting on /catches and /fleet/* (bounded in-memory LRU)
@@ -56,6 +59,7 @@ import {
   handleArenaCredits,
   handleArenaTarpit,
 } from "./arena";
+import { handleSettlementPost } from "./settlement";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
 import { handleDials, handleVibeState } from "./dials";
@@ -78,6 +82,8 @@ const REEF_LIMITER = new RateLimiter(10_000, 60_000, 120);
 const EDGE_LIMITER = new RateLimiter(10_000, 60_000, 300);
 // Arena handshakes are rare by nature — 12/min per IP is generous.
 const ARENA_LIMITER = new RateLimiter(10_000, 60_000, 12);
+// Credit settlements are per-session reconciles — 20/min per IP, still bounded.
+const SETTLE_LIMITER = new RateLimiter(10_000, 60_000, 20);
 
 interface QueryMatch {
   id: string;
@@ -417,6 +423,14 @@ export default {
       return handleArenaScenario(pathname.slice("/arena/scn/".length), cors);
     }
     if (pathname === "/arena/credits") return handleArenaCredits(cors);
+    if (pathname === "/arena/settle") {
+      if (request.method !== "POST") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      const limited = rateLimited(SETTLE_LIMITER.check(getClientIp(request)));
+      if (limited) return limited;
+      return handleSettlementPost(request, env, cors);
+    }
     if (pathname === "/arena/tarpit") return handleArenaTarpit(url, cors);
 
     // --- Reef layer: the self-building world (D1 rooms/objects/edges) ---

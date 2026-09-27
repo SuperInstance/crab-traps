@@ -190,6 +190,43 @@ describe("POST /arena/enter — the session-zero handshake", () => {
   });
 });
 
+// ── The opt-out: the breeding loop is bound at the door ─────────────────────
+
+describe("POST /arena/enter — breeding_opt_out on the receipt (v0.1)", () => {
+  async function enterWith(extra: Record<string, unknown>, player = "breeder-1"): Promise<Response> {
+    const seal = await plaqueSeal();
+    return call("/arena/enter", {
+      method: "POST",
+      body: JSON.stringify({ ack: seal, player, ...extra }),
+    });
+  }
+
+  it("records a falsy default when the field is absent", async () => {
+    const res = await enterWith({});
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.breeding_opt_out).toBe(false);
+    const insert = db.statements.find((s) => s.sql.includes("INSERT INTO arena_sessions"))!;
+    expect(insert.sql).toContain("breeding_opt_out");
+    expect(insert.bindings[4]).toBe(0);
+  });
+
+  it("records the opt-out when the operator sends breeding_opt_out: true", async () => {
+    const res = await enterWith({ breeding_opt_out: true }, "breeder-2");
+    expect(res.status).toBe(200);
+    const body = await json(res);
+    expect(body.breeding_opt_out).toBe(true);
+    const insert = db.statements.find((s) => s.sql.includes("INSERT INTO arena_sessions"))!;
+    expect(insert.bindings[4]).toBe(1);
+  });
+
+  it("only an exact boolean true opts out — 'true' the string records falsy", async () => {
+    const res = await enterWith({ breeding_opt_out: "true" }, "breeder-3");
+    expect(res.status).toBe(200);
+    expect((await json(res)).breeding_opt_out).toBe(false);
+  });
+});
+
 // ── The tank: scenarios and credits ─────────────────────────────────────────
 
 describe("GET /arena/scn/001 — the GAN chamber", () => {

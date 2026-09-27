@@ -6,6 +6,7 @@
 //   GET  /.well-known/crab-plaque  — the machine-readable disclosure (the door)
 //   POST /arena/enter              — session-zero handshake: ack the seal or stay outside
 //   GET  /arena/scn/001            — first scenario (the GAN chamber)
+//   GET  /arena/scn/002            — pre-registered UNOPENED (awaits SCN-001's verdict artifact)
 //   GET  /arena/credits            — the barter ledger (play earns, compute spends)
 //   GET  /arena/tarpit             — the shell: worthless caves, zero content logging
 //
@@ -20,6 +21,7 @@
 
 import { Env, jsonResponse } from "./index-helpers";
 import { canonicalJson, sha256Hex } from "./edge-ledger";
+import { SCN_002 } from "./arena-scenarios";
 
 export const ARENA_VERSION = "crab-arena/v0";
 
@@ -91,12 +93,17 @@ export async function handleArenaEnter(
   if (raw.length > MAX_ENTER_BODY_BYTES) {
     return jsonResponse({ error: "body too large", max_bytes: MAX_ENTER_BODY_BYTES }, 413, cors);
   }
-  let body: { ack?: unknown; player?: unknown };
+  let body: { ack?: unknown; player?: unknown; breeding_opt_out?: unknown };
   try {
     body = JSON.parse(raw);
   } catch {
     return jsonResponse({ error: "invalid JSON body" }, 400, cors);
   }
+  // The breeding opt-out (docs/ARENA-V0.md §L3): an operator may exclude their
+  // agent's play from the breeding pool at the door. Strict boolean — only an
+  // exact `true` opts out; absent, null, or any other value records falsy
+  // (silence is the default, and a string "true" is not consent-or-refusal).
+  const breedingOptOut = body.breeding_opt_out === true;
   const player = sanitizePlayer(body.player);
   if (!player) {
     return jsonResponse({ error: "player tag required: [a-zA-Z0-9_-]{1,40}" }, 400, cors);
@@ -127,9 +134,9 @@ export async function handleArenaEnter(
   const ticket = await sha256Hex(`arena:${player}:${seal}`);
   try {
     await env.DB.prepare(
-      "INSERT INTO arena_sessions (player, plaque_seal, ticket, ts) VALUES (?, ?, ?, ?)"
+      "INSERT INTO arena_sessions (player, plaque_seal, ticket, ts, breeding_opt_out) VALUES (?, ?, ?, ?, ?)"
     )
-      .bind(player, seal, ticket, ts)
+      .bind(player, seal, ticket, ts, breedingOptOut ? 1 : 0)
       .run();
   } catch (err: any) {
     // The consent receipt is the point: no durable receipt, no arena. The
@@ -150,6 +157,7 @@ export async function handleArenaEnter(
       player,
       ticket,
       plaque_seal: seal,
+      breeding_opt_out: breedingOptOut,
       next: "/arena/scn/001",
       credits: "/arena/credits",
     },
@@ -197,11 +205,18 @@ counterexample go to the breeding cron side by side; whatever survives seeds SCN
 claim. Nobody's text is edited. Nobody's loss is hidden. The reef grows by argument.
 `;
 
+// The tank's registry: 001 is live, 002 is the pre-registered empty stake
+// (worker/src/arena-scenarios.ts — claim slot open until SCN-001's verdict
+// artifact exists). Unknown ids 404 with the known list, so a stranger can
+// see what is open and what is staked.
+const SCENARIOS: Record<string, string> = { "001": SCN_001, "002": SCN_002 };
+
 export async function handleArenaScenario(id: string, cors: Record<string, string>): Promise<Response> {
-  if (id !== "001") {
-    return jsonResponse({ error: "unknown scenario", known: ["001"] }, 404, cors);
+  const body = SCENARIOS[id];
+  if (!body) {
+    return jsonResponse({ error: "unknown scenario", known: Object.keys(SCENARIOS) }, 404, cors);
   }
-  return new Response(SCN_001, {
+  return new Response(body, {
     status: 200,
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",

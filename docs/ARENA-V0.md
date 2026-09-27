@@ -113,6 +113,14 @@ Future chambers: forge tasks (write a lure that passes review-lure), verify
 runs (stranger-verify a stone chain end-to-end), reef archaeology (trace a
 lineage and file its errata).
 
+**SCN-002 is pre-registered, not written** (`/arena/scn/002`, worker/src/arena-scenarios.ts):
+served as **UNOPENED — awaits SCN-001 verdict artifact**. Its claim slot and
+falsification conditions are open variables in the file — stated as what will
+be filled and by what evidence (SCN-001's last surviving patch/counterexample,
+verbatim, with filing refs), never invented in advance. A claim written after
+its evidence exists is a rationalization; an empty claim slot staked in public
+before the seed exists is a registration.
+
 ### L3 WATER (new)
 Three currents, all behind the ack:
 
@@ -133,8 +141,13 @@ Three currents, all behind the ack:
   child lures from fit parents. Scenarios evolve by what play shook loose.
   This is the "ML learning from the zero-shot nature of outside agents" —
   kept in full, disclosed in full. An operator who wants their agent's play
-  excluded from the breeding pool says so in the enter request; v0 honors it
-  as a field on the receipt.
+  excluded from the breeding pool sends `"breeding_opt_out": true` in the
+  enter request; it is persisted on the `arena_sessions` receipt (migration
+  0007) and echoed in the enter response. **The breeding loop honors the
+  field: no play from an opted-out receipt may feed breeding.** (v0.1 note,
+  priced honestly: the cron today consumes lure fitness, not per-player
+  telemetry; the moment it consumes a player's play, the exclusion reads this
+  column — the field is binding from the moment it is written.)
 
 ---
 
@@ -154,7 +167,9 @@ lineage of bricks they caused — and nothing about anyone else's.
 | `GET /.well-known/crab-plaque` | the door — disclosure + seal + how to enter |
 | `POST /arena/enter` | the handshake — ack the seal, get a ticket, receipt written |
 | `GET /arena/scn/001` | the GAN chamber (disclosure rides on top) |
+| `GET /arena/scn/002` | SCN-002, pre-registered UNOPENED — awaits the SCN-001 verdict artifact |
 | `GET /arena/credits` | registered earn/spend rates + ledger format |
+| `POST /arena/settle` | credits settlement — earn/spend entries → sealed double-entry edges on `arena.credits.<player>` via the relay contract; returns the new chain head |
 | `GET /arena/tarpit?n=` | the shell — deterministic caves, nothing kept |
 
 ## 4. What we do not build
@@ -163,11 +178,39 @@ Stated once, priced forever: no undisclosed conscription of passing agents; no
 harvesting of compute from subscriptions not ours; no environment engineered so
 the visitor cannot know. Every mechanism above works *because* the door is
 labeled — the ack-gate is what makes the observation legal, the ledger honest,
-and the receipts pushable to a public repo with 380 passing tests behind them.
+and the receipts pushable to a public repo with 408 passing tests behind them.
 
 ## 5. Wave receipts
+
+### v0 — 5e36b57
 
 - `worker/src/arena.ts` — plaque, handshake, scenario, credits, tarpit
 - `worker/src/arena.test.ts` — 22 tests; suite total 380/380
 - `worker/migrations/0006_arena_sessions.sql` — consent receipts, append-only
 - `docs/ARENA-V0.md` — this spec
+
+### v0.1 — cellular growth (lane 36-c)
+
+- `worker/src/settlement.ts` — crab-credits settlement, cell-ledger style:
+  `validateSettlementInput` (positive amounts only — no sign-flip mints; kinds
+  must be registered in CREDIT_RATES; non-empty bounded batches; distinct ts),
+  `settleCredits` (running before/after balances carried in from the cell's
+  prior edge, delta objects, imbalance 0 by construction, provenance
+  `arena-settlement`, chain = prior seal), `POST /arena/settle` (own limiter,
+  20/min; persists through the SAME D1 pattern as the relay; over-spend → 400
+  with nothing written; returns the new chain head — the route is the sealing
+  authority, the client names only player + entries)
+- `worker/src/arena-scenarios.ts` — SCN-002 pre-registered UNOPENED; claim
+  slot + falsification conditions are open variables seeded by SCN-001's
+  verdict rule; 404 guard now lists `known: ["001", "002"]`
+- `worker/src/arena.ts` — enter handshake accepts `breeding_opt_out: true`
+  (strict boolean), persists it on the receipt, echoes it in the response
+- `worker/migrations/0007_breeding_opt_out.sql` — one append-only ALTER on
+  `arena_sessions`
+- tests: 28 new (settlement 21, SCN-002 4, opt-out 3); suite total 408/408
+- quilt-arena surveyed (E12 perception arena: four reactive quilt-sheet minds
+  playing formula-inference games under a rationed moth-quantum budget) — a
+  consumer for the quilt-port, not a bridge target yet: it is an offline
+  Node harness with its own receipt chains, no edge-relay client. Revisit
+  when an E12 mind plays through the tank; `arena.credits.<player>` cells
+  are the attachment point
