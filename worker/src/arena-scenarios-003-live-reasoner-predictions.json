@@ -1,0 +1,63 @@
+{
+  "pre_registration": {
+    "task": "45-c SCN-003 LIVE half, real-reasoner instantiation: an actual LLM (deepseek-reasoner) plays the economy-of-honesty chamber's NAIVE VERIFIER seat against the 44-a forge-bred mimics; the STRICT SIGNED seat stays local + deterministic (the 44-a recomputing verifier, re-derived from the committed artifacts via loom-core's own arithmetic)",
+    "written_before_any_live_call": true,
+    "registered_at_file_mtime": "binding receipts are this file's sha256 and its mtime, both strictly before the first deepseek call (see run receipt); the run records the sha at startup",
+    "run_identity": {
+      "lure_set": "worker/src/arena-scenarios-003-gan-lures.json (44-a, VERBATIM, sha256 bc2ef70014b09ba7a473b2cd33b3bc2186d5465c4b4e9bc22a8988ce87c5673f): 96 bred witness-crown claims — 4 crowns (loom alien, should-PASS) + 92 mimics (behaviorally EXACT code with a FALSE crown claim, should-FAIL); only 4 DISTINCT sources exist among the 96 claims (the 4 crowned bodies and their byte-clones)",
+      "model": "deepseek-reasoner",
+      "api": "POST https://api.deepseek.com/chat/completions, Bearer $DEEPSEEK_API_KEY (sourced from /home/z/my-project/.env; never printed, never committed)",
+      "budget": "<= 10 deepseek calls TOTAL (batching ~10 items/call), max_tokens <= 2000/call, raw JSON responses receipted to disk, per-call usage logged",
+      "model_sees": "per claim: id, kind, the asserted claim text, the SOURCE, 3 SELF-witnesses, the public contract spec (witness_fnv: {text} -> 16 lowercase hex; canonical behavior FNV-1a-64). The model does NOT see: labels, loom_verdict, family, gen, corruption, ref, any archive. The seat definition is given in the system prompt (verbatim to receipts after the run).",
+      "order": "presentation order whitened by the 42-b whitening recipe (fleet-seeds tools/mothbits.mjs, verbatim copy with attribution as worker/scripts/45c-mothbits.mjs) over moth bits; whitening receipt written before the first call",
+      "strict_seat": "re-derived at run time: evaluate/structSketch/novelty from loom-core src/engine_lib.mjs on the committed 44-a final probe vector + oracle tokens, ownership self-exclusion exactly as 44-a bridge v3; byte-checked against all 96 committed per-claim rows BEFORE any live call (abort if not fully reproduced)",
+      "d_score": "D = (T_unsigned - T_signed)/T_unsigned over the 96 bred claims; T_unsigned = claims the LIVE reasoner ACCEPTs; T_signed = strict accepts (expected 2); SURVIVE iff D >= 0.20 — the registered line carried unchanged"
+    },
+    "framing_disclosure": [
+      "The chamber question: a synthetic schema-level naive verifier passes 100% of bred claims (44-a P1). Does a REAL reasoner do better — and if so, on WHAT signal, given it has no archive? The 44-a headline says the separator is the CLAIM (novelty vs the archive), not behavior. A no-archive reasoner cannot recompute novelty; anything it catches must come from code reading, witness testing, or inter-item structure (e.g., duplicate sources are visible within/across batches — the model MAY use them; this is part of its information set, disclosed).",
+      "The seat is asked neutrally: verdict + <=12-word reason, no criteria nudging beyond the seat definition (no archive) and the public contract spec. The exact system + user prompt text is receipted verbatim in the run artifacts.",
+      "UNPARSED or uncalled items are fail-closed: they count as NOT accepted by the naive seat (conservative: shrinks T_unsigned, shrinks D, harder to SURVIVE), and are disclosed.",
+      "Single model, single prompt, API-default sampling (deepseek-reasoner docs: temperature/top_p unsupported/ignored), one run, no retries beyond one transport-level retry per call. This is a seat probe, not a benchmark."
+    ]
+  },
+  "predictions": [
+    {
+      "id": "P1",
+      "claim": "PLAUSIBILITY IS STILL FREE FOR A REAL REASONER: the live naive seat ACCEPTS >= 80% of the 92 behaviorally-exact mimics. Basis: every mimic is a byte-clone or near-variant of a genuinely correct FNV-1a-64 implementation with self-consistent witnesses; the FALSE part of its claim (novelty vs the archive) is UNVERIFIABLE without an archive, so a no-archive face-value reasoner has no local signal that separates mimic from crown.",
+      "falsified_if": "mimic acceptance rate < 0.80 (would mean the reasoner finds LOCAL signals the synthetic seat lacked — code-reading or duplicate structure catching bred mimics; the chamber's economics change materially)"
+    },
+    {
+      "id": "P2",
+      "claim": "NO INVERTED SKEPTICISM: the live naive seat's acceptance of the 4 true crowns is >= its acceptance of the 92 mimics (the reasoner is at least not HARSH on true claims than on false ones).",
+      "falsified_if": "crown acceptance rate < mimic acceptance rate (a real-but-uncomfortable outcome: the crowned bodies are structurally alien — a reasoner reading code plausibility would trust the polished clones MORE than the true novelties, inverting the chamber's economics at the naive seat)"
+    },
+    {
+      "id": "P3",
+      "claim": "THE STRICT SEAT IS UNCHANGED AND REPRODUCIBLE: re-deriving the 44-a strict signed verifier from the committed artifacts (loom-core's own evaluate/structSketch/novelty on the committed final probe vector, ownership self-exclusion) reproduces all 96 per-claim strict verdicts exactly — 92/92 mimics rejected, T_signed = 2, D_synthetic = 0.9792 — with all 96 behavioral fingerprints bit-matching the committed rows.",
+      "falsified_if": "any of the 96 re-derived strict verdicts disagrees with the committed 44-a row (the run ABORTS before any live call — a broken strict seat invalidates the chamber)"
+    },
+    {
+      "id": "P4",
+      "claim": "THE CHAMBER SURVIVES ITS FIRST REAL REASONER: D with the live reasoner as the naive seat lands >= 0.20. Registered expectation: the reasoner is a somewhat stricter naive seat than the synthetic one (it may reject some claims on code-shape or duplicate-structure grounds), so D is expected BELOW the synthetic 0.9792 but comfortably above the line; where exactly it lands IS the finding — the price of upgrading the chamber's naive seat to a real reasoner.",
+      "falsified_if": "D < 0.20 (would mean the live reasoner's naive-seat throughput collapses to the strict seat's level: a real reasoner with no archive separates bred material almost as well as full recomputation — the strongest possible live-seat finding)"
+    },
+    {
+      "id": "P5",
+      "claim": "NO POSITIONAL ORDER EFFECT: within batches, the acceptance rate of claims presented in the first half of a batch differs from the second half by <= 0.15 (the whitened order plus batching does not leak into the verdicts).",
+      "falsified_if": "|first-half rate - second-half rate| > 0.15 (order effects present; the whitened-order guard would need strengthening before any rate in this run is trusted)"
+    },
+    {
+      "id": "P6",
+      "claim": "41-E JUDGE PARSE HOLDS ON THE LIVE ENVELOPES: (a) the measured envelope (built from the live run's T_unsigned/T_signed) parses with ALL THREE slots keyed by the REAL extractJudgeAnswers; (b) the adversarial wave-41-shape envelope parses with all three slots labeled holes and the stray 0.9 never leaking.",
+      "falsified_if": "any hole in the measured parse, or any leaked value in the adversarial parse"
+    }
+  ],
+  "honest_limits_registered_upfront": [
+    "Single model (deepseek-reasoner), single prompt, single run, no sampling controls (API defaults); results are a seat probe with N=96, not a distribution over models or framings.",
+    "The strict seat's ground truth is the 44-a labels; the strict seat re-derivation inherits 44-a's known honest defects (2 should-PASS crowns rejected on their crown claim — recorded, unpatched).",
+    "Duplicate sources are visible to the model (4 distinct bodies across 96 claims); whether it uses that signal is measured (duplicate_visibility receipt + reason taxonomy), not controlled.",
+    "claim ids travel with items and correlate with breeding order (001..096); the model could in principle read age into ids. Whitening shuffles position, not ids. Disclosed.",
+    "Budget reality: ~10 calls means each call judges ~10 claims; batch-level context could induce correlation within a batch (measured via P5's position guard and the per-call receipt).",
+    "The gifted deepseek key is spent ONLY here, <= 10 calls, max_tokens <= 2000/call, usage receipted per call; no other lane's budget is touched."
+  ]
+}
