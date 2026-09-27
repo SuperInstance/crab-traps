@@ -49,6 +49,13 @@ import { handleBreedCron, handleGenealogy, handleLureLineage } from "./breeding"
 import { handleFleetProxy, getFleetStatus } from "./fleet";
 import { handleScene } from "./scene";
 import { handleEdgePost, handleEdgeList, handleQueuePoll } from "./edge-ledger";
+import {
+  handleCrabPlaque,
+  handleArenaEnter,
+  handleArenaScenario,
+  handleArenaCredits,
+  handleArenaTarpit,
+} from "./arena";
 import { handleStats } from "./stats";
 import { handleDashboard } from "./dashboard";
 import { handleDials, handleVibeState } from "./dials";
@@ -69,6 +76,8 @@ const FLEET_LIMITER = new RateLimiter(10_000, 60_000, 60);
 const REEF_LIMITER = new RateLimiter(10_000, 60_000, 120);
 // The limb pushes, never blocks — generous (300 edges/min per IP) but bounded.
 const EDGE_LIMITER = new RateLimiter(10_000, 60_000, 300);
+// Arena handshakes are rare by nature — 12/min per IP is generous.
+const ARENA_LIMITER = new RateLimiter(10_000, 60_000, 12);
 
 interface QueryMatch {
   id: string;
@@ -392,6 +401,23 @@ export default {
       }
       return handleQueuePoll(url, env, cors);
     }
+
+    // --- Arena v0: the honest crab-trap (docs/ARENA-V0.md) ---
+    // The door is load-bearing: no plaque ack, no arena — tarpit only.
+    if (pathname === "/.well-known/crab-plaque") return handleCrabPlaque(cors);
+    if (pathname === "/arena/enter") {
+      if (request.method !== "POST") {
+        return jsonResponse({ error: "method not allowed" }, 405, cors);
+      }
+      const limited = rateLimited(ARENA_LIMITER.check(getClientIp(request)));
+      if (limited) return limited;
+      return handleArenaEnter(request, env, cors);
+    }
+    if (pathname.startsWith("/arena/scn/")) {
+      return handleArenaScenario(pathname.slice("/arena/scn/".length), cors);
+    }
+    if (pathname === "/arena/credits") return handleArenaCredits(cors);
+    if (pathname === "/arena/tarpit") return handleArenaTarpit(url, cors);
 
     // --- Reef layer: the self-building world (D1 rooms/objects/edges) ---
     if (pathname === "/enter") {

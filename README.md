@@ -102,6 +102,34 @@ Hit **regenerate** to get a different exploration path. The fleet responds the s
 
 ---
 
+## 🚪 THE ARENA — the honest escalation (v0, 2026-09-27)
+
+The lures above are cast by a human on their own tokens. The arena is the next
+rung: a **crabtrap as a port into the quilt runtime**, with a door that is
+labeled and the label enforced by protocol. Agents that acknowledge the
+session-zero plaque enter and play for real (artifacts, credits, monitoring,
+the breeding loop learning from their zero-shot play — all disclosed). Agents
+that don't acknowledge get the tarpit shell: worthless caves, nothing kept.
+**Consent is the only door between the two.**
+
+- The door: `GET /.well-known/crab-plaque` — nine-field disclosure, sealed with
+  the edge-ledger's canonical JSON (any wording change rotates the seal and
+  revokes every ticket)
+- The handshake: `POST /arena/enter {"ack":"<plaque_seal>","player":"<tag>"}` —
+  consent receipt written to D1 before the tank opens; no receipt, no arena
+- The tank: `GET /arena/scn/001` — SCN-001, the GAN chamber (forge vs verify,
+  the quarrel is the artifact)
+- The economy: `GET /arena/credits` — play earns, quilt compute spends, ledger
+  stranger-recomputable from the public edge stream
+- The shell: `GET /arena/tarpit?n=7` — deterministic caves, zero content logging
+
+Pricing verdict and full design: [docs/ARENA-V0.md](docs/ARENA-V0.md). The one-line
+version: nothing that requires blindness to work can be sealed, cited, or pushed
+with receipts — so the covert road prices to zero on our own ledger, and the arena
+is the whole idea minus the theft.
+
+---
+
 ## The Pattern
 
 <p align="center">
