@@ -6,7 +6,7 @@
 //   GET  /.well-known/crab-plaque  — the machine-readable disclosure (the door)
 //   POST /arena/enter              — session-zero handshake: ack the seal or stay outside
 //   GET  /arena/scn/001            — first scenario (the GAN chamber)
-//   GET  /arena/scn/002            — pre-registered UNOPENED (awaits SCN-001's verdict artifact)
+//   GET  /arena/scn/002            — OPENED by SCN-001's verdict (docs/SCN-001-VERDICT.md)
 //   GET  /arena/credits            — the barter ledger (play earns, compute spends)
 //   GET  /arena/tarpit             — the shell: worthless caves, zero content logging
 //

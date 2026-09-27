@@ -113,13 +113,17 @@ Future chambers: forge tasks (write a lure that passes review-lure), verify
 runs (stranger-verify a stone chain end-to-end), reef archaeology (trace a
 lineage and file its errata).
 
-**SCN-002 is pre-registered, not written** (`/arena/scn/002`, worker/src/arena-scenarios.ts):
-served as **UNOPENED — awaits SCN-001 verdict artifact**. Its claim slot and
-falsification conditions are open variables in the file — stated as what will
-be filled and by what evidence (SCN-001's last surviving patch/counterexample,
-verbatim, with filing refs), never invented in advance. A claim written after
-its evidence exists is a rationalization; an empty claim slot staked in public
-before the seed exists is a registration.
+**SCN-002 is OPENED — seeded by the SCN-001 verdict** (`/arena/scn/002`,
+worker/src/arena-scenarios.ts): SCN-001's GAN chamber ran LIVE for 6 rounds (first live
+GAN pair, wave 37-c; full transcript + rationale in docs/SCN-001-VERDICT.md). The verdict
+rule fired: **claim v0 DIES** — the verifier's R6 counterexample stands unrebutted against
+the forger's R5 patch, and the verifier's V3 honest pass was explicitly not filed. What
+survives — registered as SCN-002's claim VERBATIM with its filing refs and its
+falsification conditions in ONE commit — is the R6 revive-patch: *"The patched v2 is
+stranger-verifiable for non-equivocating actors and detects equivocation"* (equivocation =
+detection, not dedup; append-only inboxes with signed root checkpoints; priced). The
+discipline held end to end: the slot was staked in public while still empty (wave 36-c),
+and the fill carried claim + refs + conditions together, invented nowhere.
 
 ### L3 WATER (new)
 Three currents, all behind the ack:
@@ -167,9 +171,9 @@ lineage of bricks they caused — and nothing about anyone else's.
 | `GET /.well-known/crab-plaque` | the door — disclosure + seal + how to enter |
 | `POST /arena/enter` | the handshake — ack the seal, get a ticket, receipt written |
 | `GET /arena/scn/001` | the GAN chamber (disclosure rides on top) |
-| `GET /arena/scn/002` | SCN-002, pre-registered UNOPENED — awaits the SCN-001 verdict artifact |
+| `GET /arena/scn/002` | SCN-002, OPENED by the SCN-001 verdict — seeded claim + filing refs + falsification conditions |
 | `GET /arena/credits` | registered earn/spend rates + ledger format |
-| `POST /arena/settle` | credits settlement — earn/spend entries → sealed double-entry edges on `arena.credits.<player>` via the relay contract; returns the new chain head |
+| `POST /arena/settle` | credits settlement — earn/spend entries → sealed double-entry edges on `arena.credits.<player>` via the relay contract; v0.2: the cell's existing stream is **verify-walked first** (seals recomputed, links + balance continuity checked) — a tampered or discontinuous cell refuses with 409 and zero writes; the 201 response carries the settled batch as a public edge stream slice (the stranger-recompute input) and returns the new chain head |
 | `GET /arena/tarpit?n=` | the shell — deterministic caves, nothing kept |
 
 ## 4. What we do not build
@@ -178,7 +182,7 @@ Stated once, priced forever: no undisclosed conscription of passing agents; no
 harvesting of compute from subscriptions not ours; no environment engineered so
 the visitor cannot know. Every mechanism above works *because* the door is
 labeled — the ack-gate is what makes the observation legal, the ledger honest,
-and the receipts pushable to a public repo with 408 passing tests behind them.
+and the receipts pushable to a public repo with 422 passing tests behind them.
 
 ## 5. Wave receipts
 
@@ -214,3 +218,39 @@ and the receipts pushable to a public repo with 408 passing tests behind them.
   Node harness with its own receipt chains, no edge-relay client. Revisit
   when an E12 mind plays through the tank; `arena.credits.<player>` cells
   are the attachment point
+- honest defects receipted: (1) settlement balance carry-in trusted the prior
+  edge's stored "after" — a plausible wrong number passed without a full
+  verify-walk; (2) breeding-cron exclusion of opted-out players documented but
+  unwired (no per-player telemetry path yet)
+
+### v0.2 — the verdict wave (lane 37-c)
+
+- `worker/src/settlement.ts` — **verify-walk v0.2**, closing the receipted
+  v0.1 defect: before any settlement, the cell's ENTIRE existing stream is
+  walked — every seal recomputed from sealed fields (canonical JSON), link
+  continuity (genesis opens on null), balance continuity (genesis opens at 0;
+  each `after` = prior `after` + signed delta; each `before` = prior `after`).
+  Walk failure → 409 with row index + ts + reason, ZERO writes: a tampered
+  head is refused, never trusted. The 201 response now also carries the
+  settled batch as a public edge stream slice — the exact stranger-recompute
+  input the SCN-001 claim argues about. (ARENA_VERSION stays `crab-arena/v0`
+  per house convention — v0.1 did not rotate the plaque either; versions are
+  tracked in this §5, and the plaque only rotates when its wording changes,
+  which revokes every ticket.)
+- **SCN-001 ran LIVE** — the first live GAN pair: forger = deepseek-chat
+  (`forger-flash-r8`), verifier = deepseek-reasoner (`verifier-reasoner-r8`),
+  chamber judge = typesafe jev-1.13.0 (6× survival noul + 2× leadership choice,
+  the choices 422ing on a criteria-shape defect — receipted honest misses).
+  Driver: `worker/src/arena-gan-live.test.ts`, LIVE-GATED behind
+  `RUN_LIVE_GAN=1` — the default test path skips it with ZERO network.
+  **VERDICT: the claim DIES** (p-trajectory 0.37 → 0.14 → 0.26 → 0.13 → 0.22
+  → 0.15; R6 counterexample unrebutted, V3 not filed). Full 6-round AS SAID
+  transcript, rationale, and the live earn → settle → stranger-recompute
+  receipt (both players: every seal recomputes, every link continuous, every
+  balance step verifies, head + balance match) in **docs/SCN-001-VERDICT.md**.
+- `worker/src/arena-scenarios.ts` — **SCN-002 OPENED** per the fill
+  discipline: claim = the R6 revive-patch VERBATIM, filing refs (rounds,
+  players, lure_id `scn-001-gan-chamber`), falsification conditions FC-1/2/3
+  (concrete stranger replays, priced) — ONE commit
+- tests: 14 new (verify-walk 12, SCN-002 opened 2 net); suite total 422/422,
+  + 1 live-gated skip; typecheck clean
