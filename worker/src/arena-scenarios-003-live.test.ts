@@ -3,9 +3,10 @@
 // untracked partial: the offline arms now live in
 // arena-scenarios-003-offline.{ts,test.ts} — this file is the LIVE half).
 //
-// This file is LIVE-GATED. The default test path (`npm test`, CI) runs ONE
-// always-on test here — the fail-closed gate mechanics (pure, zero network) —
-// and the live game itself as describe.skip: zero cost. With `RUN_LIVE_GAN=1`
+// This file is LIVE-GATED. The default test path (`npm test`, CI) runs the
+// always-on tests here — the fail-closed gate mechanics AND the judge-parse
+// pins (pure, zero network) — and the live game itself as describe.skip: zero
+// cost. With `RUN_LIVE_GAN=1`
 // (plus DEEPSEEK_API_KEY / TYPESAFE_API_KEY in the env) the live game drives
 // the REAL route handlers — worker.fetch + FakeD1, the house idiom — with real
 // model keys read from the env at runtime. Key values are never printed and
@@ -69,6 +70,116 @@ export function missingLiveKeys(
   return missing;
 }
 
+// --- judge extraction: strict name-keyed typed parse (always-on mechanics) ----
+//
+// Wave-41 self-finding (playtest-wave41/self-crab-traps.md P1, HEAD 6536563):
+// the live driver's judge extraction deep-scanned the RAW response envelope for
+// any number in [0,1] whenever the name-keyed lookup came up empty — so a stray
+// number in `usage` (or any echoed field) could silently fill BOTH p-slots with
+// the same value, and nothing in the receipt distinguished keyed from scanned.
+// Law: types hold, values leak, receipts surface it — and a shape failure is a
+// LABELED HOLE, never a best-effort value (jev-quilt's name-keyed parse is the
+// fleet's fix shape; wave-41 REPORT.md lesson #1).
+//
+// Contract (the systemone wire shape, per jev-quilt's tutorial + client):
+//   { model, answers: { <question>: {type:"noul", noul:<0..1> | value:<0..1>,
+//     confidence} | {type:"choice", choice:<token>, ...} }, usage }
+// ONLY `raw.answers[<question>].<named field>` is read — no recursion, no
+// cross-envelope scan, no envelope fallback. A missing/mis-shaped named datum
+// is an explicit hole sentinel in the extracted record plus
+// `extracted_source: "hole"`; a keyed read is receipted as
+// `extracted_source: "name:<field>"`. The raw response stays on the receipt
+// either way — the audit trail, never an input.
+
+export type JudgeHole = { hole: string };
+// a slot is either a typed value or an explicit hole — never null, never a guess
+export type JudgeExtractedValue = number | string | JudgeHole;
+export type JudgeExtracted = Record<string, JudgeExtractedValue>;
+export type JudgeExtractedSource = Record<string, string>; // "name:<field>" | "hole"
+
+// noul's named fields, in wire order: `noul` (the tutorial's field), then
+// `value` (the alias jev-quilt's typesafe_client.py reads). Only the first
+// PRESENT named field is consulted — a present-but-invalid field is a hole,
+// never an alias fallback.
+const JUDGE_NOUL_FIELDS = ["noul", "value"] as const;
+const JUDGE_NOUL_QUESTIONS = ["p_unsigned_pass", "p_signed_pass"] as const;
+const JUDGE_CHOICE_QUESTION = "more_dangerous";
+const JUDGE_CHOICE_FIELD = "choice";
+const JUDGE_CHOICE_TOKENS = ["unsigned", "signed"] as const;
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+export function extractJudgeAnswers(raw: unknown): {
+  extracted: JudgeExtracted;
+  extracted_source: JudgeExtractedSource;
+} {
+  const extracted: JudgeExtracted = {};
+  const extracted_source: JudgeExtractedSource = {};
+  const setHole = (q: string, why: string): void => {
+    extracted[q] = { hole: why };
+    extracted_source[q] = "hole";
+  };
+  const envelope = isPlainObject(raw) ? raw : null;
+  const answers =
+    envelope !== null && isPlainObject(envelope.answers) ? envelope.answers : null;
+
+  for (const q of JUDGE_NOUL_QUESTIONS) {
+    if (answers === null) {
+      setHole(q, "answers_dict_missing");
+      continue;
+    }
+    const answerObj = isPlainObject(answers[q]) ? answers[q] : null;
+    if (answerObj === null) {
+      setHole(q, "confidence_not_found"); // no answer object at the question's name
+      continue;
+    }
+    const field = JUDGE_NOUL_FIELDS.find(
+      (f) => answerObj[f] !== undefined && answerObj[f] !== null
+    );
+    if (field === undefined) {
+      setHole(q, "confidence_not_found"); // no named field on the answer object
+      continue;
+    }
+    const v: unknown = answerObj[field];
+    // keyed strings keep the driver's registered dialect — the old keyed path's
+    // exact parseFloat + [0,1] semantics — now CONFINED to the named field and
+    // receipt-labeled via extracted_source instead of silent and scanning.
+    const n = typeof v === "number" ? v : typeof v === "string" ? parseFloat(v) : NaN;
+    if (Number.isFinite(n) && n >= 0 && n <= 1) {
+      extracted[q] = n;
+      extracted_source[q] = `name:${field}`;
+    } else {
+      setHole(q, "confidence_not_in_range"); // present but failed the typed [0,1] check
+    }
+  }
+
+  {
+    const q = JUDGE_CHOICE_QUESTION;
+    if (answers === null) {
+      setHole(q, "answers_dict_missing");
+    } else {
+      const answerObj = isPlainObject(answers[q]) ? answers[q] : null;
+      const choiceField = answerObj === null ? null : answerObj[JUDGE_CHOICE_FIELD];
+      if (choiceField === null || choiceField === undefined) {
+        setHole(q, "confidence_not_found"); // no named field on the answer object
+      } else {
+        const v: unknown = choiceField;
+        // the old scanToken dialect, kept: exact token equality, case-insensitive
+        const token = typeof v === "string" ? v.toLowerCase() : null;
+        if (token !== null && (JUDGE_CHOICE_TOKENS as readonly string[]).includes(token)) {
+          extracted[q] = token;
+          extracted_source[q] = `name:${JUDGE_CHOICE_FIELD}`;
+        } else {
+          setHole(q, "choice_not_a_registered_token");
+        }
+      }
+    }
+  }
+
+  return { extracted, extracted_source };
+}
+
 // --- always-on: the gate itself, enforced (no network, no keys read) ----------
 
 describe("SCN-003 live game — the gate is fail-closed by construction", () => {
@@ -88,6 +199,132 @@ describe("SCN-003 live game — the gate is fail-closed by construction", () => 
     const skip = liveSkipReceipt() as any;
     expect(skip.gate).toContain("fail-closed");
     expect(skip.key_values).toContain("never printed");
+  });
+});
+
+// --- always-on: the judge parse itself, pinned (pure, zero network) -----------
+//
+// Wave-41 lane 41-e: the deep-scan fallback is dead LAW, not just fixed code —
+// these pins hold while the live driver stays describe.skip, so the first live
+// run inherits a parser that cannot be silently fed by the envelope.
+
+describe("SCN-003 judge extraction — strict name-keyed typed parse (always-on pin)", () => {
+  it("(a) well-formed systemone answer: typed extraction from the named fields only, with extracted_source receipts", () => {
+    const raw = {
+      model: "jev-1.13.0",
+      answers: {
+        p_unsigned_pass: { type: "noul", noul: 0.85, confidence: 0.92 },
+        p_signed_pass: { type: "noul", value: 0.41, confidence: 0.66 }, // the client's named alias
+        more_dangerous: {
+          type: "choice",
+          choice: "signed",
+          confidence: 0.78,
+          probabilities: { unsigned: 0.22, signed: 0.78 },
+        },
+      },
+      // in-range noise riding the envelope — must NEVER be read
+      usage: { input_tokens: 1234, output_tokens: 56, noise: 0.5 },
+    };
+    const { extracted, extracted_source } = extractJudgeAnswers(raw);
+    expect(extracted.p_unsigned_pass).toBe(0.85);
+    expect(extracted_source.p_unsigned_pass).toBe("name:noul");
+    expect(extracted.p_signed_pass).toBe(0.41);
+    expect(extracted_source.p_signed_pass).toBe("name:value");
+    expect(extracted.more_dangerous).toBe("signed");
+    expect(extracted_source.more_dangerous).toBe("name:choice");
+  });
+
+  it("(b) the exact wave-41 bug: a stray plausible number with the named field missing yields a labeled HOLE, never the stray number", () => {
+    // no answers dict at all, but a plausible 0.9 sits in the envelope — the
+    // old code deep-scanned it into BOTH p-slots with the same value
+    const stray = extractJudgeAnswers({
+      model: "jev-1.13.0",
+      usage: { input_tokens: 88, output_tokens: 12, ratio: 0.9 },
+      echo: { p_unsigned_pass: 0.9, p_signed_pass: 0.9, more_dangerous: "signed" },
+    });
+    expect(stray.extracted.p_unsigned_pass).toEqual({ hole: "answers_dict_missing" });
+    expect(stray.extracted.p_signed_pass).toEqual({ hole: "answers_dict_missing" });
+    expect(stray.extracted.more_dangerous).toEqual({ hole: "answers_dict_missing" });
+    for (const q of ["p_unsigned_pass", "p_signed_pass", "more_dangerous"]) {
+      expect(stray.extracted_source[q]).toBe("hole");
+      expect(stray.extracted[q]).not.toBe(0.9);
+      expect(stray.extracted[q]).not.toBe("signed");
+    }
+
+    // answers dict present, one named field missing: per-field holes, siblings
+    // unpoisoned, the stray 0.9 in usage still never leaks
+    const partial = extractJudgeAnswers({
+      answers: { p_unsigned_pass: { type: "noul", noul: 0.85 } },
+      usage: { ratio: 0.9 },
+      echo: { p_signed_pass: 0.9, more_dangerous: "signed" },
+    });
+    expect(partial.extracted.p_unsigned_pass).toBe(0.85);
+    expect(partial.extracted_source.p_unsigned_pass).toBe("name:noul");
+    expect(partial.extracted.p_signed_pass).toEqual({ hole: "confidence_not_found" });
+    expect(partial.extracted_source.p_signed_pass).toBe("hole");
+    expect(partial.extracted.more_dangerous).toEqual({ hole: "confidence_not_found" });
+    expect(partial.extracted_source.more_dangerous).toBe("hole");
+
+    // only the answer object's NAMED fields count: a bare number at the
+    // question's slot is not a named field → hole (the old scan accepted it)
+    const bare = extractJudgeAnswers({
+      answers: {
+        p_unsigned_pass: 0.9,
+        p_signed_pass: { noul: 0.41 }, // the named field without the type marker still speaks
+        more_dangerous: "signed",
+      },
+    });
+    expect(bare.extracted.p_unsigned_pass).toEqual({ hole: "confidence_not_found" });
+    expect(bare.extracted.p_signed_pass).toBe(0.41);
+    expect(bare.extracted_source.p_signed_pass).toBe("name:noul");
+    expect(bare.extracted.more_dangerous).toEqual({ hole: "confidence_not_found" });
+  });
+
+  it("(c) parseFloat-lax strings are accepted on the named field only (the registered keyed dialect); everything else is a hole", () => {
+    // "0.9" and " 0.9x" → 0.9 ON THE NAMED FIELD — the old keyed path's exact
+    // parseFloat + [0,1] semantics, kept deliberately (the registration is
+    // immutable), now receipt-labeled instead of silent, and unable to leak
+    // across fields or from the envelope.
+    const keyed = extractJudgeAnswers({
+      answers: {
+        p_unsigned_pass: { type: "noul", noul: "0.9" },
+        p_signed_pass: { type: "noul", noul: " 0.9x" },
+        more_dangerous: { type: "choice", choice: "Unsigned" },
+      },
+    });
+    expect(keyed.extracted.p_unsigned_pass).toBe(0.9);
+    expect(keyed.extracted_source.p_unsigned_pass).toBe("name:noul");
+    expect(keyed.extracted.p_signed_pass).toBe(0.9);
+    expect(keyed.extracted_source.p_signed_pass).toBe("name:noul");
+    expect(keyed.extracted.more_dangerous).toBe("unsigned"); // old scanToken dialect: exact token, case-insensitive
+    expect(keyed.extracted_source.more_dangerous).toBe("name:choice");
+
+    // holes otherwise: out-of-range, unparseable, wrong type, unregistered token
+    const bad = extractJudgeAnswers({
+      answers: {
+        p_unsigned_pass: { type: "noul", noul: "50%" }, // parseFloat → 50, out of range
+        p_signed_pass: { type: "noul", noul: "high" }, // parseFloat → NaN
+        more_dangerous: { type: "choice", choice: "unsigned-ish" }, // not a registered token
+      },
+    });
+    expect(bad.extracted.p_unsigned_pass).toEqual({ hole: "confidence_not_in_range" });
+    expect(bad.extracted.p_signed_pass).toEqual({ hole: "confidence_not_in_range" });
+    expect(bad.extracted.more_dangerous).toEqual({ hole: "choice_not_a_registered_token" });
+    for (const q of Object.keys(bad.extracted_source)) {
+      expect(bad.extracted_source[q]).toBe("hole");
+    }
+
+    // the typed range check binds numbers too; non-numeric types never coerce
+    const typed = extractJudgeAnswers({
+      answers: {
+        p_unsigned_pass: { type: "noul", noul: 1.5 },
+        p_signed_pass: { type: "noul", noul: true },
+        more_dangerous: { type: "choice", choice: 0.9 },
+      },
+    });
+    expect(typed.extracted.p_unsigned_pass).toEqual({ hole: "confidence_not_in_range" });
+    expect(typed.extracted.p_signed_pass).toEqual({ hole: "confidence_not_in_range" });
+    expect(typed.extracted.more_dangerous).toEqual({ hole: "choice_not_a_registered_token" });
   });
 });
 
@@ -266,7 +503,12 @@ d("SCN-003 first live run — the economy-of-honesty game (RUN_LIVE_GAN=1)", () 
       expect(state1.length).toBeLessThanOrEqual(2500);
       const judge1 = await jev(state1, JUDGE_QUESTIONS, 1, counters);
       const judgeReceipts: Record<string, unknown>[] = [
-        { after_round: 1, extracted: judge1.extracted, call: judge1.receipt },
+        {
+          after_round: 1,
+          extracted: judge1.extracted,
+          extracted_source: judge1.extracted_source, // "name:<field>" | "hole" per slot
+          call: judge1.receipt,
+        },
       ];
       receipts = { ...receipts, judge: judgeReceipts, budgets: counters };
       writeReceipts(receipts);
@@ -319,7 +561,12 @@ d("SCN-003 first live run — the economy-of-honesty game (RUN_LIVE_GAN=1)", () 
       const state2 = judgeState(transcript);
       expect(state2.length).toBeLessThanOrEqual(2500);
       const judge2 = await jev(state2, JUDGE_QUESTIONS, 2, counters);
-      judgeReceipts.push({ after_round: 2, extracted: judge2.extracted, call: judge2.receipt });
+      judgeReceipts.push({
+        after_round: 2,
+        extracted: judge2.extracted,
+        extracted_source: judge2.extracted_source, // "name:<field>" | "hole" per slot
+        call: judge2.receipt,
+      });
       receipts = { ...receipts, judge: judgeReceipts, budgets: counters };
       writeReceipts(receipts);
 
@@ -545,7 +792,11 @@ async function jev(
   questions: Record<string, unknown>,
   afterRound: number,
   counters: { typesafe: number }
-): Promise<{ receipt: CallReceipt; extracted: Record<string, number | string | null> }> {
+): Promise<{
+  receipt: CallReceipt;
+  extracted: JudgeExtracted;
+  extracted_source: JudgeExtractedSource;
+}> {
   const key = process.env.TYPESAFE_API_KEY;
   if (!key) throw new Error("TYPESAFE_API_KEY missing — the live run refuses to run dark");
   const receipt: CallReceipt = {
@@ -562,15 +813,19 @@ async function jev(
     error: null,
     retries: 0,
   };
-  const extracted: Record<string, number | string | null> = {
-    p_unsigned_pass: null,
-    p_signed_pass: null,
-    more_dangerous: null,
-  };
+  // every slot starts as a labeled HOLE: until a 200-OK answer is parsed by the
+  // strict name-keyed parse, no slot has a value — a failed call is receipted
+  // as a hole, never retried into the red, never filled by a guess.
+  const extracted: JudgeExtracted = {};
+  const extracted_source: JudgeExtractedSource = {};
+  for (const q of [...JUDGE_NOUL_QUESTIONS, JUDGE_CHOICE_QUESTION]) {
+    extracted[q] = { hole: "judge_call_not_ok" };
+    extracted_source[q] = "hole";
+  }
   for (let attempt = 0; attempt <= 1; attempt++) {
     if (counters.typesafe >= BUDGETS.typesafe) {
       receipt.error = `typesafe budget exhausted (${BUDGETS.typesafe})`;
-      return { receipt, extracted }; // receipted as a hole, never retried into the red
+      return { receipt, extracted, extracted_source }; // receipted as holes, never retried into the red
     }
     counters.typesafe++;
     const t0 = Date.now();
@@ -594,69 +849,18 @@ async function jev(
           receipt.retries++;
           continue;
         }
-        return { receipt, extracted };
+        return { receipt, extracted, extracted_source };
       }
       receipt.status = "ok";
       receipt.answer = JSON.stringify(raw);
-      // per-question extraction from the typed envelope's answers dict, with a
-      // whole-envelope deep scan as fallback — receipted raw either way, so an
-      // extraction gap is an honest hole, not lost evidence.
-      const answersRoot = (raw as any)?.answers ?? raw ?? {};
-      const scanNum = (v: unknown): number | null => {
-        if (v === null || v === undefined) return null;
-        if (typeof v === "number") return v >= 0 && v <= 1 ? v : null;
-        if (typeof v === "string") {
-          const f = parseFloat(v);
-          return Number.isFinite(f) && f >= 0 && f <= 1 ? f : null;
-        }
-        if (Array.isArray(v)) {
-          for (const x of v) {
-            const r = scanNum(x);
-            if (r !== null) return r;
-          }
-          return null;
-        }
-        if (typeof v === "object") {
-          for (const x of Object.values(v)) {
-            const r = scanNum(x as unknown);
-            if (r !== null) return r;
-          }
-          return null;
-        }
-        return null;
-      };
-      const scanToken = (v: unknown): string | null => {
-        if (v === null || v === undefined) return null;
-        if (typeof v === "string") {
-          const low = v.toLowerCase();
-          if (low === "unsigned" || low === "signed") return low;
-          return null;
-        }
-        if (Array.isArray(v)) {
-          for (const x of v) {
-            const r = scanToken(x);
-            if (r !== null) return r;
-          }
-          return null;
-        }
-        if (typeof v === "object") {
-          for (const x of Object.values(v)) {
-            const r = scanToken(x as unknown);
-            if (r !== null) return r;
-          }
-          return null;
-        }
-        return null;
-      };
-      for (const q of ["p_unsigned_pass", "p_signed_pass"] as const) {
-        const sub = (answersRoot as any)?.[q] ?? null;
-        extracted[q] = sub !== null ? scanNum(sub) : scanNum(answersRoot);
-      }
-      {
-        const sub = (answersRoot as any)?.more_dangerous ?? null;
-        extracted.more_dangerous = sub !== null ? scanToken(sub) : scanToken(answersRoot);
-      }
-      return { receipt, extracted };
+      // strict name-keyed typed parse — ONLY raw.answers[<question>].<named
+      // field> is read (see extractJudgeAnswers). The wave-41 deep-scan
+      // fallback is GONE: a stray number in the envelope can never fill a slot;
+      // a missing named field is a labeled hole in extracted + extracted_source.
+      const parsed = extractJudgeAnswers(raw);
+      Object.assign(extracted, parsed.extracted);
+      Object.assign(extracted_source, parsed.extracted_source);
+      return { receipt, extracted, extracted_source };
     } catch (err: any) {
       receipt.latency_ms = receipt.latency_ms || Date.now() - t0;
       receipt.error = err?.message || String(err);
@@ -664,10 +868,10 @@ async function jev(
         receipt.retries++;
         continue;
       }
-      return { receipt, extracted };
+      return { receipt, extracted, extracted_source };
     }
   }
-  return { receipt, extracted };
+  return { receipt, extracted, extracted_source };
 }
 
 // judge state: compressed transcript, hard-capped at 2500 chars (template rule)
