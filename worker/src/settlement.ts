@@ -59,6 +59,146 @@ export interface SettledResult {
   balance: number;
 }
 
+// --- verifyWalk (v0.2): the full chain walk before carry-in ------------------
+//
+// The v0.1 defect (docs/ARENA-V0.md §5, receipted): balance carry-in trusted
+// the cell's prior edge's stored "after" — a plausible wrong number passed
+// without a full verify-walk. v0.2 closes it. Before a settlement appends
+// anything, the ENTIRE existing cell stream is walked:
+//   1. every edge's seal is recomputed from its sealed fields (canonical JSON)
+//      and must equal the stored edge_hash — a tampered row fails here;
+//   2. link continuity: each edge's `chain` must be the prior edge's seal,
+//      and the stream must OPEN on a null chain (genesis) — a credits cell's
+//      public stream has no outside anchor to point at;
+//   3. balance continuity: the stream must OPEN at balance 0 (the credits
+//      reconcile rule — a stranger replays from zero), each edge's `before`
+//      must equal the prior edge's `after`, and each `after` must equal
+//      `before` + the delta's signed amount. A plausible-but-wrong number now
+//      dies here even when its seal is intact, because the seal was computed
+//      over the wrong number at insert time — the walk is what catches it.
+// Returns the walked head + final balance (the only state settlement may
+// carry in), or a precise failure: row index (oldest-first), ts, reason.
+
+export interface LedgerEdgeRow {
+  v: number;
+  cell: string;
+  ts: number;
+  before: string; // canonical JSON text column, as persisted
+  after: string;
+  delta: string;
+  imbalance: number | null;
+  provenance: string;
+  chain: string | null;
+  edge_hash: string;
+}
+
+export type WalkResult =
+  | { ok: true; head: string | null; balance: number; edges: number }
+  | { ok: false; row: number; ts: number | null; reason: string };
+
+export async function verifyWalk(rows: LedgerEdgeRow[]): Promise<WalkResult> {
+  // Oldest-first, defensively — the walk is order-sensitive by definition.
+  const ordered = [...rows].sort((a, b) => a.ts - b.ts);
+  if (ordered.length === 0) {
+    // Genesis: an untouched cell carries head null, balance 0.
+    return { ok: true, head: null, balance: 0, edges: 0 };
+  }
+
+  let balance: number | null = null;
+  let priorSeal: string | null = null;
+
+  for (let i = 0; i < ordered.length; i++) {
+    const row = ordered[i];
+    const fail = (reason: string): WalkResult => ({ ok: false, row: i, ts: row.ts, reason });
+
+    let before: unknown;
+    let after: unknown;
+    let delta: unknown;
+    let provenance: unknown;
+    try {
+      before = JSON.parse(row.before);
+      after = JSON.parse(row.after);
+      delta = JSON.parse(row.delta);
+      provenance = JSON.parse(row.provenance);
+    } catch (err: any) {
+      return fail(`column is not parseable canonical JSON: ${err?.message || err}`);
+    }
+
+    // 1. The seal must recompute from the sealed fields alone.
+    let recomputed: string;
+    try {
+      recomputed = await edgeHash({
+        v: row.v,
+        cell: row.cell,
+        ts: row.ts,
+        before,
+        after,
+        delta,
+        imbalance: row.imbalance,
+        provenance,
+      });
+    } catch (err: any) {
+      return fail(`sealed fields are not canonically serializable: ${err?.message || err}`);
+    }
+    if (recomputed !== row.edge_hash) {
+      return fail(
+        `seal mismatch at row ${i}: stored ${row.edge_hash}, recomputed ${recomputed} — the row was changed after it was sealed`
+      );
+    }
+
+    // 2. Link continuity — genesis opens on null, everything else links back.
+    if (i === 0) {
+      if (row.chain !== null) {
+        return fail(
+          `genesis link: the cell's oldest edge carries chain ${row.chain} — a credits cell's stream must open on a null chain`
+        );
+      }
+    } else if (row.chain !== priorSeal) {
+      return fail(
+        `chain link mismatch at row ${i}: edge links ${row.chain}, prior seal ${priorSeal}`
+      );
+    }
+
+    // 3. Balance continuity — the credits reconcile rule, enforced per row.
+    if (typeof before !== "number" || !Number.isFinite(before)) {
+      return fail(`'before' is not a number: ${row.before}`);
+    }
+    if (typeof after !== "number" || !Number.isFinite(after)) {
+      return fail(`'after' is not a number: ${row.after} — the cell head is not a balance`);
+    }
+    const signedDelta: number | null =
+      typeof delta === "object" && delta !== null && typeof (delta as Record<string, unknown>).signed === "number"
+        ? ((delta as Record<string, unknown>).signed as number)
+        : null;
+    if (signedDelta === null) {
+      return fail(`delta.signed is not a number — the reconcile delta is missing or malformed`);
+    }
+    const openBalance: number = before;
+    if (i === 0) {
+      if (openBalance !== 0) {
+        return fail(
+          `genesis balance: the cell's oldest edge opens at ${openBalance} — a credits cell's stream must open at 0 (a stranger replays from zero)`
+        );
+      }
+    } else if (openBalance !== balance) {
+      return fail(
+        `balance discontinuity at row ${i}: edge opens at ${openBalance}, prior edge closed at ${balance}`
+      );
+    }
+    const expected: number = openBalance + signedDelta;
+    if (after !== expected) {
+      return fail(
+        `balance discontinuity at row ${i}: after ${after} ≠ before ${openBalance} + signed ${signedDelta} (expected ${expected})`
+      );
+    }
+
+    balance = after;
+    priorSeal = row.edge_hash;
+  }
+
+  return { ok: true, head: priorSeal, balance: balance as number, edges: ordered.length };
+}
+
 type ValidationResult =
   | { ok: true; value: SettlementInput }
   | { ok: false; error: string };
@@ -208,9 +348,13 @@ export async function settleCredits(
 // --- POST /arena/settle -------------------------------------------------------
 //
 // Body: { player, entries: [{kind, amount, ts, ref}, ...] } →
-// 201 { success, cell, settled, balance, chain_head, ... } with every edge
-// persisted through the SAME D1 pattern the relay uses (canonical JSON text
-// columns, seal in edge_hash, chain link pointing at the cell's prior head).
+// 201 { success, cell, settled, balance, chain_head, edges, ... } with every
+// edge persisted through the SAME D1 pattern the relay uses (canonical JSON
+// text columns, seal in edge_hash, chain link pointing at the cell's prior
+// head). v0.2: the existing cell stream is verify-walked FIRST (seals,
+// links, balance steps) — a tampered or discontinuous cell refuses with 409
+// and zero writes; the response carries the settled batch as a public edge
+// stream slice so a stranger can recompute the balance from the stream alone.
 
 export async function handleSettlementPost(
   request: Request,
@@ -246,32 +390,36 @@ export async function handleSettlementPost(
   const cell = `arena.credits.${player}`;
 
   try {
-    // The carried-in state comes from the cell itself, never from the client:
-    // the prior edge's seal is the chain link, its `after` is the opening
-    // balance. A client-declared balance is exactly the tamper the seal
-    // exists to catch.
-    const prior = await env.DB.prepare(
-      `SELECT ts, edge_hash, "after" AS prior_after FROM ledger_edges WHERE cell = ? ORDER BY ts DESC LIMIT 1`
+    // v0.2 — the carried-in state is WALKED, never trusted. The v0.1 route
+    // read only the prior edge's stored seal + "after"; a plausible wrong
+    // number passed without a full verify-walk (receipted defect,
+    // docs/ARENA-V0.md §5). Now the whole existing cell stream is walked
+    // (seals recomputed, links checked, balances stepped) BEFORE anything is
+    // accepted. A tampered cell refuses settlement — 409 with the failing row
+    // + reason, zero writes — instead of compounding a corrupt carry-in.
+    const stream = await env.DB.prepare(
+      `SELECT v, cell, ts, "before", "after", delta, imbalance, provenance, chain, edge_hash
+       FROM ledger_edges WHERE cell = ? ORDER BY ts ASC`
     )
       .bind(cell)
-      .first<{ ts: number; edge_hash: string; prior_after: string }>();
+      .all<LedgerEdgeRow>();
 
-    let priorState: CellPrior = { head: null, balance: 0 };
-    if (prior) {
-      const carried = JSON.parse(prior.prior_after);
-      if (typeof carried !== "number" || !Number.isFinite(carried)) {
-        return jsonResponse(
-          {
-            success: false,
-            error: "cell head is not a balance",
-            detail: `the cell's latest edge at ts ${prior.ts} does not carry a numeric 'after' — the credits cell is compromised; settle nothing until it is verified`,
-          },
-          503,
-          cors
-        );
-      }
-      priorState = { head: prior.edge_hash, balance: carried };
+    const walk = await verifyWalk(stream.results ?? []);
+    if (!walk.ok) {
+      return jsonResponse(
+        {
+          success: false,
+          error: "cell verify-walk failed",
+          row: walk.row,
+          ts: walk.ts,
+          detail: walk.reason,
+          note: "the credits cell's public stream does not verify — settle nothing until the cell is repaired; a tampered head is refused, never trusted",
+        },
+        409,
+        cors
+      );
     }
+    const priorState: CellPrior = { head: walk.head, balance: walk.balance };
 
     const settled = await settleCredits(player, entries, priorState);
     if (!settled.ok) {
@@ -311,8 +459,24 @@ export async function handleSettlementPost(
         balance,
         ts: edges[edges.length - 1].edge.ts,
         chain_head: head,
-        note: prior
-          ? "settlement appended — the chain carries the cell's prior seal"
+        // v0.2: the response carries the settled batch in the public edge
+        // stream's shape — the exact rows a stranger needs to recompute the
+        // balance from the stream alone, without trusting the arena. This is
+        // the claim SCN-001 exists to attack, handed over with the receipt.
+        edges: edges.map(({ edge, hash }) => ({
+          v: edge.v,
+          cell: edge.cell,
+          ts: edge.ts,
+          before: edge.before,
+          after: edge.after,
+          delta: edge.delta,
+          imbalance: edge.imbalance,
+          provenance: edge.provenance,
+          chain: edge.chain,
+          edge_hash: hash,
+        })),
+        note: walk.head
+          ? "settlement appended — the chain carries the cell's walked prior seal"
           : "genesis settlement — credits cell opened at the relay",
       },
       201,
