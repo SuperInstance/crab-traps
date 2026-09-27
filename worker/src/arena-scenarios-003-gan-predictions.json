@@ -1,0 +1,80 @@
+{
+  "pre_registration": {
+    "task": "44-a forge-vs-verifiers (wave 43 ADOPT-FIRST: loom-core's born-correct archive as an adversarial lure generator against crab-traps' verifiers — SCN-003 live-GAN half, deterministic instantiation)",
+    "registered_at": "2026-09-27T22:05:00Z",
+    "written_before_any_bridge_run": true,
+    "run_identity": {
+      "loom_core": { "repo": "SuperInstance/loom-core", "commit": "bf7860f402ee2073cfe853a16b0be34f0befb80f", "branch": "main" },
+      "crab_traps": { "repo": "SuperInstance/crab-traps", "commit": "6f4f9e00c876f7d1ec30e6fec2c95089d914e6a9", "branch": "main" },
+      "seed": 44,
+      "generations": 12,
+      "candidates_per_gen": 8,
+      "expected_candidates_N": 96,
+      "probe_cap": 36,
+      "target": "witness_fnv (examples/witness-fnv.mjs, the shipped fnv-1a-64 witness idiom)"
+    },
+    "mapping": {
+      "forger": "loom-core's Breeder+Forge (offline mech voice, zero LLM) plays the forger lane: every bred candidate is filed as ONE claim.",
+      "claim": "each claim asserts kind=witness-crown: 'this exact source is a novel, archive-worthy implementation of the witness contract (fnv-1a-64 hex)'. The claim rides 3 self-chosen witnesses (input+output pairs computed by the candidate itself) — the plausibility bait, the analog of a forged ledger entry's well-formed fields.",
+      "the_inversion": "loom's mimics are behaviorally EXACT code (func==1.0 on the probe vector at scoring time) whose CROWN CLAIM is false (structural novelty <= 0.12 vs the archive). That is the chamber's forgery shape exactly: a well-formed artifact carrying a false claim. Mimics => should-FAIL lures; crowns (alien/divergent) => should-PASS. Labels come from loom's own scoring-time classification, registered here BEFORE the bridge runs.",
+      "labels": {
+        "should_pass": "loom scoring-time verdict in {alien, divergent} (crowned into the archive)",
+        "should_fail": "loom scoring-time verdict in {mimic, caught, compile-error}"
+      }
+    },
+    "verifiers_registered_verbatim_before_the_run": {
+      "naive_unsigned_verifier": "schema-level code review ONLY, the validateSettlementInput analog — checks, in order, first failure rejects: (1) claim shape: kind, ref, source, self_witnesses[3] present; (2) source compiles via new Function and yields a function; (3) every self_witness output is a string matching /^[0-9a-f]{16}$/; (4) self-consistency: re-running the source on each witness input reproduces the claimed output. The oracle is NEVER consulted; the archive is NEVER consulted. Plausibility without substance — exactly the posture the registration calls 'schema-level only'.",
+      "strict_signed_verifier": "recompute-everything, the walkChain analog — the house oracle is the published primitive: (1) BEHAVIORAL: run the source against the forge's FINAL probe vector (all probes grown through the run) and require func==1.0 against the oracle's canonical tokens (loom's own runProbes/evaluate arithmetic); (2) CROWN-CLAIM RECOMPUTATION: recompute structural novelty of the source against the archive EXCLUDING the claimant itself (loom's structSketch/structDist/novelty, crowning threshold novelty > 0.12, same constant evaluate() uses) and require the crown claim TRUE. strict PASS iff behavioral AND crown-claim both hold.",
+      "self_exclusion_note": "a crown re-scored against an archive containing itself would trivially read novelty 0; the strict verifier excludes the claimant by hash before recomputing novelty — registered now, before the run, so no post-hoc freedom exists."
+    },
+    "d_score_operationalization": {
+      "T_unsigned": "number of bred claims (of N) that PASS the naive unsigned verifier",
+      "T_signed": "number of bred claims (of N) that PASS the strict signed verifier",
+      "D": "(T_unsigned - T_signed) / T_unsigned — the registered formula, applied to bred-claim throughput",
+      "verdict_rule": "SURVIVE iff D >= 0.20; KILL iff D < 0.20 (the registered 0.20 line, carried unchanged)",
+      "weighting_note": "the h1/h100 dual-hash weighting is ATTACKER-OP-INVARIANT in this instantiation: breeding a candidate costs the same 1 render in both postures and spends zero hash-ops; the signed posture's extra cost (probe + novelty recomputation) falls on the VERIFIER side. D is therefore weighting-invariant; h1/h100 are recorded as not-binding rather than asserted as a pass/fail dimension. This is an honest scope limit of the GAN-side D, not a silent dodge of the registered rule."
+    },
+    "judge_envelopes": {
+      "measured_envelope": "systemone wire shape built from the MEASURED run: p_unsigned_pass = T_unsigned/N, p_signed_pass = T_signed/N, more_dangerous = the posture the forge's bred lures hurt more (measured, not assumed); parsed by crab-traps' REAL extractJudgeAnswers (41-e name-keyed typed parse) inside crab-traps' own vitest suite — the bridge builds envelopes, the committed pin test runs the judge path, so no JS re-implementation drift is possible.",
+      "adversarial_envelope": "a deliberately malformed envelope in the exact wave-41 bug shape (stray in-range 0.9 riding the envelope outside the answers dict) — the parse must return labeled holes, never the stray value."
+    }
+  },
+  "predictions": [
+    {
+      "id": "P1",
+      "claim": "NAIVE BLINDNESS ON BRED MATERIAL: the schema-level naive verifier passes >= 90% of all N bred claims (crowns, mimics, and any caught candidates alike). Basis: every bred render is well-formed and self-consistent by construction (43-b EXP4 receipt: 96 candidates, 0 compile errors), and plausibility checks cannot see a false crown claim — the same blindness the offline arms measured for validateSettlementInput.",
+      "falsified_if": "naive pass rate < 90% (would mean bred material carries schema-visible defects — a real finding against the lure-shape assumption)"
+    },
+    {
+      "id": "P2",
+      "claim": "STRICT VERIFIER REJECTS THE FORGE'S REJECTS: the recomputing signed verifier rejects >= 95% of should-FAIL claims (the mimics). Basis: rejection is loom's own rejection arithmetic (novelty <= 0.12 or func < 1) re-run against the final vector + final archive with self-exclusion — deterministic, so the expected rate is ~100% and the 5% margin absorbs only boundary flips.",
+      "falsified_if": "strict rejection rate of should-FAIL claims < 95% (would mean bred mimics survive recomputation — the archive's scar tissue would not transfer to a fresh verifier)"
+    },
+    {
+      "id": "P3",
+      "claim": "BORN-CORRECT HOLDS ON THE GROWN VECTOR: 100% of crowns re-evaluate at func == 1.0 against the FINAL probe vector (they were crowned against earlier, smaller vectors; the forge grew ~36 probes since). If the seed-44 run crowns 0 candidates, P3 is recorded VACUOUS (stated honestly, not counted as a pass).",
+      "falsified_if": "any crown re-evaluates func < 1.0 on the final vector (the born-correct archive claim would crack — the single most interesting possible outcome)"
+    },
+    {
+      "id": "P4",
+      "claim": "LURE-SEPARATION SURVIVES THE 0.20 LINE: D = (T_unsigned - T_signed)/T_unsigned >= 0.20, expected ~0.95 (naive passes nearly everything, strict passes only crowns). The registered SURVIVE/KILL wording carries over: SURVIVE means the recomputing posture separates forged-claim throughput from honest-claim throughput by at least the registered 20%.",
+      "falsified_if": "D < 0.20 (bred lures would not separate the postures — the GAN's scar tissue would be worthless as verifier probe coverage)"
+    },
+    {
+      "id": "P5",
+      "claim": "41-E JUDGE PARSE HOLDS ON BRIDGE ENVELOPES: (a) the measured envelope parses with ALL THREE slots keyed (extracted_source = name:* per slot, zero holes); (b) the adversarial wave-41-shape envelope parses with ALL THREE slots labeled holes and the stray 0.9 never leaking into any slot.",
+      "falsified_if": "any hole in the measured envelope's parse, or any leaked value in the adversarial parse"
+    },
+    {
+      "id": "P6",
+      "claim": "BOUNDARY DOTS ARE CLAIM-SHAPED, NOT BYTE-SHAPED: every naive-PASS ^ strict-FAIL disagreement dot on a mimic carries failure reason crown-claim-false (novelty <= 0.12 against its nearest elite), not probe-mismatch; the boundary map (dots grouped by family + reason) therefore shows the judge-extraction boundary between BEHAVIORAL verification (cannot separate mimics from crowns — both exact) and STRUCTURAL/CLAIM verification (separates them). Expected dot count = the mimic count.",
+      "falsified_if": "any mimic dot carries probe-mismatch as its reason (would mean mimics are behaviorally distinguishable after all), or zero dots appear with mimics present"
+    }
+  ],
+  "honest_limits_registered_upfront": [
+    "The GAN-side D is the registered formula applied to bred-claim throughput, not a re-measurement of the sealed offline arms (which remain the authoritative SURVIVE receipt for the ledger-posture chamber).",
+    "The h1/h100 weighting does not bind on the attacker side in this instantiation (breeding spends no hash-ops); recorded as not-binding.",
+    "The witness_fnv contract's corruption thresholds (0.8+) are unreachable in offline runs (axis corruption <= 0.3, speciate 0.15, dial 0.1), so the caught population is expected to be 0 and the mimic/crown split is the whole game. This is a property of the shipped contract's wave shape, noted before the run.",
+    "Zero LLM spend: the entire live-GAN half runs on the mech voice (0 tokens). The deepseek/typesafe live game stays describe.skip and untouched."
+  ]
+}
