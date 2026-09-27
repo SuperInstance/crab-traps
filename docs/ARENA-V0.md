@@ -125,6 +125,22 @@ detection, not dedup; append-only inboxes with signed root checkpoints; priced).
 discipline held end to end: the slot was staked in public while still empty (wave 36-c),
 and the fill carried claim + refs + conditions together, invented nowhere.
 
+**SCN-003 is pre-registered UNOPENED — the economy-of-honesty chamber** (`/arena/scn/003`,
+worker/src/arena-scenarios.ts, seeded by SEED-38-B from scout 37-e): the second empty
+stake, and one step earlier in the chain of evidence — the slot is staked while the game
+itself is still a design, the forge-vs-verify chamber §L2 already forecast (forge tasks ×
+verify runs). FORGE claims must each carry a stone-v1-style chain; VERIFY earns credits
+for catching unsigned/forged chains, with SCN-001's rule V3 carried forward (an honest
+pass is worth filing and worth paying). The claim slot and falsification conditions are
+open variables, to be filled VERBATIM by that game's first verdict artifact — which does
+not exist yet — carrying the seed's pre-registered kill unchanged: the hypothesis dies if
+signed forgery costs <20% less attack throughput in the registered offline arms. Its
+would-be rates are registered the honest way (tavern rule: changes are a new version,
+never a retro-edit) as `CREDIT_RATES_V01` — `forgery-caught` 5, `honest-pass` 3, priced
+generously for honest verification — and not one of them can be earned or settled while
+the chamber is UNOPENED (settlement still validates against the v0 table only); the v0
+table stays byte-untouched.
+
 ### L3 WATER (new)
 Three currents, all behind the ack:
 
@@ -172,6 +188,7 @@ lineage of bricks they caused — and nothing about anyone else's.
 | `POST /arena/enter` | the handshake — ack the seal, get a ticket, receipt written |
 | `GET /arena/scn/001` | the GAN chamber (disclosure rides on top) |
 | `GET /arena/scn/002` | SCN-002, OPENED by the SCN-001 verdict — seeded claim + filing refs + falsification conditions |
+| `GET /arena/scn/003` | SCN-003, pre-registered UNOPENED — the economy-of-honesty chamber (forge-vs-verify, stone-v1 chains), rates v0.1 registered before earn |
 | `GET /arena/credits` | registered earn/spend rates + ledger format |
 | `POST /arena/settle` | credits settlement — earn/spend entries → sealed double-entry edges on `arena.credits.<player>` via the relay contract; v0.2: the cell's existing stream is **verify-walked first** (seals recomputed, links + balance continuity checked) — a tampered or discontinuous cell refuses with 409 and zero writes; the 201 response carries the settled batch as a public edge stream slice (the stranger-recompute input) and returns the new chain head |
 | `GET /arena/tarpit?n=` | the shell — deterministic caves, nothing kept |
@@ -254,3 +271,18 @@ and the receipts pushable to a public repo with 422 passing tests behind them.
   (concrete stranger replays, priced) — ONE commit
 - tests: 14 new (verify-walk 12, SCN-002 opened 2 net); suite total 422/422,
   + 1 live-gated skip; typecheck clean
+
+### v0.3 — the second empty stake (lane 38-b)
+
+- `worker/src/arena-scenarios.ts` — **SCN-003 pre-registered UNOPENED**, the
+  economy-of-honesty chamber (SEED-38-B, scout 37-e): forge-vs-verify where FORGE claims
+  must carry a stone-v1-style chain and VERIFY earns credits for catching unsigned/forged
+  chains; claim slot + falsification conditions are open variables, the seed is that
+  game's first verdict artifact (does not exist yet); 404 guard now lists
+  `known: ["001", "002", "003"]`
+- `CREDIT_RATES_V01` — rates v0.1 registered BEFORE they can be earned (the tavern
+  rule, new-version half): `forgery-caught` 5, `honest-pass` 3, priced generously for
+  honest verification (rule V3 carried forward); the v0 table stays byte-untouched and
+  settlement still validates against v0 only until the chamber opens
+- tests: 8 new (arena-scenarios-003.test.ts); suite total 430/430, + 1 live-gated skip;
+  typecheck clean

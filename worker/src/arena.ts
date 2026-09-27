@@ -7,6 +7,7 @@
 //   POST /arena/enter              — session-zero handshake: ack the seal or stay outside
 //   GET  /arena/scn/001            — first scenario (the GAN chamber)
 //   GET  /arena/scn/002            — OPENED by SCN-001's verdict (docs/SCN-001-VERDICT.md)
+//   GET  /arena/scn/003            — pre-registered UNOPENED (the economy-of-honesty chamber)
 //   GET  /arena/credits            — the barter ledger (play earns, compute spends)
 //   GET  /arena/tarpit             — the shell: worthless caves, zero content logging
 //
@@ -21,7 +22,7 @@
 
 import { Env, jsonResponse } from "./index-helpers";
 import { canonicalJson, sha256Hex } from "./edge-ledger";
-import { SCN_002 } from "./arena-scenarios";
+import { SCN_002, SCN_003 } from "./arena-scenarios";
 
 export const ARENA_VERSION = "crab-arena/v0";
 
@@ -205,11 +206,12 @@ counterexample go to the breeding cron side by side; whatever survives seeds SCN
 claim. Nobody's text is edited. Nobody's loss is hidden. The reef grows by argument.
 `;
 
-// The tank's registry: 001 is live, 002 is the pre-registered empty stake
-// (worker/src/arena-scenarios.ts — claim slot open until SCN-001's verdict
-// artifact exists). Unknown ids 404 with the known list, so a stranger can
-// see what is open and what is staked.
-const SCENARIOS: Record<string, string> = { "001": SCN_001, "002": SCN_002 };
+// The tank's registry: 001 is live, 002 is OPENED by SCN-001's verdict
+// (docs/SCN-001-VERDICT.md), 003 is the second pre-registered empty stake
+// (worker/src/arena-scenarios.ts — claim slot open until the economy-of-honesty
+// game's first verdict artifact exists). Unknown ids 404 with the known list,
+// so a stranger can see what is open and what is staked.
+const SCENARIOS: Record<string, string> = { "001": SCN_001, "002": SCN_002, "003": SCN_003 };
 
 export async function handleArenaScenario(id: string, cors: Record<string, string>): Promise<Response> {
   const body = SCENARIOS[id];

@@ -114,7 +114,8 @@ describe("GET /arena/scn/002 — the opened stake", () => {
     expect(unknown.status).toBe(404);
     const body = await json(unknown);
     expect(body.error).toBe("unknown scenario");
-    expect(body.known).toEqual(["001", "002"]);
+    // 003 joined the registry as the second pre-registered empty stake
+    expect(body.known).toEqual(["001", "002", "003"]);
   });
 
   it("SCN-001 still serves the chamber that produced this seed — the rule is public", () => {
