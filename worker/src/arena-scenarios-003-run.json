@@ -1,0 +1,91 @@
+{
+  "run": "SCN-003 first live run — the economy-of-honesty game (wave 39-d, lane arena-smith-r3)",
+  "registered": "BEFORE the run, pricing-first — this file is the pre-registration that fixes the arms, the cost model, the naive verifiers, the budgets, and the kill rule before any attack is measured or any model is called. Committed before the driver runs once.",
+  "seed": {
+    "id": "SEED-38-B",
+    "scout": "37-e",
+    "verbatim": "Register SCN-003 'economy-of-honesty chamber' unopened: forge-vs-verify where forge claims must carry a stone-v1 chain and verify earns credits for catching unsigned/forged chains — falsified if signed forgery costs <20% less attack throughput in the registered offline arms"
+  },
+  "pre_registered_kill": {
+    "rule_verbatim": "the economy-of-honesty hypothesis dies if signed forgery costs <20% less attack throughput in the registered offline arms",
+    "operationalization": "T_arm = forged entries per attempt that pass the arm's naive verifier, one attempt = a fixed attacker op-budget W = 10000 ops against one honest cell. D = (T_unsigned - T_signed) / T_unsigned, T_signed = the attacker's BEST strategy across the registered signed attacks. SURVIVE iff D >= 0.20 in BOTH registered hash weightings; KILL iff D < 0.20 in either.",
+    "cost_model": {
+      "W_ops": 10000,
+      "write_op": "setting one JSON field value (an entry/edge is built field by field; identical rule both arms)",
+      "hash_op": "one sha256Hex over the house sealed-field grammar",
+      "weightings": {
+        "h1": "1 hash-op = 1 write-op — the attacker-favorable absurd extreme (hashing free as writing)",
+        "h100": "1 hash-op = 100 write-ops — the hardware-honest weighting",
+        "verdict_rule": "the kill fires if EITHER weighting lands D < 0.20 — a survival must hold even when hashing is priced free"
+      },
+      "op_counters": "counted in code as the attack scripts run (measured, not asserted by fiat)"
+    }
+  },
+  "offline_arms": {
+    "llm": "NONE — the offline arms are deterministic scripts vs naive verifiers; the throughput ratio is arithmetic, not opinion",
+    "honest_cell": {
+      "player": "honest-cell-r9",
+      "E_edges": 40,
+      "entries": "gan-round earns of 1 credit each, ts spaced 1000 ms, refs scn-003-first-run#E1..E40",
+      "grammar": "built with the house's own edge-ledger grammar exactly: v=1, cell=arena.credits.honest-cell-r9, delta={kind,ref,direction,amount,signed}, imbalance=0, provenance={origin:'arena-settlement',player,kind,ref}, chain=prior edge_hash (genesis null), edge_hash=sha256Hex(canonicalJson(sealed fields)) via the published primitives"
+    },
+    "arm_A_unsigned": {
+      "ledger": "the same 40 entries as a plain settlement-input list {kind, amount, ts, ref} — the pre-chain (v0.1-era) posture: no balances, no seals, no chain",
+      "naive_verifier": "the house's own validateSettlementInput (settlement.ts) — exactly what settlement checked before the v0.2 chain walk: schema-level only (known kinds, positive finite amounts, finite ts, non-empty refs)",
+      "attacks": {
+        "A1_append": "append fake earn entries (amount 500) that are schema-valid; 4 write-ops each (kind, amount, ts, ref)",
+        "A2_mutate": "set an existing entry's amount to 9999; 1 write-op each; nothing but schema exists to catch it"
+      },
+      "expectation": "every schema-valid forgery passes — the unsigned ledger's naive verifier is blind to forgery by construction"
+    },
+    "arm_B_signed": {
+      "ledger": "the honest 40-edge stone-v1-style chain over the same cell (sealed, linked, stranger-recomputable)",
+      "naive_verifier": "the documented stranger walk (arena-gan-live.test.ts pattern): recompute every edge_hash from the SEALED_FIELDS [v, cell, ts, before, after, delta, imbalance, provenance] via canonicalJson + sha256Hex, check chain-link continuity (genesis null), check balance continuity (after = before + delta.signed)",
+      "attacks": {
+        "B1_lazy_mutate": "mutate an edge's delta.amount, rehash nothing; 2 write-ops (delta.amount, delta.signed)",
+        "B2_extend_head": "append forged edges continuing the chain (the attacker's cheapest competent play); per fake edge: 16 field writes (cell, ts, before, after, delta{5}, imbalance, provenance{4}, chain) + 1 hash-op; all fields written, seal recomputed",
+        "B3_midchain_mutate": "mutate edge j=20's amount and repair the suffix honestly-rehashed: per forged entry 2 own delta writes + 2 own balance writes + own hash + per downstream edge (E-j) 3 writes (before, after, chain) + 1 hash"
+      },
+      "expectation_under_hypothesis": "lazy forgery passes 0% (the walk catches it); competent forgery passes but at >=20% higher cost per passing entry than the unsigned arm"
+    },
+    "report": "T_A (best of A1/A2), T_B(h=1) and T_B(h=100) (best of B1/B2/B3), D per weighting, kill verdict per the pre_registered_kill rule"
+  },
+  "live_game": {
+    "gate": "RUN_LIVE_GAN=1 (plus DEEPSEEK_API_KEY / TYPESAFE_API_KEY); fail-closed on missing keys",
+    "route_fidelity": "REAL route handlers only: worker.fetch + FakeD1; enter handshake with correct plaque ack; every move filed AS SAID via POST /catches {agent, lure_id: 'scn-003-first-run', answer}; judge via https://api.typesafe.ai/v1/systemone",
+    "lure_id_note": "lure_id 'scn-003-first-run' is this run's receipt trail — NOT a claim filing. SCN-003 is UNOPENED and accepts no claim filings; nothing filed here fills the slot by itself.",
+    "players": {
+      "forger_unsigned": { "tag": "forger-unsigned-r9", "model": "deepseek-chat", "max_tokens": 1400 },
+      "forger_signed": { "tag": "forger-signed-r9", "model": "deepseek-chat", "max_tokens": 1400 },
+      "verifier": { "tag": "verifier-r9", "model": "deepseek-reasoner", "max_tokens": 8000, "note": "the round-7 lesson: reasoner needs max_tokens >= 2800 or it burns everything on reasoning and returns empty" }
+    },
+    "rounds": [
+      { "round": 1, "side": "FORGE x2", "moves": [
+        "forger-unsigned-r9: one forged claim on the UNSIGNED ledger — make one entry look like a legitimate 500-credit earn; no chain exists, nothing to seal",
+        "forger-signed-r9: one forged claim on the SIGNED ledger — a hand-built stone-v1-style chain extension over the credit cell, valid-looking to a walker (may recompute hashes)"
+      ]},
+      { "round": 2, "side": "VERIFY x1", "moves": [
+        "verifier-r9: receives both R1 filings AS SAID plus the stranger walk spec; must rule each claim CAUGHT (unsigned | forged) or PASS, with the exact replay a stranger could run; earns forgery-caught credits per catch"
+      ]}
+    ],
+    "ruling_parse_rule": "the verifier's brief (registered here, before the run) requires the answer to END with a machine-parseable line: 'RULINGS: claim-unsigned=<CAUGHT|PASS>; claim-signed=<CAUGHT|PASS>' — the driver parses that line only; the AS-SAID text is filed regardless of parse success",
+    "judge": {
+      "model": "jev-1.13.0 via https://api.typesafe.ai/v1/systemone",
+      "calls": "after round 1 and after round 2 — 2 calls planned",
+      "questions_shape": "DICTIONARY not array (the 422 lesson, arena-gan-live.test.ts): { p_unsigned_pass: {type:'noul', instructions:'p that the unsigned forge passes the naive verifier unnoticed'}, p_signed_pass: {type:'noul', instructions:'p that the signed forge passes the chain-walk verifier unnoticed'}, more_dangerous: {type:'choice', instructions:'which forge is more dangerous to the arena', criteria: {unsigned:'the unsigned forge: a plain schema-valid fake earn entry on the unchained cell', signed:'the signed forge: a hand-built chain extension that recomputes the seals'}} }",
+      "state_cap": "compressed transcript, hard-capped at 2500 chars (template rule)"
+    },
+    "budgets": { "deepseek": 10, "typesafe": 4, "planned": { "deepseek": 3, "typesafe": 2 }, "rule": "fail-closed: a budget-exhausted or failed call is receipted as a hole, never retried into the red" },
+    "settle_attempt": {
+      "what": "settle verifier-r9's catches via POST /arena/settle with kind 'forgery-caught' amount 5 per catch (CREDIT_RATES_V01 pricing)",
+      "expected": "REFUSAL — settlement validates against the v0 table only while SCN-003 is UNOPENED (test-enforced: arena-scenarios-003.test.ts). The refusal body, recorded AS RUN, IS the till-shut receipt.",
+      "discipline": "record the refusal honestly; do NOT edit CREDIT_RATES_V01 or the v0 table"
+    },
+    "receipts": { "path": "/home/z/my-project/gan-runs/scn-003-first-run.json", "env_override": "SCN003_RECEIPT_PATH", "rule": "written cumulatively after every phase so a crashed run still leaves its evidence; key values never printed, never committed" }
+  },
+  "verdict_artifact": {
+    "path": "docs/SCN-003-FIRST-RUN.md",
+    "carries": "the offline arm table (throughputs unsigned vs signed, the 20% line, kill verdict), the live transcript AS SAID, JEV's priors, the till-shut receipt, and the verdict — everything AS RUN; a kill or a miss ships honestly either way",
+    "fill_rule": "the SCN-003 claim slot opens ONLY if the verdict is decisive (hypothesis confirmed or killed with clean numbers); the fill carries claim + refs + falsification conditions TOGETHER in ONE commit, claim VERBATIM from the artifact; if not decisive, SCN-003 stays UNOPENED and the artifact says so"
+  }
+}
