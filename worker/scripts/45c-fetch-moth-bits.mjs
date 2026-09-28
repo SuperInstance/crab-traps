@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // 45c-fetch-moth-bits.mjs — task 45-c order-whitening entropy fetch.
 //
-// Fetches FRESH raw bits from the moth quantum service (coin-toss-v1) to seed
+// Fetches FRESH random bytes from the moth quantum service (comet-qrng-v1: Born-rule
+// measurements on IBM hardware, SP 800-90B certificate + Toeplitz extractor) to seed
 // the 42-b whitening recipe (45c-mothbits.mjs) for the 96-claim presentation
 // order. Key: env MOTH_KEY (never printed, never written to any file).
 //
@@ -30,7 +31,7 @@ if (!key) {
 }
 
 const API = "https://api.mothquantum.com/api/v1";
-const SHOTS = 2048; // raw coin bits; VN debias keeps ~25%, ~512 bits -> plenty for the FY stream (which is SHA-256-extended anyway)
+const OUTPUT_BYTES = 64; // comet-qrng-v1: Born-rule bytes off IBM hardware, Toeplitz-extracted; num_qubits=12 x shots=256 keeps the counts-only log2(shots!) ordering subtraction below the raw budget
 const t0 = Date.now();
 
 async function call(method, p, body) {
@@ -56,9 +57,9 @@ async function call(method, p, body) {
 
 const receipt = {
   run: "45c order-whitening entropy fetch",
-  engine: "coin-toss-v1",
+  engine: "comet-qrng-v1",
   mode: "qpu",
-  shots: SHOTS,
+  output_bytes: 512,
   started_at: new Date().toISOString(),
   wall_budget_seconds: wallMs / 1000,
   steps: [],
@@ -67,10 +68,10 @@ const receipt = {
 let jobId = null;
 // 1. submit
 {
-  const r = await call("POST", "/engines/coin-toss-v1/process", { params: { mode: "qpu", shots: SHOTS } });
+  const r = await call("POST", "/engines/comet-qrng-v1/process", { params: { mode: "qpu", num_qubits: 12, shots: 256, output_bytes: 64 } });
   receipt.steps.push({ step: "submit", status: r.status, at: new Date().toISOString() });
   const jid = r.data && (r.data.job_id || r.data.id || (r.data.result && r.data.result.job_id));
-  if (r.status !== 200 && r.status !== 201) {
+  if ((r.status !== 200 && r.status !== 201 && r.status !== 202) || !jid) {
     receipt.error = `submit failed status=${r.status} body=${JSON.stringify(r.data).slice(0, 300)}`;
     fs.writeFileSync(outReceipt, JSON.stringify(receipt, null, 2) + "\n");
     console.error(`45c-moth: submit failed — ${receipt.error}`);
@@ -78,20 +79,26 @@ let jobId = null;
   }
   jobId = jid || null;
 }
-// 2. poll (job-based API; some engines return the result synchronously — handle both)
+// 2. poll /jobs/{id}/status until completed, then /jobs/{id}/result
 let result = null;
 for (let i = 0; Date.now() - t0 < wallMs; i++) {
-  const r = await call("GET", jobId ? `/process/${jobId}` : "/process");
-  if (r.status === 200 && r.data) {
-    const d = r.data;
-    if (d.status === "completed" || d.state === "completed" || d.result || d.outputs) {
-      result = d.result || d.outputs || d;
-      receipt.steps.push({ step: "poll", polls: i + 1, at: new Date().toISOString() });
-      break;
-    }
+  await new Promise((res) => setTimeout(res, i === 0 ? 1000 : 3000));
+  const s = await call("GET", `/jobs/${jobId}/status`);
+  const st = s.data && s.data.status;
+  if (st === "failed" || st === "cancelled") {
+    receipt.error = `job ${jobId} ${st}`;
+    fs.writeFileSync(outReceipt, JSON.stringify(receipt, null, 2) + "\n");
+    console.error(`45c-moth: job ${st} — fail-closed exit 3 (runner falls back, receipted)`);
+    process.exit(3);
   }
-  receipt.steps.push({ step: "poll-wait", i, status: r.status, at: new Date().toISOString() });
-  await new Promise((res) => setTimeout(res, 3000));
+  if (st !== "completed") {
+    receipt.steps.push({ step: "poll-wait", i, status: st, at: new Date().toISOString() });
+    continue;
+  }
+  const r = await call("GET", `/jobs/${jobId}/result`);
+  result = (r.data && (r.data.result !== undefined ? r.data.result : r.data)) || null;
+  receipt.steps.push({ step: "poll", polls: i + 1, at: new Date().toISOString() });
+  break;
 }
 if (!result) {
   receipt.error = `no completed result within ${wallMs / 1000}s (jobId=${jobId})`;
@@ -99,35 +106,29 @@ if (!result) {
   console.error("45c-moth: no result in budget — fail-closed exit 3 (runner falls back, receipted)");
   process.exit(3);
 }
-// 3. extract bits — accept the several shapes the service has used
-let bits = null, shape = null;
-const pick = (o) => {
-  if (!o) return null;
-  if (typeof o === "string" && /^[01]+$/.test(o)) return o;
-  if (Array.isArray(o) && o.every((x) => x === 0 || x === 1)) return o.join("");
-  if (Array.isArray(o) && o.every((x) => typeof x === "number")) {
-    // integer results: bit = v & 1
-    return o.map((v) => String(v & 1)).join("");
-  }
-  if (o.bits) return pick(o.bits);
-  if (o.outcomes) return pick(o.outcomes);
-  if (o.results) return pick(o.results);
-  return null;
-};
-for (const [k, v] of Object.entries(result)) {
-  const b = pick(v);
-  if (b) { bits = b; shape = k; break; }
-}
-if (!bits || bits.length < 256) {
-  receipt.error = `could not extract >=256 bits from result keys=${Object.keys(result).join(",")}`;
+// 3. extract bytes — comet-qrng returns output.random.hex (Toeplitz-extracted).
+// ONLY the documented randomness leaf is acceptable entropy — commitment/
+// salt/circuit_hash fields are provenance digests and must never be mistaken
+// for randomness (a sha256 digest is uniform-looking but is NOT chamber entropy).
+const direct = result && result.output && result.output.random && result.output.random.hex;
+let bytesHex = null, shape = null;
+if (typeof direct === "string" && /^[0-9a-f]{64,}$/.test(direct)) { bytesHex = direct; shape = "output.random.hex"; }
+if (!bytesHex) {
+  const r = (result && result.output && result.output.random) || {};
+  const keys = Object.keys(result).join(",");
+  receipt.error = `no usable output.random.hex (keys=${keys}, random.bytes=${r.bytes}, requested=${r.requested_bytes})`;
+  receipt.jobId = jobId;
   fs.writeFileSync(outReceipt, JSON.stringify(receipt, null, 2) + "\n");
-  console.error("45c-moth: bit extraction failed — fail-closed exit 3 (runner falls back, receipted)");
+  console.error("45c-moth: byte extraction failed — fail-closed exit 3 (runner falls back, receipted)");
   process.exit(3);
 }
+let bits = "";
+for (const byte of Buffer.from(bytesHex, "hex")) bits += byte.toString(2).padStart(8, "0"); // MSB-first, the recipe input convention
 fs.mkdirSync(path.dirname(path.resolve(outBits)), { recursive: true });
 fs.writeFileSync(outBits, bits + "\n");
 receipt.finished_at = new Date().toISOString();
 receipt.bits_len = bits.length;
+receipt.bytes_hex_sha256 = (await import("node:crypto")).createHash("sha256").update(bytesHex).digest("hex");
 receipt.result_shape = shape;
 receipt.jobId = jobId;
 fs.writeFileSync(outReceipt, JSON.stringify(receipt, null, 2) + "\n");

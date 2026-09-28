@@ -45,7 +45,11 @@ import { fileURLToPath } from "node:url";
 // ── registered constants (do not tune post-hoc) ─────────────────────────────
 const MODEL = "deepseek-reasoner";
 const API_URL = "https://api.deepseek.com/chat/completions";
-const MAX_TOKENS = 2000;
+// RESUME-TASK DEVIATION (disclosed, sanctioned): registered budget was 2000,
+// but the gateway's reasoner seat spends its whole token budget on
+// reasoning_tokens and returns empty content at 2000. Raised to 4000 for the
+// final answers, per the resume order; still one budget, receipted per call.
+const MAX_TOKENS = 4000;
 const MAX_CALLS = 10;
 const ITEMS_PER_BATCH = 10;
 const POOL = 96;
@@ -212,20 +216,33 @@ const redactedItem = (c) => ({
   self_witnesses: c.self_witnesses,
 });
 
-const batches = [];
-for (let b = 0; b * ITEMS_PER_BATCH < POOL && b < MAX_CALLS; b++) {
-  const positions = [];
-  for (let k = 0; k < ITEMS_PER_BATCH && b * ITEMS_PER_BATCH + k < POOL; k++) {
-    const pos = b * ITEMS_PER_BATCH + k;
-    positions.push({ pos, claimIndex: order[pos] });
-  }
-  batches.push({
-    call_no: b + 1,
-    positions, // [{pos, claimIndex}]
-    items: positions.map(({ claimIndex }) => redactedItem(claims44a[claimIndex])),
-  });
-}
-const totalLiveItems = batches.reduce((n, b) => n + b.items.length, 0);
+// ── 5b. RESUME OPTIONS (45-c resumed run; every deviation receipted) ────────
+// MEASURED FACT from the interrupted live start (stage A, receipted in
+// receipts/45c/45c-call-0{1,2}-*.json): at the registered batch of 10 items
+// and the resume-order max_tokens of 4000, the reasoner burns ALL 4000
+// completion tokens on reasoning (finish_reason=length, reasoning_tokens=4000,
+// content empty, no JSON array anywhere AS SAID) — 10-item batches CANNOT
+// produce verdicts inside the sanctioned token budget. Stage B (this
+// process): the REMAINING call budget at a batch size the seat can finish
+// (~1.5k tokens preamble + ~0.8-1.2k tokens/claim of hex arithmetic).
+// --resume ingests the existing call receipts (parse-only, NO re-calls;
+// ingested calls COUNT against the registered 10-call budget); --batch N
+// sets the stage-B batch size. The registered fail-closed accounting is
+// UNCHANGED: unpresented/unparsed claims count as NOT accepted.
+const RESUME = argv.includes("--resume");
+const batchIdx = argv.indexOf("--batch");
+const STAGE_B_BATCH = batchIdx >= 0 ? Math.max(1, Number(argv[batchIdx + 1]) || 0) : ITEMS_PER_BATCH;
+const NO_NEW = argv.includes("--no-new-calls");
+const preSpentIdx = argv.indexOf("--pre-spent");
+const PRE_SPENT = preSpentIdx >= 0 ? Math.max(0, Number(argv[preSpentIdx + 1]) || 0) : 0;
+const alsoCovIdx = argv.indexOf("--also-covered");
+const ALSO_COVERED = alsoCovIdx >= 0
+  ? argv[alsoCovIdx + 1].split(",").map((s) => Number(s.trim())).filter((n) => Number.isInteger(n) && n >= 0 && n < POOL)
+  : [];
+const batches = [];       // stage-B batches this process will call
+const ingestedCalls = []; // calls parsed from receipts (--resume)
+const coveredPositions = new Set(); // positions already presented (any stage)
+const totalLiveItems = () => batches.reduce((n, b) => n + b.items.length, 0);
 
 // ── 6. THE LIVE CALLS (budgeted, receipted) ─────────────────────────────────
 const key = process.env.DEEPSEEK_API_KEY;
@@ -236,9 +253,128 @@ if (!DRY && !key) {
 
 const usageLog = [];
 const callReceipts = [];
-const llmByClaimIndex = new Map(); // claimIndex -> {verdict, reason, call_no, pos}
+const llmByClaimIndex = new Map(); // claimIndex -> {verdict, verdict_source, reason, call_no, pos}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Structured AS-SAID extraction ONLY (45-a extraction law, tightened): a
+// verdict counts if the model actually EMITTED one — a JSON array in the
+// final content, or a JSON array inside the reasoning text. Prose scan is
+// deliberately NOT attempted: binding conditional reasoning-talk ("should
+// ACCEPT if...") to claim ids would be interpretation, not extraction.
+function extractAnswer(msg) {
+  const content = msg && typeof msg.content === "string" ? msg.content : "";
+  try {
+    const s = content.indexOf("["), e = content.lastIndexOf("]");
+    if (s >= 0 && e > s) {
+      const arr = JSON.parse(content.slice(s, e + 1));
+      if (Array.isArray(arr)) return { arr, source: "content" };
+    }
+  } catch { /* fall through */ }
+  const rc = msg && typeof msg.reasoning_content === "string" ? msg.reasoning_content : "";
+  if (rc.length > 0) {
+    try {
+      const s = rc.indexOf("["), e = rc.lastIndexOf("]");
+      if (s >= 0 && e > s) {
+        const arr = JSON.parse(rc.slice(s, e + 1));
+        if (Array.isArray(arr)) return { arr, source: "reasoning_extracted" };
+      }
+    } catch { /* fall through */ }
+  }
+  return { arr: null, source: "none" };
+}
+
+function mapRowsToLLM(arr, source, idToSlot, callNo) {
+  for (const row of arr) {
+    const slot = idToSlot.get(row && row.id);
+    if (!slot) continue;
+    const verdict = row.verdict === "ACCEPT" ? "ACCEPT" : row.verdict === "REJECT" ? "REJECT" : "UNPARSED";
+    llmByClaimIndex.set(slot.claimIndex, {
+      verdict,
+      verdict_source: source,
+      reason: typeof row.reason === "string" ? row.reason.slice(0, 200) : null,
+      call_no: callNo,
+      pos: slot.pos,
+    });
+  }
+}
+
+// --resume: parse stage-A call receipts into the verdict table. Parse-only;
+// no network; calls already spent are counted against MAX_CALLS.
+function ingestReceipts() {
+  const files = fs.readdirSync(OUT_DIR)
+    .filter((f) => /^45c-call-\d+-response\.json$/.test(f)).sort();
+  const manifestPath = path.join(OUT_DIR, "resume-ingested.json");
+  const manifest = fs.existsSync(manifestPath)
+    ? JSON.parse(fs.readFileSync(manifestPath, "utf-8")) : { ingested: [] };
+  for (const f of files) {
+    const reqFile = f.replace("-response.json", "-request.json");
+    const req = fs.existsSync(path.join(OUT_DIR, reqFile))
+      ? JSON.parse(fs.readFileSync(path.join(OUT_DIR, reqFile), "utf-8")) : null;
+    // coverage is marked even for manifest-skipped receipts (skip = parse
+    // idempotency only; the positions WERE presented)
+    if (req) for (const { pos } of req.items) coveredPositions.add(pos);
+    if (manifest.ingested.includes(f)) continue;
+    const resp = JSON.parse(fs.readFileSync(path.join(OUT_DIR, f), "utf-8"));
+    const callNo = req ? req.call_no : Number(f.match(/\d+/)[0]);
+    const msg = resp && resp.choices && resp.choices[0] && resp.choices[0].message;
+    const { arr, source } = extractAnswer(msg);
+    if (req) {
+      const idToSlot = new Map(req.items.map(({ pos, claim_id }) => [claim_id, { pos, claimIndex: order[pos] }]));
+      if (arr) mapRowsToLLM(arr, source, idToSlot, callNo);
+      for (const { pos } of req.items) coveredPositions.add(pos);
+    }
+    ingestedCalls.push({
+      call_no: callNo, receipt_file: f,
+      finish_reason: resp && resp.choices && resp.choices[0] && resp.choices[0].finish_reason || null,
+      answer_source: source, verdicts_mapped: arr ? arr.length : 0,
+      note: "stage-A call ingested from receipt (NO re-call; counts against the 10-call budget)",
+    });
+    usageLog.push({
+      call_no: callNo, attempt: 1, status: 200, ms: null, source: "receipt-ingest",
+      usage: resp && resp.usage, model: (resp && resp.model) || MODEL,
+      finish_reason: resp && resp.choices && resp.choices[0] && resp.choices[0].finish_reason || null,
+      reasoning_chars: msg && typeof msg.reasoning_content === "string" ? msg.reasoning_content.length : 0,
+      at: new Date().toISOString(),
+    });
+    manifest.ingested.push(f);
+  }
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+}
+
+if (RESUME) {
+  ingestReceipts();
+  for (const pos of ALSO_COVERED) coveredPositions.add(pos);
+}
+
+// Build the stage-B batches: next uncovered whitened positions, STAGE_B_BATCH
+// per call, until the registered 10-call budget is exhausted. A fresh run
+// (no --resume) reproduces the registered slicing exactly (10 items/call).
+// --no-new-calls: receipt-only pass — no network, artifacts from ingested
+// receipts + pre-spent accounting (used to close a starved run honestly).
+const existingReceiptNums = fs.existsSync(OUT_DIR)
+  ? fs.readdirSync(OUT_DIR)
+      .map((f) => (f.match(/^45c-call-(\d+)-response\.json$/) || [])[1])
+      .filter(Boolean).map(Number)
+  : [];
+let nextCallNo = Math.max(ingestedCalls.length, ...existingReceiptNums, 0) + 1;
+if (!NO_NEW) {
+  for (let pos = 0; pos < POOL && batches.length < MAX_CALLS - PRE_SPENT - ingestedCalls.length; ) {
+    if (coveredPositions.has(pos)) { pos++; continue; }
+    const positions = [];
+    while (positions.length < STAGE_B_BATCH && pos < POOL) {
+      if (coveredPositions.has(pos)) { pos++; continue; }
+      positions.push({ pos, claimIndex: order[pos] });
+      coveredPositions.add(pos);
+      pos++;
+    }
+    batches.push({
+      call_no: nextCallNo++,
+      positions, // [{pos, claimIndex}]
+      items: positions.map(({ claimIndex }) => redactedItem(claims44a[claimIndex])),
+    });
+  }
+}
 
 async function liveCall(batch, attempt) {
   const userPrompt = `Claims for this call (${batch.items.length} of this batch; presented in whitened order):\n` +
@@ -285,10 +421,11 @@ async function liveCall(batch, attempt) {
   return { status, raw, err, ms, requestReceipt };
 }
 
-let callCount = 0;
+let callCount = PRE_SPENT + ingestedCalls.length;
 if (DRY) {
-  console.log("[45c] --dry: skipping live calls (dress rehearsal of strict seat + whitening + batching only)");
+  console.log(`[45c] --dry: skipping live calls (dress rehearsal of strict seat + whitening + batching only)`);
 } else {
+  if (RESUME) console.log(`[45c] resume: pre-spent ${PRE_SPENT} call(s) w/o intact receipts + ${ingestedCalls.length} ingested receipt(s) = ${callCount} of ${MAX_CALLS}; stage-B batch=${STAGE_B_BATCH}, ${batches.length} call(s) to make${batches.length ? ", positions " + batches[0].positions[0].pos + ".." + batches[batches.length - 1].positions[batches[batches.length - 1].positions.length - 1].pos : " (receipt-only pass)"}`);
   for (const batch of batches) {
     if (callCount >= MAX_CALLS) throw new Error("call budget exceeded — refusing");
     let attempt = 1, out = null;
@@ -318,31 +455,15 @@ if (DRY) {
 
     if (out.status !== 200 || !out.raw.choices) continue; // fail-closed: items stay unverified
     const msg = out.raw.choices[0].message;
-    const content = msg.content || "";
-    // tolerate prose/fences: first '[' to last ']'
-    let arr = null;
-    try {
-      const s = content.indexOf("["), e = content.lastIndexOf("]");
-      if (s >= 0 && e > s) arr = JSON.parse(content.slice(s, e + 1));
-    } catch { arr = null; }
+    const { arr, source: arrSource } = extractAnswer(msg);
     const reasoningLen = typeof msg.reasoning_content === "string" ? msg.reasoning_content.length : 0;
-    console.log(`[45c] call ${batch.call_no}: status 200 in ${out.ms}ms, reasoning ${reasoningLen} chars, usage ${JSON.stringify(out.raw.usage)}`);
-    if (!Array.isArray(arr)) {
-      console.error(`[45c] call ${batch.call_no}: answer not a JSON array — items get no live verdict (fail-closed)`);
+    console.log(`[45c] call ${batch.call_no}: status 200 in ${out.ms}ms, reasoning ${reasoningLen} chars, answer_source=${arrSource}, usage ${JSON.stringify(out.raw.usage)}`);
+    if (!arr) {
+      console.error(`[45c] call ${batch.call_no}: no structured answer AS SAID (content empty, no array in reasoning) — items fail-closed`);
       continue;
     }
     const idToIndex = new Map(batch.positions.map(({ pos, claimIndex }) => [claims44a[claimIndex].claim_id, { pos, claimIndex }]));
-    for (const row of arr) {
-      const slot = idToIndex.get(row && row.id);
-      if (!slot) continue;
-      const verdict = row.verdict === "ACCEPT" ? "ACCEPT" : row.verdict === "REJECT" ? "REJECT" : "UNPARSED";
-      llmByClaimIndex.set(slot.claimIndex, {
-        verdict,
-        reason: typeof row.reason === "string" ? row.reason.slice(0, 200) : null,
-        call_no: batch.call_no,
-        pos: slot.pos,
-      });
-    }
+    mapRowsToLLM(arr, arrSource, idToIndex, batch.call_no);
     await sleep(1500);
   }
 }
@@ -372,6 +493,7 @@ const perClaim = order.map((claimIndex, pos) => {
     loom_verdict: c.loom_verdict,
     src_sha12: sha256(c.source).slice(0, 12),
     llm_verdict: llm ? llm.verdict : "NO-CALL",
+    llm_verdict_source: llm ? llm.verdict_source : null,
     llm_reason: llm ? llm.reason : null,
     llm_reason_class: llm ? reasonClass(llm.reason) : "none",
     strict_pass: strictRows[claimIndex].strict_pass,
@@ -473,7 +595,27 @@ const runReceipt = {
     items_total: N,
     items_answered: answered.length,
     items_unparsed_or_uncalled: unparsed,
-    batching: `${ITEMS_PER_BATCH} items/call, order whitened (42-b recipe)`,
+    batching: RESUME
+      ? `stage A: 10 items/call (registered), starved; salvage probes: batch 2 then batch 1, ALL starved; receipts-only close — order whitened (42-b recipe), registered <=10-call budget kept (true spend receipted)`
+      : `${ITEMS_PER_BATCH} items/call, order whitened (42-b recipe)`,
+    resume: RESUME
+      ? {
+          pre_spent_calls_no_intact_receipts: PRE_SPENT,
+          pre_spent_note: "the two batch-2 salvage calls (whitened positions 20-23 presented, starved: reasoning 12021/13743 chars, finish_reason=length, zero verdicts) had their response receipts OVERWRITTEN by a resume call-numbering bug before the numbering was fixed; facts preserved in the agent session log; their spend is counted here",
+          ingested_calls: ingestedCalls,
+          stage_b_batch_size: STAGE_B_BATCH,
+          stage_b_calls: batches.length,
+          stage_b_positions: batches.flatMap((b) => b.positions.map((p) => p.pos)),
+          presented_positions_sorted: [...coveredPositions].sort((a, b) => a - b),
+          deviations: [
+            "max_tokens 2000 (registered) -> 4000: sanctioned by the resume order (reasoner exhausts the budget on reasoning)",
+            "STARVATION FINDING: on EVERY call (batch 10, batch 2, batch 1), the gateway reasoner spent ALL 4000 completion tokens on reasoning_tokens (finish_reason=length, content empty, no JSON array anywhere AS SAID) — the seat emitted ZERO verdicts in " + (PRE_SPENT + ingestedCalls.length) + " calls; even ONE claim does not fit the sanctioned token budget",
+            "salvage batch sizes 2 and 1 deviate from the registered '~10 items/call' (measured infeasible); registered call budget (<=10 TOTAL) and fail-closed accounting UNCHANGED",
+            "coverage is partial (see presented_positions_sorted): only those whitened positions were ever presented; unpresented/unparsed claims count as NOT accepted (registered conservative rule) and are disclosed",
+            "remaining budget deliberately UNDERSPENT: with starvation conclusive at every batch size, further calls cannot produce a verdict; no information justifies more spend",
+          ],
+        }
+      : undefined,
     dry_run: DRY,
     started_note: "see receipts/45c-call-01-request.json sent_at for first call time; whitening-receipt.json written before the first call",
     crab_traps_base: { repo: "SuperInstance/crab-traps", tip_before_lane: "fed1e98502dfcedbd3669652bbe3d713e1156d78" },
@@ -502,9 +644,29 @@ const runReceipt = {
       ? `SURVIVE — with a REAL reasoner as the naive seat, D=${D.toFixed(4)} >= 0.20 at the registered line`
       : `KILL — D=${D.toFixed(4)} < 0.20: the live reasoner's naive seat separates bred claims no better than ${D.toFixed(4)} at the registered line`,
     survived,
+    interpretability_note: unparsed > 0
+      ? `COVERAGE CAVEAT: ${unparsed}/96 claims were never answered by the live seat (budget starvation at stage A + partial stage-B salvage), and the registered fail-closed rule counts them as NOT accepted — the conservative D over all 96 is dominated by non-coverage, so read measured_subset below (both seats compared on the SAME answered claims) alongside it.`
+      : "full coverage: all 96 claims answered by the live seat",
     D_synthetic_44a: dSynthetic,
     delta_vs_synthetic: +(D - dSynthetic).toFixed(4),
   },
+  measured_subset: (() => {
+    const ans = perClaim.filter((r) => r.llm_verdict === "ACCEPT" || r.llm_verdict === "REJECT");
+    const u = ans.filter((r) => r.llm_verdict === "ACCEPT").length;
+    const s = ans.filter((r) => r.strict_pass).length;
+    const dSub = u > 0 ? (u - s) / u : null;
+    const mims = ans.filter((r) => r.label_44a === "should_fail");
+    const crns = ans.filter((r) => r.label_44a === "should_pass");
+    return {
+      n_answered: ans.length,
+      accepts: u,
+      strict_passes_among_answered: s,
+      D_subset: dSub === null ? null : +dSub.toFixed(4),
+      note: "the interpretable reading when coverage is partial: BOTH seats compared on the SAME answered claims. The registered conservative D over all 96 is reported in verdict.D. Non-registered reading, disclosed.",
+      mimic_acceptance: { n: mims.length, accepted: mims.filter((r) => r.llm_verdict === "ACCEPT").length, rate: mims.length ? +(mims.filter((r) => r.llm_verdict === "ACCEPT").length / mims.length).toFixed(4) : null },
+      crown_acceptance: { n: crns.length, accepted: crns.filter((r) => r.llm_verdict === "ACCEPT").length, rate: crns.length ? +(crns.filter((r) => r.llm_verdict === "ACCEPT").length / crns.length).toFixed(4) : null },
+    };
+  })(),
   rates: {
     mimics: mimics,
     crowns: crowns,
@@ -512,11 +674,16 @@ const runReceipt = {
     second_half_of_batch: secondHalf,
     reject_reason_taxonomy: reasonTaxonomy,
     accept_reason_taxonomy: acceptTaxonomy,
+    answer_source_counts: {
+      content: perClaim.filter((r) => r.llm_verdict_source === "content").length,
+      reasoning_extracted: perClaim.filter((r) => r.llm_verdict_source === "reasoning_extracted").length,
+      note: "reasoning_extracted = the 45-a extraction law: verdict read AS SAID from reasoning_content when the final content was empty/truncated (per-claim llm_verdict_source carries the tag)",
+    },
     duplicate_visibility: duplicateReceipt,
   },
   predictions_measured: {
-    P1: { mimics_accepted: mimics.accepted, mimics_n: mimics.n, rate: mimics.rate, threshold: 0.8, pass: mimics.rate !== null && mimics.rate >= 0.8 },
-    P2: { crowns_rate: crowns.rate, mimics_rate: mimics.rate, pass: crowns.rate !== null && mimics.rate !== null && crowns.rate >= mimics.rate },
+    P1: { mimics_accepted: mimics.accepted, mimics_n: mimics.n, rate: mimics.rate, threshold: 0.8, pass: mimics.rate !== null && mimics.rate >= 0.8, conservative_all_92_rate: +(mimics.accepted / 92).toFixed(4), note: "conservative_all_92_rate counts the registered fail-closed rule (unanswered mimics = not accepted)" },
+    P2: { crowns_rate: crowns.rate, mimics_rate: mimics.rate, pass: crowns.rate !== null && mimics.rate !== null && crowns.rate >= mimics.rate, measurable: crowns.n > 0 },
     P3: { strict_matches_44a: strictMatches, T_signed_rederived: T_strict, pass: strictRepro.fully_reproduced },
     P4: { D: +D.toFixed(4), threshold: 0.2, pass: survived },
     P5: { first_half: firstHalf, second_half: secondHalf, abs_delta: firstHalf.rate !== null && secondHalf.rate !== null ? +Math.abs(firstHalf.rate - secondHalf.rate).toFixed(4) : null, threshold: 0.15, pass: firstHalf.rate !== null && secondHalf.rate !== null && Math.abs(firstHalf.rate - secondHalf.rate) <= 0.15 },

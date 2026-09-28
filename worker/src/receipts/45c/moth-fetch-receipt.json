@@ -1,0 +1,130 @@
+{
+  "run": "45c order-whitening entropy fetch",
+  "engine": "comet-qrng-v1",
+  "mode": "qpu",
+  "output_bytes": 512,
+  "started_at": "2026-09-27T23:33:22.307Z",
+  "wall_budget_seconds": 110,
+  "steps": [
+    {
+      "step": "submit",
+      "status": 202,
+      "at": "2026-09-27T23:33:24.364Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 0,
+      "status": "processing",
+      "at": "2026-09-27T23:33:26.251Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 1,
+      "status": "processing",
+      "at": "2026-09-27T23:33:30.070Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 2,
+      "status": "processing",
+      "at": "2026-09-27T23:33:33.891Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 3,
+      "status": "processing",
+      "at": "2026-09-27T23:33:37.903Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 4,
+      "status": "processing",
+      "at": "2026-09-27T23:33:41.704Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 5,
+      "status": "processing",
+      "at": "2026-09-27T23:33:45.517Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 6,
+      "status": "processing",
+      "at": "2026-09-27T23:33:49.344Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 7,
+      "status": "processing",
+      "at": "2026-09-27T23:33:53.167Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 8,
+      "status": "processing",
+      "at": "2026-09-27T23:33:56.987Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 9,
+      "status": "processing",
+      "at": "2026-09-27T23:34:00.823Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 10,
+      "status": "processing",
+      "at": "2026-09-27T23:34:04.640Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 11,
+      "status": "processing",
+      "at": "2026-09-27T23:34:08.484Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 12,
+      "status": "processing",
+      "at": "2026-09-27T23:34:12.343Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 13,
+      "status": "processing",
+      "at": "2026-09-27T23:34:16.169Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 14,
+      "status": "processing",
+      "at": "2026-09-27T23:34:19.967Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 15,
+      "status": "processing",
+      "at": "2026-09-27T23:34:23.790Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 16,
+      "status": "processing",
+      "at": "2026-09-27T23:34:27.607Z"
+    },
+    {
+      "step": "poll-wait",
+      "i": 17,
+      "status": "processing",
+      "at": "2026-09-27T23:34:31.435Z"
+    },
+    {
+      "step": "poll",
+      "polls": 19,
+      "at": "2026-09-27T23:34:37.337Z"
+    }
+  ],
+  "error": "no usable output.random.hex (keys=output, random.bytes=0, requested=64)",
+  "jobId": "27be8266-3715-4a61-bd4b-0a4a690090ed"
+}
