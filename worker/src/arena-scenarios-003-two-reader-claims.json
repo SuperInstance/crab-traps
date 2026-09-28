@@ -1,0 +1,195 @@
+{
+  "pre_registration": {
+    "task": "47-b two-reader rule (first installment, mid-arc item 7): a crab-traps-side SECOND READER independently walks the SAME 8 chains the fleet's wave-46 witness rollout verified, compares computed tips/binding facts against the wave-46 receipted pins, emits a two-reader receipt whose rows carry walker identity 'crab-traps-second-reader', and exits 0 iff every chain agrees",
+    "lane": "Task 47-b second-reader (lane)",
+    "registered_at_utc": "mtime of this file is the binding receipt; recorded BEFORE any official second-reader run",
+    "walker_independence_law": "the walker is WRITTEN FROM THE LAW, not ported from fleet code: row_hash = sha256(UTF8(canonicalJSON([prev, row-minus-row_hash]))); canonicalJSON = object keys sorted recursively by Unicode code unit, undefined-valued keys skipped, arrays keep order, JSON.stringify scalar semantics, no whitespace; stone row 0 must be kind 'stone.header' with alg 'stone-v1'; annotation rows (kind 'stone.*' except 'stone.header') never advance the tip; witness receipts carry exactly {claim, inputs_sha256, output_sha256, parent, ts}, id = sha256(canonical json), first parent = 'GENESIS', tip = id(last receipt). Fleet modules tools/lib/stone-v1.mjs and playtest/wave44/witness-grammar/witness.mjs were READ AS SPEC ONLY; no fleet walker code copied; no shared code with fleet-seeds",
+    "pin_provenance": "every pin below is reused verbatim from the fleet's wave-46 rollout receipts: playtest/wave46/witness-rollout/walkers.mjs PINS + receipts/run-receipt.json targets + claims.json (claims sha cfaf425b42ac2824b91c9190a0d89d34be9158657815399e12e0513d4ca0118a) + committed fetched bytes under receipts/fetched/, all read at fleet-seeds commit 9c46c34253c18ae3f94f764470ccb6e837768255",
+    "recon_disclosure": "pre-registration reconnaissance, disclosed: (a) 5 raw.githubusercontent GETs at the pinned URLs returned bytes whose sha256 match the receipted pins (6637ce7d…, 3340b082…, 6e958f67…, 818e6683…, 6d7db23e…); (b) a throwaway canonicalJSON written fresh from the law reproduced the fleet walker's receipted output digests for the three non-chain targets (crabtraps_45c 9267feb4…, crabtraps_44a 5e7d51ca…, fleetseeds_fixtures 108f535f…) — this probe informed the digest-agreement design only; the official run recomputes everything itself",
+    "labels": "LIVE = fetched from raw.githubusercontent.com at the pinned commit sha; FIXTURE = read from the fleet-seeds checkout at the pinned reference commit and pinned by BOTH bytes-sha256 and git blob sha",
+    "no_llm_spend": true,
+    "no_keys": "no key material used, printed, or committed; the second reader is stdlib-only network + hash code"
+  },
+  "fleet_reference": {
+    "repo": "SuperInstance/fleet-seeds",
+    "reference_commit": "9c46c34253c18ae3f94f764470ccb6e837768255",
+    "wave46_claims_sha256": "cfaf425b42ac2824b91c9190a0d89d34be9158657815399e12e0513d4ca0118a",
+    "wave46_rollup_chain_tip": "6e4cdb8f2ca27607f74068b4640258c0c363957fb55248ea8a2f357740451407",
+    "wave46_run_at": "2026-09-28T00:48:42.400Z",
+    "pin_sources": [
+      "playtest/wave46/witness-rollout/walkers.mjs (PINS table)",
+      "playtest/wave46/witness-rollout/receipts/run-receipt.json (targets)",
+      "playtest/wave46/witness-rollout/receipts/fetched/ (committed LIVE bytes)",
+      "playtest/wave46/witness-rollout/claims.json"
+    ]
+  },
+  "pins": [
+    {
+      "id": "wave44_kat",
+      "kind": "witness-chain",
+      "label": "FIXTURE",
+      "fleet_path": "playtest/wave44/witness-grammar/kat/chain.jsonl",
+      "bytes_sha256": "c68175e7aa54383a6c4795595c7d7ee4eef4c68628d2e96f5720b28e6033f7c9",
+      "git_blob": "5cac84cff7946abf6940e1b7f3337a5e94d0b4c3",
+      "expect_tip": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+      "expect_receipts": 5,
+      "fleet_receipted_tip": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c"
+    },
+    {
+      "id": "qthe_e_q10",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "repo": "SuperInstance/qthe",
+      "commit": "0f5be9d6652d90b7984ebfaa5394a6e20179c7dc",
+      "path": "receipts/e_q10_chain.jsonl",
+      "raw_url": "https://raw.githubusercontent.com/SuperInstance/qthe/0f5be9d6652d90b7984ebfaa5394a6e20179c7dc/receipts/e_q10_chain.jsonl",
+      "bytes_sha256": "6637ce7dfb2d68718cc0a09d13fbe6311d59f52d3a91c8e00264546911f1fc59",
+      "expect_tip": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+      "expect_links": 24,
+      "fleet_receipted_tip": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938"
+    },
+    {
+      "id": "qthe_e_q6",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "repo": "SuperInstance/qthe",
+      "commit": "905bb2f57ba369500359dc255aeaaeb681125fa6",
+      "path": "receipts/e_q6_chain.jsonl",
+      "raw_url": "https://raw.githubusercontent.com/SuperInstance/qthe/905bb2f57ba369500359dc255aeaaeb681125fa6/receipts/e_q6_chain.jsonl",
+      "bytes_sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+      "expect_tip": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+      "expect_links": 15,
+      "fleet_receipted_tip": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+      "note": "the e_q9-named fixture at this pin is the e_q6 chain (fleet P5 disclosure, honored); e_q9 has no chain"
+    },
+    {
+      "id": "pong_birth_seal",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "repo": "SuperInstance/pong-quilt",
+      "commit": "1da41be23eff100f4d11df0e187311e12ad704f9",
+      "path": "checkpoints/stone-v1.json",
+      "raw_url": "https://raw.githubusercontent.com/SuperInstance/pong-quilt/1da41be23eff100f4d11df0e187311e12ad704f9/checkpoints/stone-v1.json",
+      "bytes_sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+      "expect_tip": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+      "expect_links": 5,
+      "fleet_receipted_tip": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+      "note": "single-JSON-document chain (array form), not JSONL"
+    },
+    {
+      "id": "tavern_round11",
+      "kind": "stone-v1",
+      "label": "FIXTURE",
+      "fleet_path": "tavern/round-11/round11_ledger.jsonl",
+      "pinned_at_fleet_commit": "a7a0226185a47695f4b7fd420d54d0e394e48630",
+      "git_blob": "913eea42b2b0f34ff669c74c3a6156dc2319a471",
+      "bytes_sha256": "bdf3be0641f51b4241d3846b16744e2623bfb4ec24f5374f931d7618d1d19bf5",
+      "expect_tip": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+      "expect_links": 6,
+      "fleet_receipted_tip": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+      "note": "git blob verified identical at fleet pin a7a0226 and reference commit 9c46c34 (post round-12 fold; standalone r11 chain untouched)"
+    },
+    {
+      "id": "crabtraps_45c",
+      "kind": "artifact+pre-registration-binding",
+      "label": "LIVE",
+      "repo": "SuperInstance/crab-traps",
+      "commit": "e6f5ce3342e12280d7ef70d982ec4c6d709540e9",
+      "artifact_path": "worker/src/arena-scenarios-003-live-reasoner-results.json",
+      "artifact_raw_url": "https://raw.githubusercontent.com/SuperInstance/crab-traps/e6f5ce3342e12280d7ef70d982ec4c6d709540e9/worker/src/arena-scenarios-003-live-reasoner-results.json",
+      "artifact_sha256": "818e66834edb5ed1d21f1a2070eeb860d6cc8dd291546deaa59ea3fb61bc2184",
+      "predictions_path": "worker/src/arena-scenarios-003-live-reasoner-predictions.json",
+      "predictions_raw_url": "https://raw.githubusercontent.com/SuperInstance/crab-traps/e6f5ce3342e12280d7ef70d982ec4c6d709540e9/worker/src/arena-scenarios-003-live-reasoner-predictions.json",
+      "predictions_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+      "fleet_receipted_detail": {
+        "artifact_sha256": "818e66834edb5ed1d21f1a2070eeb860d6cc8dd291546deaa59ea3fb61bc2184",
+        "predictions_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+        "embedded_pre_registration_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+        "artifactShaMatchesPin": true,
+        "embeddedMatchesPredictions": true,
+        "embeddedMatchesPin": true,
+        "hasVerdict": true
+      },
+      "fleet_receipted_output_digest": "9267feb453683e993fa4bb395a7b15c7177e8740a90bd67e62a8c11bce17d5e4"
+    },
+    {
+      "id": "crabtraps_44a",
+      "kind": "artifact+pre-registration-binding",
+      "label": "LIVE",
+      "repo": "SuperInstance/crab-traps",
+      "commit": "fed1e98502dfcedbd3669652bbe3d713e1156d78",
+      "artifact_path": "worker/src/arena-scenarios-003-gan-results.json",
+      "artifact_raw_url": "https://raw.githubusercontent.com/SuperInstance/crab-traps/fed1e98502dfcedbd3669652bbe3d713e1156d78/worker/src/arena-scenarios-003-gan-results.json",
+      "artifact_sha256": "6d7db23ec86e2ffb79d8dcae65b9972fd87bd6f012ecc33d596fb7ebe47a0d78",
+      "predictions_path": "worker/src/arena-scenarios-003-gan-predictions.json",
+      "predictions_raw_url": "https://raw.githubusercontent.com/SuperInstance/crab-traps/fed1e98502dfcedbd3669652bbe3d713e1156d78/worker/src/arena-scenarios-003-gan-predictions.json",
+      "predictions_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+      "fleet_receipted_detail": {
+        "artifact_sha256": "6d7db23ec86e2ffb79d8dcae65b9972fd87bd6f012ecc33d596fb7ebe47a0d78",
+        "predictions_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+        "embedded_pre_registration_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+        "artifactShaMatchesPin": true,
+        "embeddedMatchesPredictions": true,
+        "embeddedMatchesPin": true,
+        "hasVerdict": true
+      },
+      "fleet_receipted_output_digest": "5e7d51ca4487d90d92cc9c65d19a66d94822f85c7e3f16fba76648698b348f41"
+    },
+    {
+      "id": "fleetseeds_fixtures",
+      "kind": "fixture-manifest",
+      "label": "FIXTURE",
+      "files": [
+        {
+          "path": "tools/fixtures/qthe-e_q6-chain-905bb2f57ba369500359dc255aeaaeb681125fa6.jsonl",
+          "sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+          "git_blob": "2ea29bb4e3228fd0481389aa79971486df977727"
+        },
+        {
+          "path": "tools/fixtures/pong-stone-v1-1da41be23eff100f4d11df0e187311e12ad704f9.json",
+          "sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+          "git_blob": "b88c07772fe5559009fde43f3dc2503cb65272fb"
+        },
+        {
+          "path": "tools/fixtures/rekor-ecdsa-entry-108e9186-a00ec06ef.live-get.json",
+          "sha256": "4545f9182b4204e5f7bc2c1130739aeb0039026d12c735f4756c20043f879268",
+          "git_blob": "4866bf319bef70bb80fcf4a2087d40e618733c30"
+        },
+        {
+          "path": "tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9-152c46272e19.txt",
+          "sha256": "ebc8a43d90be5c0b01788f7cc63021ab0b0dac1a0294756e73a2882360b5e9b9",
+          "git_blob": "ce1b22efc7fe06530d631df6a886ad6807ec5b7f"
+        }
+      ],
+      "fleet_receipted_output_digest": "108f535f78bfee266ce2550267285c9c461cd5fcab2c045e06579f4ec7530239"
+    }
+  ],
+  "claims": [
+    {
+      "id": "P1",
+      "claim": "All 8 chains' independently-computed tips / binding facts AGREE with the wave-46 receipted pins: chains_agreed = 8/8, two-reader receipt all_agree = true. Stone chains: computed tip == fleet_receipted_tip AND links match AND bytes sha match. Witness KAT: computed tip == fleet_receipted_tip AND receipt count == 5. Binding artifacts: artifact sha, predictions sha and all three embedded-binding facts equal the fleet's receipted detail. Fixture manifest: all 4 file shas equal their pins.",
+      "falsifier": "any chain with agree=false, any links/bytes-sha mismatch, or runner exit non-zero on the official run"
+    },
+    {
+      "id": "P2",
+      "claim": "Negative controls FAIL CLOSED: every injected fault is caught and flips the verdict to disagree — tampered stone chain byte, wrong expect-tip pin on an untampered chain, tampered witness receipt byte, skipped middle witness receipt, tampered artifact bytes, tampered predictions bytes, tampered fixture byte — and the untouched-bytes positive control still agrees 8/8. The instrument's exit code reflects each control (0 on agree-only, non-zero on any disagreement).",
+      "falsifier": "any negative control that still verifies (undetected tamper), or the positive control disagreeing"
+    },
+    {
+      "id": "P3",
+      "claim": "The walker identity note 'crab-traps-second-reader' is present in EVERY receipt row of the two-reader receipt (inside each receipt's claim text and in each per-chain entry's walker_note field), with zero identity-less rows.",
+      "falsifier": "any receipt row or per-chain entry lacking the exact walker identity string"
+    },
+    {
+      "id": "P4",
+      "claim": "Cross-reader byte agreement: LIVE-fetched bytes are byte-identical (sha256) to the fleet rollout's committed fetched/ bytes for all 5 remote chains (qthe e_q10, qthe e_q6, pong birth-seal, crabtraps 45c artifact+predictions, crabtraps 44a artifact+predictions), and all FIXTURE bytes match their pre-registered bytes-sha256 AND git blob pins.",
+      "falsifier": "any sha divergence between second-reader-fetched bytes and fleet committed bytes, or any fixture bytes/blob pin mismatch"
+    },
+    {
+      "id": "P5",
+      "claim": "The two-reader receipt is itself a witness chain under the second reader's INDEPENDENT grammar implementation (exact field set, strict sha256 parent links, GENESIS sentinel, duplicate-id rejection): it self-verifies with ok=true, 8 receipts, and the runner exits 0 iff every chain agrees. Additionally, the second reader's canonicalJSON reproduces the fleet walker's receipted output digests for the three non-chain targets when fed the fleet's walker identity (digest reproduction evidence, not an agreement requirement).",
+      "falsifier": "receipt chain fails self-verification, runner exit code inconsistent with the agreement table, or digest reproduction failing while facts still agree (honest note, not a hard fail)"
+    }
+  ],
+  "exit_contract": "runner exit 0 iff every chain tip/binding agrees AND the receipt chain self-verifies; exit 1 otherwise; fail-closed on any fetch/pin/walk error"
+}

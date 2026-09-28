@@ -1,0 +1,10 @@
+{
+  "what": "SCN-003 47-b pre-registration receipt: two-reader claims (P1-P5 + full pin table), sha256+mtime captured BEFORE any official second-reader run",
+  "file": "worker/src/arena-scenarios-003-two-reader-claims.json",
+  "sha256": "d274f8c6c03bcfb239b073d6eda51787aa18e3e1c65ad0f1150138cf42860dd3",
+  "bytes": 14459,
+  "mtime_utc": "2026-09-28T01:24:32.119Z",
+  "captured_at": "2026-09-28T01:24:40.950Z",
+  "written_before_any_run": true,
+  "note": "THIS receipt (sha+mtime) is committed in the registration push BEFORE the official run; claims cover P1 tips-agreement, P2 fail-closed negatives, P3 walker identity, P4 cross-reader byte agreement, P5 self-verifying receipt + digest reproduction"
+}
