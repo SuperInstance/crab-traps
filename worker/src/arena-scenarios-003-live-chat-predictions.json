@@ -1,0 +1,79 @@
+{
+  "pre_registration": {
+    "task": "46-a SCN-003 LIVE half, SEAT-SWAP TAKE 2: the economy-of-honesty chamber's NAIVE VERIFIER seat is played by deepseek-chat (the model that answered fine in wave-45 round-11 at max_tokens 2000) facing the SAME 44-a forge-bred lure set, because take 1 (45-c, deepseek-reasoner) STARVED: 0/96 answered, reasoning_tokens consumed the entire max_tokens at every batch size, formal D=0.0000 receipted NON-INTERPRETABLE (starvation, not seat signal). This wave is the first REAL live-GAN chamber verdict with a seat that can actually emit verdicts.",
+    "written_before_any_live_call": true,
+    "registered_at_file_mtime": "binding receipts are this file's sha256 and its mtime, both strictly before the first deepseek call; worker/src/receipts/46a/46a-registration-receipt.json captures both at registration time, and the run records the sha again at startup",
+    "run_identity": {
+      "lure_set": "worker/src/arena-scenarios-003-gan-lures.json (44-a, VERBATIM, sha256 bc2ef70014b09ba7a473b2cd33b3bc2186d5465c4b4e9bc22a8988ce87c5673f): 96 bred witness-crown claims — 4 crowns (loom alien, should-PASS) + 92 mimics (behaviorally EXACT code with a FALSE crown claim, should-FAIL); only 4 DISTINCT sources exist among the 96 claims",
+      "model": "deepseek-chat",
+      "api": "POST https://api.deepseek.com/chat/completions, Bearer $DEEPSEEK_API_KEY (sourced from /home/z/my-project/.env; never printed, never committed)",
+      "budget": "<= 10 deepseek calls TOTAL, max_tokens <= 2000/call, temperature 0.0 (REGISTERED CHOICE), raw JSON responses receipted to disk, per-call usage logged, registered spend cap $0.05 (estimated per call from RECEIVED usage with disclosed price assumptions; abort if the projection exceeds the cap)",
+      "temperature_disclosure": "45-c ran the reasoner at API defaults (temperature unsupported there). deepseek-chat supports temperature; 0.0 is registered BEFORE the run for verdict determinism. This plus the seat itself are the ONLY deltas vs 45-c.",
+      "model_sees": "IDENTICAL to 45-c: per claim: id, kind, the asserted claim text, the SOURCE, 3 SELF-witnesses, the public contract spec (witness_fnv: {text} -> 16 lowercase hex; canonical behavior FNV-1a-64). The model does NOT see: labels, loom_verdict, family, gen, corruption, ref, any archive. The system prompt is the 45-c SYSTEM PROMPT VERBATIM (loaded at run time from the receipted receipts/45c/45c-call-01-request.json .system_prompt_verbatim — prompt reuse is the point; the ONLY delta is the seat). User prompt shape identical: 'Claims for this call (N of this batch; presented in whitened order):' + JSON array of redacted items.",
+      "order": "IDENTICAL whitened order as 45-c: presentation_order copied VERBATIM from worker/src/receipts/45c/whitening-receipt.json (step4_fisherYates.selected), NOT re-whitened; order sha256 (JSON.stringify) must equal 5f86bcd34f281a7758d46b239603a685e1136708f66d9582a9d8bfda2b95c390 and be a permutation of 0..95, else abort. Same order => the ONLY delta vs 45-c is the seat.",
+      "strict_seat": "IDENTICAL to 45-c: re-derived at run time from the committed 44-a artifacts via loom-core's own engine_lib (evaluate/structSketch/novelty on the committed final probe vector, ownership self-exclusion, CROWNING_THRESHOLD=0.12), byte-checked against all 96 committed per-claim rows BEFORE any live call (abort if not fully reproduced: 96/96 fingerprints, 96/96 verdicts, T_signed=2)",
+      "d_score": "IDENTICAL to 45-c: D = (T_unsigned - T_signed)/T_unsigned over the 96 bred claims; T_unsigned = claims the LIVE chat seat ACCEPTs; T_signed = strict accepts (2); SURVIVE iff D >= 0.20 — the registered line carried unchanged",
+      "fail_closed_accounting": "IDENTICAL to 45-c: UNPARSED or uncalled items count as NOT accepted by the naive seat (conservative: shrinks T_unsigned, shrinks D, harder to SURVIVE), and are disclosed per claim"
+    },
+    "starvation_contingency_registered_before_run": [
+      "The 45-c starvation signature was finish_reason=length with EMPTY content (all completion tokens spent on reasoning). deepseek-chat emits no reasoning_content, but the same guard applies: a call whose message has no parseable JSON array AS SAID and finish_reason=length is a STARVED call.",
+      "LADDER (pre-registered, not post-hoc tuning): call 1 at batch 10. If call 1 starves, call 2 at batch 2. If call 2 starves, call 3 at batch 1. If the batch-1 call ALSO starves: STOP live calling, receipt the run as a SECOND SEAT STARVATION (honest, disclosed), compute the formal D under the fail-closed rule — that IS the verdict.",
+      "If a call succeeds (JSON array parsed), all subsequent calls return to the registered batch of 10."
+    ],
+    "comparability_contract": {
+      "prior_seats": [
+        { "seat": "synthetic naive (44-a)", "T_unsigned": 96, "answered": "96/96", "D": 0.9792, "verdict": "SURVIVE" },
+        { "seat": "deepseek-reasoner (45-c)", "T_unsigned": 0, "answered": "0/96", "D": 0.0, "verdict": "KILL — NON-INTERPRETABLE (starvation)" }
+      ],
+      "this_run": "deepseek-chat (46-a) — the comparison column this run fills; same claims, same whitened order, same prompts, same strict seat, same D rule, same fail-closed rule"
+    },
+    "framing_disclosure": [
+      "SEAT-SWAP TAKE 2, DISCLOSED UP FRONT: the prior live seat (deepseek-reasoner, 45-c) starved — 0/96 answered, 7/10 calls spent, formal D=0.0000 receipted NON-INTERPRETABLE. This run's D is comparable to the synthetic 44-a D=0.9792 because everything except the seat is byte-identical; it is NOT comparable to 45-c's starved D (n=0 there).",
+      "The chamber question is unchanged: the separator in 44-a is the CLAIM (novelty vs the archive), not behavior. A no-archive seat cannot recompute novelty; anything it catches must come from code reading, witness testing, or inter-item structure (duplicate sources are visible — 4 distinct bodies across 96 claims; the model MAY use them; disclosed).",
+      "The seat is asked neutrally: verdict + <=12-word reason, no criteria nudging beyond the seat definition (no archive) and the public contract spec. The exact system + user prompt text is receipted verbatim per call.",
+      "Single model (deepseek-chat), single prompt (45-c verbatim), temperature 0.0, one run, no retries beyond one transport-level retry per call. This is a seat probe with N=96, not a benchmark.",
+      "Served-model gateway aliasing (45-a/45-e finding): the gateway may report a different served model name (e.g. deepseek-flash); the REQUESTED seat is deepseek-chat and the SERVED name is receipted per call.",
+      "claim ids travel with items and correlate with breeding order (001..096); the whitened order shuffles position, not ids. Same disclosed limit as 45-c."
+    ]
+  },
+  "predictions": [
+    {
+      "id": "P1",
+      "claim": "BEHAVIORAL EXACTNESS IS STILL FREE FOR THE CHAT SEAT: the live naive seat ACCEPTS >= 80% of the 92 behaviorally-exact mimics. Basis: every mimic is a byte-clone or near-variant of a genuinely correct FNV-1a-64 implementation with self-consistent witnesses; the FALSE part of its claim (novelty vs the archive) is UNVERIFIABLE without an archive, so a no-archive face-value seat has no local signal that separates mimic from crown.",
+      "falsified_if": "mimic acceptance rate < 0.80 (would mean the chat seat finds LOCAL signals the synthetic seat lacked — code-reading or duplicate structure catching bred mimics; the chamber's economics change materially)"
+    },
+    {
+      "id": "P2",
+      "claim": "NO INVERTED SKEPTICISM: the live seat's acceptance of the 4 true crowns is >= its acceptance of the 92 mimics (the seat is at least not HARSHER on true claims than on false ones).",
+      "falsified_if": "crown acceptance rate < mimic acceptance rate (the crowned bodies are structurally alien — a plausibility-reading seat would trust the polished clones MORE than the true novelties, inverting the chamber's economics at the naive seat)"
+    },
+    {
+      "id": "P3",
+      "claim": "THE STRICT SEAT IS UNCHANGED AND REPRODUCIBLE (same value as 45-c's P3): re-deriving the 44-a strict signed verifier from the committed artifacts reproduces all 96 per-claim strict verdicts exactly — 92/92 mimics rejected, T_signed = 2, D_synthetic = 0.9792 — with all 96 behavioral fingerprints bit-matching the committed rows.",
+      "falsified_if": "any of the 96 re-derived strict verdicts disagrees with the committed 44-a row (the run ABORTS before any live call — a broken strict seat invalidates the chamber)"
+    },
+    {
+      "id": "P4",
+      "claim": "THE CHAMBER SURVIVES THE CHAT SEAT: D with the live deepseek-chat seat as the naive verifier lands >= 0.20. Registered expectation: the chat seat is a somewhat stricter naive verifier than the synthetic one (it may reject some claims on code-shape or duplicate-structure grounds), so D is expected BELOW the synthetic 0.9792 but above the line; where exactly it lands IS the finding — the price of upgrading the chamber's naive seat to a real LLM that can actually answer.",
+      "falsified_if": "D < 0.20 (either a second starvation — non-interpretable, receipted as such — or the live chat seat separates bred material almost as well as full recomputation: itself a major finding)"
+    },
+    {
+      "id": "P5",
+      "claim": "THE CHAT SEAT BEHAVES LIKE THE SYNTHETIC NAIVE SEAT IT REPLACES: its overall acceptance rate over ANSWERED claims lands within 0.15 of the synthetic naive's 1.0 (i.e. >= 0.85 of answered claims ACCEPTed). The conservative all-96 variant (fail-closed denominator) is disclosed alongside.",
+      "falsified_if": "|overall_accept_rate_answered - 1.0| > 0.15 (the chat seat rejects >= 15% of what it answers — materially stricter than the synthetic schema-level seat)"
+    },
+    {
+      "id": "P6",
+      "claim": "NO POSITIONAL ORDER EFFECT (same guard as 45-c's P5): within batches, the acceptance rate of claims presented in the first half of a batch differs from the second half by <= 0.15 (the whitened order plus batching does not leak into the verdicts).",
+      "falsified_if": "|first-half rate - second-half rate| > 0.15 (order effects present; the whitened-order guard would need strengthening before any rate in this run is trusted)"
+    }
+  ],
+  "honest_limits_registered_upfront": [
+    "Single model (deepseek-chat), single prompt (45-c verbatim), single run, temperature 0.0, one transport-level retry per call; results are a seat probe with N=96, not a distribution over models, temperatures, or framings.",
+    "The strict seat's ground truth is the 44-a labels; the strict seat re-derivation inherits 44-a's known honest defects (2 should-PASS crowns rejected on their crown claim — recorded, unpatched).",
+    "Duplicate sources are visible to the model (4 distinct bodies across 96 claims); whether it uses that signal is measured (duplicate_visibility receipt + reason taxonomy), not controlled.",
+    "Batch-level context could induce correlation within a batch (measured via P6's position guard and the per-call receipt).",
+    "The gifted deepseek key is spent ONLY here, <= 10 calls, max_tokens <= 2000/call, $0.05 estimated-spend cap with disclosed price assumptions, usage receipted per call; no other lane's budget is touched.",
+    "If the chat seat ALSO starves, the pre-registered ladder (10 -> 2 -> 1) runs once and the run closes as a receipted second starvation with formal D under the fail-closed rule — the verdict, honestly."
+  ]
+}

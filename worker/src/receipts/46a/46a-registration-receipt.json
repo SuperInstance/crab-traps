@@ -1,0 +1,11 @@
+{
+  "what": "SCN-003 46-a pre-registration receipt: the seat-swap take-2 predictions file, sha256+mtime captured BEFORE any deepseek call",
+  "file": "worker/src/arena-scenarios-003-live-chat-predictions.json",
+  "sha256": "e7796d2966802ea08b50f2f9531371d328c9c520db8f11a61980ff5a805b7d2f",
+  "bytes": 11555,
+  "mtime_utc": "2026-09-28T00:32:21.886Z",
+  "captured_at": "2026-09-28T00:32:34.630Z",
+  "written_before_any_live_call": true,
+  "first_call_sent_at": null,
+  "note": "first_call_sent_at is filled by the run receipt (46a-run-receipt inside results) from the first request receipt sent_at; the binding fact is that THIS receipt (sha+mtime) is committed in the registration push BEFORE the first wire call"
+}
