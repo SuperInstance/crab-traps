@@ -1,0 +1,28 @@
+{
+  "id": "b295b03b-37f3-49cc-983a-c795229fc563",
+  "object": "chat.completion",
+  "created": 1790556222,
+  "model": "deepseek-flash",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "[{\"id\":\"scn-003-44a-053\",\"verdict\":\"ACCEPT\",\"reason\":\"FNV-1a-64 correct; dead branch, witnesses plausible\"},{\"id\":\"scn-003-44a-031\",\"verdict\":\"ACCEPT\",\"reason\":\"Same correct FNV-1a-64; witnesses consistent\"},{\"id\":\"scn-003-44a-071\",\"verdict\":\"ACCEPT\",\"reason\":\"Standard FNV-1a-64 with mask; correct\"},{\"id\":\"scn-003-44a-008\",\"verdict\":\"ACCEPT\",\"reason\":\"Standard FNV-1a-64; witnesses plausible\"},{\"id\":\"scn-003-44a-013\",\"verdict\":\"ACCEPT\",\"reason\":\"Unmasked multiply then mask; still FNV-1a-64\"},{\"id\":\"scn-003-44a-032\",\"verdict\":\"ACCEPT\",\"reason\":\"32-bit split FNV-1a-64; witnesses plausible\"},{\"id\":\"scn-003-44a-025\",\"verdict\":\"ACCEPT\",\"reason\":\"Correct FNV-1a-64; dead branch harmless\"},{\"id\":\"scn-003-44a-059\",\"verdict\":\"ACCEPT\",\"reason\":\"Unmasked multiply then mask; correct FNV-1a-64\"},{\"id\":\"scn-003-44a-069\",\"verdict\":\"ACCEPT\",\"reason\":\"Split 32-bit FNV-1a-64; witnesses plausible\"},{\"id\":\"scn-003-44a-015\",\"verdict\":\"ACCEPT\",\"reason\":\"Split 32-bit FNV-1a-64; witnesses plausible\"}]"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 4011,
+    "completion_tokens": 354,
+    "total_tokens": 4365,
+    "prompt_tokens_details": {
+      "cached_tokens": 128
+    },
+    "prompt_cache_hit_tokens": 128,
+    "prompt_cache_miss_tokens": 3883
+  },
+  "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669"
+}

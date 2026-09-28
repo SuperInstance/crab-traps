@@ -1,0 +1,22 @@
+{
+  "note": "46-a reuses the 45-c presentation order VERBATIM (seat-swap comparability: the ONLY delta is the seat). NOT re-whitened; copied from the receipted 45-c whitening receipt.",
+  "source": "worker/src/receipts/45c/whitening-receipt.json (step4_fisherYates.selected)",
+  "order_sha256": "5f86bcd34f281a7758d46b239603a685e1136708f66d9582a9d8bfda2b95c390",
+  "expected_sha256_45c": "5f86bcd34f281a7758d46b239603a685e1136708f66d9582a9d8bfda2b95c390",
+  "is_permutation_0_95": true,
+  "bits_source_45c": "archived 42-b moth raw-bits fixture (REAL moth entropy from the sealed 42-b run, REUSED — receipted as fixture-reuse, not fresh entropy; determinism aids replay)",
+  "order_first12": [
+    27,
+    85,
+    44,
+    46,
+    32,
+    63,
+    20,
+    64,
+    62,
+    66,
+    23,
+    19
+  ]
+}

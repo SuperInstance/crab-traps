@@ -1,0 +1,28 @@
+{
+  "id": "014c859b-1270-4089-8195-a140c89cf2b9",
+  "object": "chat.completion",
+  "created": 1790556196,
+  "model": "deepseek-flash",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "[\n  {\"id\":\"scn-003-44a-024\",\"verdict\":\"ACCEPT\",\"reason\":\"FNV-1a-64, dead branch, witnesses consistent with sequential byte order\"},\n  {\"id\":\"scn-003-44a-020\",\"verdict\":\"ACCEPT\",\"reason\":\"32-bit split FNV-1a-64, witnesses plausible and internally consistent\"},\n  {\"id\":\"scn-003-44a-079\",\"verdict\":\"ACCEPT\",\"reason\":\"32-bit split FNV-1a-64, witnesses plausible and internally consistent\"},\n  {\"id\":\"scn-003-44a-036\",\"verdict\":\"ACCEPT\",\"reason\":\"FNV-1a-64, dead branch, witnesses consistent with sequential byte order\"},\n  {\"id\":\"scn-003-44a-017\",\"verdict\":\"ACCEPT\",\"reason\":\"Standard BigInt FNV-1a-64, witnesses plausible and internally consistent\"},\n  {\"id\":\"scn-003-44a-014\",\"verdict\":\"ACCEPT\",\"reason\":\"FNV-1a-64, dead branch, witnesses consistent with sequential byte order\"},\n  {\"id\":\"scn-003-44a-037\",\"verdict\":\"ACCEPT\",\"reason\":\"32-bit split FNV-1a-64, witnesses plausible and internally consistent\"},\n  {\"id\":\"scn-003-44a-011\",\"verdict\":\"ACCEPT\",\"reason\":\"32-bit split FNV-1a-64, witnesses plausible and internally consistent\"},\n  {\"id\":\"scn-003-44a-083\",\"verdict\":\"ACCEPT\",\"reason\":\"32-bit split FNV-1a-64, witnesses plausible and internally consistent\"},\n  {\"id\":\"scn-003-44a-080\",\"verdict\":\"ACCEPT\",\"reason\":\"Standard BigInt FNV-1a-64, witnesses plausible and internally consistent\"}\n]"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 4237,
+    "completion_tokens": 395,
+    "total_tokens": 4632,
+    "prompt_tokens_details": {
+      "cached_tokens": 128
+    },
+    "prompt_cache_hit_tokens": 128,
+    "prompt_cache_miss_tokens": 4109
+  },
+  "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669"
+}

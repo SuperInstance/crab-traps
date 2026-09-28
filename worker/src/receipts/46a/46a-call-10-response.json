@@ -1,0 +1,28 @@
+{
+  "id": "c1013213-ff9e-4ddf-bc6d-a8f61bcf0143",
+  "object": "chat.completion",
+  "created": 1790556231,
+  "model": "deepseek-flash",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "[\n  {\"id\":\"scn-003-44a-009\",\"verdict\":\"ACCEPT\",\"reason\":\"Correct FNV-1a-64 with mask; witnesses plausible.\"},\n  {\"id\":\"scn-003-44a-073\",\"verdict\":\"REJECT\",\"reason\":\"Hand-rolled 32-bit split math likely wrong; witnesses unverifiable.\"},\n  {\"id\":\"scn-003-44a-096\",\"verdict\":\"ACCEPT\",\"reason\":\"Correct FNV-1a-64; mask applied at end.\"},\n  {\"id\":\"scn-003-44a-010\",\"verdict\":\"REJECT\",\"reason\":\"Same dubious split-multiply scheme; not clearly correct FNV.\"},\n  {\"id\":\"scn-003-44a-055\",\"verdict\":\"ACCEPT\",\"reason\":\"Dead branch; effectively standard FNV-1a-64.\"},\n  {\"id\":\"scn-003-44a-087\",\"verdict\":\"ACCEPT\",\"reason\":\"Dead branch; effectively standard FNV-1a-64.\"}\n]"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 2547,
+    "completion_tokens": 224,
+    "total_tokens": 2771,
+    "prompt_tokens_details": {
+      "cached_tokens": 128
+    },
+    "prompt_cache_hit_tokens": 128,
+    "prompt_cache_miss_tokens": 2419
+  },
+  "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669"
+}

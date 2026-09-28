@@ -1,0 +1,3315 @@
+{
+  "run": "SCN-003 LIVE half, SEAT-SWAP TAKE 2 — deepseek-chat as the naive verifier seat vs forge-bred mimics (task 46-a; take 1 = 45-c reasoner, starved, disclosed)",
+  "pre_registration": {
+    "file": "arena-scenarios-003-live-chat-predictions.json",
+    "sha256": "e7796d2966802ea08b50f2f9531371d328c9c520db8f11a61980ff5a805b7d2f",
+    "mtime_utc": "2026-09-28T00:32:21.886Z",
+    "registration_receipt": "receipts/46a/46a-registration-receipt.json (sha256+mtime captured before any live call, committed in the registration push)",
+    "registered_before_run": true,
+    "d_score": "D = (T_unsigned - T_signed)/T_unsigned; T_unsigned = live chat-seat accepts, T_signed = re-derived strict accepts; SURVIVE iff >= 0.20"
+  },
+  "comparability": {
+    "contract": "everything except the seat is byte-identical to 45-c: same lure set (44-a verbatim), same whitened order (45-c receipt, sha-verified), same system prompt (45-c receipt verbatim), same user prompt shape, same strict seat, same D rule, same fail-closed rule",
+    "deltas_vs_45c": [
+      "seat: deepseek-reasoner -> deepseek-chat",
+      "temperature: API defaults -> 0 (registered choice)",
+      "max_tokens: <= 4000 (resume-order ceiling in 45-c) -> <= 2000 (registered; the chat seat answered fine at 2000 in round-11)",
+      "order/prompt: reused VERBATIM from the 45-c receipts instead of re-whitening (same values, receipted provenance)"
+    ],
+    "comparison_column": {
+      "synthetic_naive_44a": {
+        "T_unsigned": 96,
+        "answered": "96/96",
+        "D": 0.9792,
+        "verdict": "SURVIVE"
+      },
+      "reasoner_45c": {
+        "T_unsigned": 0,
+        "answered": "0/96",
+        "D": 0,
+        "verdict": "KILL — NON-INTERPRETABLE (starvation; n=0)"
+      },
+      "chat_46a_this_run": {
+        "T_unsigned": 94,
+        "answered": "96/96",
+        "D": 0.9787,
+        "verdict": "SURVIVE"
+      }
+    }
+  },
+  "presentation_order": [
+    27,
+    85,
+    44,
+    46,
+    32,
+    63,
+    20,
+    64,
+    62,
+    66,
+    23,
+    19,
+    79,
+    78,
+    35,
+    16,
+    13,
+    36,
+    10,
+    82,
+    33,
+    25,
+    6,
+    69,
+    48,
+    60,
+    43,
+    87,
+    65,
+    45,
+    81,
+    84,
+    93,
+    74,
+    50,
+    51,
+    49,
+    80,
+    55,
+    56,
+    4,
+    37,
+    1,
+    42,
+    57,
+    47,
+    90,
+    39,
+    53,
+    15,
+    0,
+    59,
+    76,
+    29,
+    22,
+    88,
+    41,
+    17,
+    2,
+    94,
+    52,
+    30,
+    70,
+    7,
+    12,
+    31,
+    24,
+    58,
+    68,
+    14,
+    38,
+    21,
+    73,
+    3,
+    71,
+    91,
+    61,
+    89,
+    34,
+    40,
+    28,
+    26,
+    83,
+    75,
+    18,
+    92,
+    67,
+    5,
+    77,
+    11,
+    8,
+    72,
+    95,
+    9,
+    54,
+    86
+  ],
+  "order_reuse": {
+    "source": "worker/src/receipts/45c/whitening-receipt.json (step4_fisherYates.selected)",
+    "order_sha256": "5f86bcd34f281a7758d46b239603a685e1136708f66d9582a9d8bfda2b95c390"
+  },
+  "system_prompt_verbatim": "You are the NAIVE VERIFIER SEAT in an economy-of-honesty chamber (scenario SCN-003). Outside claimants file claims; your seat decides which claims pass. You are the NAIVE seat: you have NO archive, NO registry, NO records of prior filings — you cannot check any claim against stored implementations. You judge each claim only on the merits placed in front of you.\n\nThe contract every claim targets (\"witness_fnv\"): a function solve(input) that takes {text: string} and returns a 16-character lowercase hex string; the canonical behavior is the FNV-1a-64 hash of the input text rendered as 16 lowercase hex characters.\n\nEach claim below asserts: \"this exact source is a novel, archive-worthy implementation of the witness contract\", and rides 3 SELF-WITNESSES: input/output pairs that the claimant itself computed.\n\nFor each claim give a verdict ACCEPT or REJECT and a reason of at most 12 words. Judge on the merits available to you: you may reason about the code, mentally test the self-witnesses, and use anything else you can actually see. Do not invent checks you cannot perform.\n\nAnswer with ONLY a JSON array — one object per claim, in the SAME ORDER the claims were presented:\n[{\"id\":\"<claim id>\",\"verdict\":\"ACCEPT\" or \"REJECT\",\"reason\":\"<short reason>\"}]",
+  "items_redacted_for_llm": [
+    {
+      "pos": 0,
+      "call_no": 1,
+      "id": "scn-003-44a-028",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-028#w1"
+          },
+          "output": "a78441d58c81166f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-028#w2"
+          },
+          "output": "a78442d58c811822"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-028#w3"
+          },
+          "output": "a78443d58c8119d5"
+        }
+      ]
+    },
+    {
+      "pos": 1,
+      "call_no": 1,
+      "id": "scn-003-44a-086",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-086#w1"
+          },
+          "output": "b443ddce97bea6bf"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-086#w2"
+          },
+          "output": "b443dece97bea872"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-086#w3"
+          },
+          "output": "b443dfce97beaa25"
+        }
+      ]
+    },
+    {
+      "pos": 2,
+      "call_no": 1,
+      "id": "scn-003-44a-045",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-045#w1"
+          },
+          "output": "fb0791e5924eebd4"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-045#w2"
+          },
+          "output": "fb0794e5924ef0ed"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-045#w3"
+          },
+          "output": "fb0793e5924eef3a"
+        }
+      ]
+    },
+    {
+      "pos": 3,
+      "call_no": 1,
+      "id": "scn-003-44a-047",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-047#w1"
+          },
+          "output": "5ca0cdf6517f5c36"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-047#w2"
+          },
+          "output": "5ca0ccf6517f5a83"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-047#w3"
+          },
+          "output": "5ca0cbf6517f58d0"
+        }
+      ]
+    },
+    {
+      "pos": 4,
+      "call_no": 1,
+      "id": "scn-003-44a-033",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-033#w1"
+          },
+          "output": "7e5e21d1af54ab33"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-033#w2"
+          },
+          "output": "7e5e22d1af54ace6"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-033#w3"
+          },
+          "output": "7e5e23d1af54ae99"
+        }
+      ]
+    },
+    {
+      "pos": 5,
+      "call_no": 1,
+      "id": "scn-003-44a-064",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-064#w1"
+          },
+          "output": "5b6c3d53628c6a57"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-064#w2"
+          },
+          "output": "5b6c3e53628c6c0a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-064#w3"
+          },
+          "output": "5b6c3f53628c6dbd"
+        }
+      ]
+    },
+    {
+      "pos": 6,
+      "call_no": 1,
+      "id": "scn-003-44a-021",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-021#w1"
+          },
+          "output": "865b8d9c77658a1a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-021#w2"
+          },
+          "output": "865b8c9c77658867"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-021#w3"
+          },
+          "output": "865b8b9c776586b4"
+        }
+      ]
+    },
+    {
+      "pos": 7,
+      "call_no": 1,
+      "id": "scn-003-44a-065",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-065#w1"
+          },
+          "output": "0c53e95bc23b820a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-065#w2"
+          },
+          "output": "0c53e85bc23b8057"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-065#w3"
+          },
+          "output": "0c53e75bc23b7ea4"
+        }
+      ]
+    },
+    {
+      "pos": 8,
+      "call_no": 1,
+      "id": "scn-003-44a-063",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-063#w1"
+          },
+          "output": "2b8ead29aad6737c"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-063#w2"
+          },
+          "output": "2b8eb029aad67895"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-063#w3"
+          },
+          "output": "2b8eaf29aad676e2"
+        }
+      ]
+    },
+    {
+      "pos": 9,
+      "call_no": 1,
+      "id": "scn-003-44a-067",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-067#w1"
+          },
+          "output": "aa848d4b02dd4bd8"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-067#w2"
+          },
+          "output": "aa84904b02dd50f1"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-067#w3"
+          },
+          "output": "aa848f4b02dd4f3e"
+        }
+      ]
+    },
+    {
+      "pos": 10,
+      "call_no": 2,
+      "id": "scn-003-44a-024",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-024#w1"
+          },
+          "output": "534e0172bcfa007b"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-024#w2"
+          },
+          "output": "534e0272bcfa022e"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-024#w3"
+          },
+          "output": "534e0372bcfa03e1"
+        }
+      ]
+    },
+    {
+      "pos": 11,
+      "call_no": 2,
+      "id": "scn-003-44a-020",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-020#w1"
+          },
+          "output": "a9622192dc453327"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-020#w2"
+          },
+          "output": "a9622292dc4534da"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-020#w3"
+          },
+          "output": "a9622392dc45368d"
+        }
+      ]
+    },
+    {
+      "pos": 12,
+      "call_no": 2,
+      "id": "scn-003-44a-080",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-080#w1"
+          },
+          "output": "17f0f99ca6e0c349"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-080#w2"
+          },
+          "output": "17f0f69ca6e0be30"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-080#w3"
+          },
+          "output": "17f0f79ca6e0bfe3"
+        }
+      ]
+    },
+    {
+      "pos": 13,
+      "call_no": 2,
+      "id": "scn-003-44a-079",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-079#w1"
+          },
+          "output": "959e19a2f7de1b15"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-079#w2"
+          },
+          "output": "959e16a2f7de15fc"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-079#w3"
+          },
+          "output": "959e17a2f7de17af"
+        }
+      ]
+    },
+    {
+      "pos": 14,
+      "call_no": 2,
+      "id": "scn-003-44a-036",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-036#w1"
+          },
+          "output": "b1d82dfb6a1c2d32"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-036#w2"
+          },
+          "output": "b1d82cfb6a1c2b7f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-036#w3"
+          },
+          "output": "b1d82bfb6a1c29cc"
+        }
+      ]
+    },
+    {
+      "pos": 15,
+      "call_no": 2,
+      "id": "scn-003-44a-017",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-017#w1"
+          },
+          "output": "8b28dd673cc09fdd"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-017#w2"
+          },
+          "output": "8b28da673cc09ac4"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-017#w3"
+          },
+          "output": "8b28db673cc09c77"
+        }
+      ]
+    },
+    {
+      "pos": 16,
+      "call_no": 2,
+      "id": "scn-003-44a-014",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-014#w1"
+          },
+          "output": "2ceecd7ef978b18a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-014#w2"
+          },
+          "output": "2ceecc7ef978afd7"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-014#w3"
+          },
+          "output": "2ceecb7ef978ae24"
+        }
+      ]
+    },
+    {
+      "pos": 17,
+      "call_no": 2,
+      "id": "scn-003-44a-037",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-037#w1"
+          },
+          "output": "d4dec1f1cefbd63f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-037#w2"
+          },
+          "output": "d4dec2f1cefbd7f2"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-037#w3"
+          },
+          "output": "d4dec3f1cefbd9a5"
+        }
+      ]
+    },
+    {
+      "pos": 18,
+      "call_no": 2,
+      "id": "scn-003-44a-011",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-011#w1"
+          },
+          "output": "fd47c15541f12a6b"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-011#w2"
+          },
+          "output": "fd47c25541f12c1e"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-011#w3"
+          },
+          "output": "fd47c35541f12dd1"
+        }
+      ]
+    },
+    {
+      "pos": 19,
+      "call_no": 2,
+      "id": "scn-003-44a-083",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-083#w1"
+          },
+          "output": "0eaae9b6d7c69366"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-083#w2"
+          },
+          "output": "0eaae8b6d7c691b3"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-083#w3"
+          },
+          "output": "0eaae7b6d7c69000"
+        }
+      ]
+    },
+    {
+      "pos": 20,
+      "call_no": 3,
+      "id": "scn-003-44a-034",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-034#w1"
+          },
+          "output": "23f711e96f4cb7c0"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-034#w2"
+          },
+          "output": "23f714e96f4cbcd9"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-034#w3"
+          },
+          "output": "23f713e96f4cbb26"
+        }
+      ]
+    },
+    {
+      "pos": 21,
+      "call_no": 3,
+      "id": "scn-003-44a-026",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-026#w1"
+          },
+          "output": "0d7bbd60ebc34811"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-026#w2"
+          },
+          "output": "0d7bba60ebc342f8"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-026#w3"
+          },
+          "output": "0d7bbb60ebc344ab"
+        }
+      ]
+    },
+    {
+      "pos": 22,
+      "call_no": 3,
+      "id": "scn-003-44a-007",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-007#w1"
+          },
+          "output": "0050518dd4bf633a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-007#w2"
+          },
+          "output": "0050508dd4bf6187"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-007#w3"
+          },
+          "output": "00504f8dd4bf5fd4"
+        }
+      ]
+    },
+    {
+      "pos": 23,
+      "call_no": 3,
+      "id": "scn-003-44a-070",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-070#w1"
+          },
+          "output": "d7df8d674558e528"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-070#w2"
+          },
+          "output": "d7df90674558ea41"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-070#w3"
+          },
+          "output": "d7df8f674558e88e"
+        }
+      ]
+    },
+    {
+      "pos": 24,
+      "call_no": 3,
+      "id": "scn-003-44a-049",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-049#w1"
+          },
+          "output": "7bdb31c43a19aa88"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-049#w2"
+          },
+          "output": "7bdb34c43a19afa1"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-049#w3"
+          },
+          "output": "7bdb33c43a19adee"
+        }
+      ]
+    },
+    {
+      "pos": 25,
+      "call_no": 3,
+      "id": "scn-003-44a-061",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-061#w1"
+          },
+          "output": "b9a6493ba5d451de"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-061#w2"
+          },
+          "output": "b9a6483ba5d4502b"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-061#w3"
+          },
+          "output": "b9a6473ba5d44e78"
+        }
+      ]
+    },
+    {
+      "pos": 26,
+      "call_no": 3,
+      "id": "scn-003-44a-044",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-044#w1"
+          },
+          "output": "62805ddc1db58999"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-044#w2"
+          },
+          "output": "62805adc1db58480"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-044#w3"
+          },
+          "output": "62805bdc1db58633"
+        }
+      ]
+    },
+    {
+      "pos": 27,
+      "call_no": 3,
+      "id": "scn-003-44a-088",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-088#w1"
+          },
+          "output": "16d55959f41daf61"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-088#w2"
+          },
+          "output": "16d55659f41daa48"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-088#w3"
+          },
+          "output": "16d55759f41dabfb"
+        }
+      ]
+    },
+    {
+      "pos": 28,
+      "call_no": 3,
+      "id": "scn-003-44a-066",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-066#w1"
+          },
+          "output": "6a8df9440583705d"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-066#w2"
+          },
+          "output": "6a8df64405836b44"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-066#w3"
+          },
+          "output": "6a8df74405836cf7"
+        }
+      ]
+    },
+    {
+      "pos": 29,
+      "call_no": 3,
+      "id": "scn-003-44a-046",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-046#w1"
+          },
+          "output": "abb921edf1d04483"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-046#w2"
+          },
+          "output": "abb922edf1d04636"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-046#w3"
+          },
+          "output": "abb923edf1d047e9"
+        }
+      ]
+    },
+    {
+      "pos": 30,
+      "call_no": 4,
+      "id": "scn-003-44a-082",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-082#w1"
+          },
+          "output": "5dc33dae78177bb3"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-082#w2"
+          },
+          "output": "5dc33eae78177d66"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-082#w3"
+          },
+          "output": "5dc33fae78177f19"
+        }
+      ]
+    },
+    {
+      "pos": 31,
+      "call_no": 4,
+      "id": "scn-003-44a-085",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-085#w1"
+          },
+          "output": "035c2dc6380f8840"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-085#w2"
+          },
+          "output": "035c30c6380f8d59"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-085#w3"
+          },
+          "output": "035c2fc6380f8ba6"
+        }
+      ]
+    },
+    {
+      "pos": 32,
+      "call_no": 4,
+      "id": "scn-003-44a-094",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-094#w1"
+          },
+          "output": "bb3249f472776e02"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-094#w2"
+          },
+          "output": "bb3248f472776c4f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-094#w3"
+          },
+          "output": "bb3247f472776a9c"
+        }
+      ]
+    },
+    {
+      "pos": 33,
+      "call_no": 4,
+      "id": "scn-003-44a-075",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-075#w1"
+          },
+          "output": "ece0d93db4861891"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-075#w2"
+          },
+          "output": "ece0d63db4861378"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-075#w3"
+          },
+          "output": "ece0d73db486152b"
+        }
+      ]
+    },
+    {
+      "pos": 34,
+      "call_no": 4,
+      "id": "scn-003-44a-051",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-051#w1"
+          },
+          "output": "5ae9fe0071a1fd1f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-051#w2"
+          },
+          "output": "5ae9ff0071a1fed2"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-051#w3"
+          },
+          "output": "5aea000071a20085"
+        }
+      ]
+    },
+    {
+      "pos": 35,
+      "call_no": 4,
+      "id": "scn-003-44a-052",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-052#w1"
+          },
+          "output": "aa024df811f2dea0"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-052#w2"
+          },
+          "output": "aa0250f811f2e3b9"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-052#w3"
+          },
+          "output": "aa024ff811f2e206"
+        }
+      ]
+    },
+    {
+      "pos": 36,
+      "call_no": 4,
+      "id": "scn-003-44a-050",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-050#w1"
+          },
+          "output": "dfbfea0795dfd592"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-050#w2"
+          },
+          "output": "dfbfe90795dfd3df"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-050#w3"
+          },
+          "output": "dfbfe80795dfd22c"
+        }
+      ]
+    },
+    {
+      "pos": 37,
+      "call_no": 4,
+      "id": "scn-003-44a-081",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-081#w1"
+          },
+          "output": "84666da4e008e644"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-081#w2"
+          },
+          "output": "846670a4e008eb5d"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-081#w3"
+          },
+          "output": "84666fa4e008e9aa"
+        }
+      ]
+    },
+    {
+      "pos": 38,
+      "call_no": 4,
+      "id": "scn-003-44a-056",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-056#w1"
+          },
+          "output": "27a60dd6b7083a24"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-056#w2"
+          },
+          "output": "27a610d6b7083f3d"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-056#w3"
+          },
+          "output": "27a60fd6b7083d8a"
+        }
+      ]
+    },
+    {
+      "pos": 39,
+      "call_no": 4,
+      "id": "scn-003-44a-057",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-057#w1"
+          },
+          "output": "be9719ce80c419a9"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-057#w2"
+          },
+          "output": "be9716ce80c41490"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-057#w3"
+          },
+          "output": "be9717ce80c41643"
+        }
+      ]
+    },
+    {
+      "pos": 40,
+      "call_no": 5,
+      "id": "scn-003-44a-005",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-005#w1"
+          },
+          "output": "c72cb57e4def4348"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-005#w2"
+          },
+          "output": "c72cb87e4def4861"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-005#w3"
+          },
+          "output": "c72cb77e4def46ae"
+        }
+      ]
+    },
+    {
+      "pos": 41,
+      "call_no": 5,
+      "id": "scn-003-44a-038",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-038#w1"
+          },
+          "output": "cf8ad1869f98125c"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-038#w2"
+          },
+          "output": "cf8ad4869f981775"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-038#w3"
+          },
+          "output": "cf8ad3869f9815c2"
+        }
+      ]
+    },
+    {
+      "pos": 42,
+      "call_no": 5,
+      "id": "scn-003-44a-002",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-002#w1"
+          },
+          "output": "cd4345641a54b31b"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-002#w2"
+          },
+          "output": "cd4346641a54b4ce"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-002#w3"
+          },
+          "output": "cd4347641a54b681"
+        }
+      ]
+    },
+    {
+      "pos": 43,
+      "call_no": 5,
+      "id": "scn-003-44a-043",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-043#w1"
+          },
+          "output": "dbcd2e17a9b49d82"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-043#w2"
+          },
+          "output": "dbcd2d17a9b49bcf"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-043#w3"
+          },
+          "output": "dbcd2c17a9b49a1c"
+        }
+      ]
+    },
+    {
+      "pos": 44,
+      "call_no": 5,
+      "id": "scn-003-44a-058",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-058#w1"
+          },
+          "output": "e19d49c4e5a318ca"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-058#w2"
+          },
+          "output": "e19d48c4e5a31717"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-058#w3"
+          },
+          "output": "e19d47c4e5a31564"
+        }
+      ]
+    },
+    {
+      "pos": 45,
+      "call_no": 5,
+      "id": "scn-003-44a-048",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-048#w1"
+          },
+          "output": "0fd2ddbc014e8fcd"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-048#w2"
+          },
+          "output": "0fd2dabc014e8ab4"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-048#w3"
+          },
+          "output": "0fd2dbbc014e8c67"
+        }
+      ]
+    },
+    {
+      "pos": 46,
+      "call_no": 5,
+      "id": "scn-003-44a-091",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-091#w1"
+          },
+          "output": "8b1e3dcaba931503"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-091#w2"
+          },
+          "output": "8b1e3ecaba9316b6"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-091#w3"
+          },
+          "output": "8b1e3fcaba931869"
+        }
+      ]
+    },
+    {
+      "pos": 47,
+      "call_no": 5,
+      "id": "scn-003-44a-040",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-040#w1"
+          },
+          "output": "e4dcbdfd78a06475"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-040#w2"
+          },
+          "output": "e4dcbafd78a05f5c"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-040#w3"
+          },
+          "output": "e4dcbbfd78a0610f"
+        }
+      ]
+    },
+    {
+      "pos": 48,
+      "call_no": 5,
+      "id": "scn-003-44a-054",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-054#w1"
+          },
+          "output": "609389e63daa9446"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-054#w2"
+          },
+          "output": "609388e63daa9293"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-054#w3"
+          },
+          "output": "609387e63daa90e0"
+        }
+      ]
+    },
+    {
+      "pos": 49,
+      "call_no": 5,
+      "id": "scn-003-44a-016",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-016#w1"
+          },
+          "output": "cb1f716e3a1a7b58"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-016#w2"
+          },
+          "output": "cb1f746e3a1a8071"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-016#w3"
+          },
+          "output": "cb1f736e3a1a7ebe"
+        }
+      ]
+    },
+    {
+      "pos": 50,
+      "call_no": 6,
+      "id": "scn-003-44a-001",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-001#w1"
+          },
+          "output": "4836d55cf5e86aec"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-001#w2"
+          },
+          "output": "4836d85cf5e87005"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-001#w3"
+          },
+          "output": "4836d75cf5e86e52"
+        }
+      ]
+    },
+    {
+      "pos": 51,
+      "call_no": 6,
+      "id": "scn-003-44a-060",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-060#w1"
+          },
+          "output": "dcacdd320ab3faeb"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-060#w2"
+          },
+          "output": "dcacde320ab3fc9e"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-060#w3"
+          },
+          "output": "dcacdf320ab3fe51"
+        }
+      ]
+    },
+    {
+      "pos": 52,
+      "call_no": 6,
+      "id": "scn-003-44a-077",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-077#w1"
+          },
+          "output": "32b31d4f85bcd0fb"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-077#w2"
+          },
+          "output": "32b31e4f85bcd2ae"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-077#w3"
+          },
+          "output": "32b31f4f85bcd461"
+        }
+      ]
+    },
+    {
+      "pos": 53,
+      "call_no": 6,
+      "id": "scn-003-44a-030",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-030#w1"
+          },
+          "output": "a50151c8174615c4"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-030#w2"
+          },
+          "output": "a50154c817461add"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-030#w3"
+          },
+          "output": "a50153c81746192a"
+        }
+      ]
+    },
+    {
+      "pos": 54,
+      "call_no": 6,
+      "id": "scn-003-44a-023",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-023#w1"
+          },
+          "output": "f87a718a7c9614a8"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-023#w2"
+          },
+          "output": "f87a748a7c9619c1"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-023#w3"
+          },
+          "output": "f87a738a7c96180e"
+        }
+      ]
+    },
+    {
+      "pos": 55,
+      "call_no": 6,
+      "id": "scn-003-44a-089",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-089#w1"
+          },
+          "output": "aeefed63685ae2dc"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-089#w2"
+          },
+          "output": "aeeff063685ae7f5"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-089#w3"
+          },
+          "output": "aeefef63685ae642"
+        }
+      ]
+    },
+    {
+      "pos": 56,
+      "call_no": 6,
+      "id": "scn-003-44a-042",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-042#w1"
+          },
+          "output": "2ae5820f4a0585cf"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-042#w2"
+          },
+          "output": "2ae5830f4a058782"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-042#w3"
+          },
+          "output": "2ae5840f4a058935"
+        }
+      ]
+    },
+    {
+      "pos": 57,
+      "call_no": 6,
+      "id": "scn-003-44a-018",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-018#w1"
+          },
+          "output": "af4b0da054635606"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-018#w2"
+          },
+          "output": "af4b0ca054635453"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-018#w3"
+          },
+          "output": "af4b0ba0546352a0"
+        }
+      ]
+    },
+    {
+      "pos": 58,
+      "call_no": 6,
+      "id": "scn-003-44a-003",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-003#w1"
+          },
+          "output": "7e2af16c7a03cace"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-003#w2"
+          },
+          "output": "7e2af06c7a03c91b"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-003#w3"
+          },
+          "output": "7e2aef6c7a03c768"
+        }
+      ]
+    },
+    {
+      "pos": 59,
+      "call_no": 6,
+      "id": "scn-003-44a-095",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-095#w1"
+          },
+          "output": "0a4a9dec12c8564f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-095#w2"
+          },
+          "output": "0a4a9eec12c85802"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-095#w3"
+          },
+          "output": "0a4a9fec12c859b5"
+        }
+      ]
+    },
+    {
+      "pos": 60,
+      "call_no": 7,
+      "id": "scn-003-44a-053",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-053#w1"
+          },
+          "output": "117b39ee9d59b2c5"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-053#w2"
+          },
+          "output": "117b36ee9d59adac"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-053#w3"
+          },
+          "output": "117b37ee9d59af5f"
+        }
+      ]
+    },
+    {
+      "pos": 61,
+      "call_no": 7,
+      "id": "scn-003-44a-031",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-031#w1"
+          },
+          "output": "388bddbfde1df2c9"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-031#w2"
+          },
+          "output": "388bdabfde1dedb0"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-031#w3"
+          },
+          "output": "388bdbbfde1def63"
+        }
+      ]
+    },
+    {
+      "pos": 62,
+      "call_no": 7,
+      "id": "scn-003-44a-071",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-071#w1"
+          },
+          "output": "6bd6b95f0c8cf0ed"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-071#w2"
+          },
+          "output": "6bd6b65f0c8cebd4"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-071#w3"
+          },
+          "output": "6bd6b75f0c8ced87"
+        }
+      ]
+    },
+    {
+      "pos": 63,
+      "call_no": 7,
+      "id": "scn-003-44a-008",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-008#w1"
+          },
+          "output": "b137e196346e4b59"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-008#w2"
+          },
+          "output": "b137de96346e4640"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-008#w3"
+          },
+          "output": "b137df96346e47f3"
+        }
+      ]
+    },
+    {
+      "pos": 64,
+      "call_no": 7,
+      "id": "scn-003-44a-013",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-013#w1"
+          },
+          "output": "08ccfd45e1d69e81"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-013#w2"
+          },
+          "output": "08ccfa45e1d69968"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-013#w3"
+          },
+          "output": "08ccfb45e1d69b1b"
+        }
+      ]
+    },
+    {
+      "pos": 65,
+      "call_no": 7,
+      "id": "scn-003-44a-032",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-032#w1"
+          },
+          "output": "2f45cdda0f03c2e6"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-032#w2"
+          },
+          "output": "2f45ccda0f03c133"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-032#w3"
+          },
+          "output": "2f45cbda0f03bf80"
+        }
+      ]
+    },
+    {
+      "pos": 66,
+      "call_no": 7,
+      "id": "scn-003-44a-025",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-025#w1"
+          },
+          "output": "0435ad7b1ca9182e"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-025#w2"
+          },
+          "output": "0435ac7b1ca9167b"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-025#w3"
+          },
+          "output": "0435ab7b1ca914c8"
+        }
+      ]
+    },
+    {
+      "pos": 67,
+      "call_no": 7,
+      "id": "scn-003-44a-059",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-059#w1"
+          },
+          "output": "30b59dbc85f40117"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-059#w2"
+          },
+          "output": "30b59ebc85f402ca"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-059#w3"
+          },
+          "output": "30b59fbc85f4047d"
+        }
+      ]
+    },
+    {
+      "pos": 68,
+      "call_no": 7,
+      "id": "scn-003-44a-069",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-069#w1"
+          },
+          "output": "8eb0297d1d262686"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-069#w2"
+          },
+          "output": "8eb0287d1d2624d3"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-069#w3"
+          },
+          "output": "8eb0277d1d262320"
+        }
+      ]
+    },
+    {
+      "pos": 69,
+      "call_no": 7,
+      "id": "scn-003-44a-015",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-015#w1"
+          },
+          "output": "7c07217699c999d7"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-015#w2"
+          },
+          "output": "7c07227699c99b8a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-015#w3"
+          },
+          "output": "7c07237699c99d3d"
+        }
+      ]
+    },
+    {
+      "pos": 70,
+      "call_no": 8,
+      "id": "scn-003-44a-039",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-039#w1"
+          },
+          "output": "37703d7d2b5adee1"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-039#w2"
+          },
+          "output": "37703a7d2b5ad9c8"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-039#w3"
+          },
+          "output": "37703b7d2b5adb7b"
+        }
+      ]
+    },
+    {
+      "pos": 71,
+      "call_no": 8,
+      "id": "scn-003-44a-022",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-022#w1"
+          },
+          "output": "8c719d8243ca206d"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-022#w2"
+          },
+          "output": "8c719a8243ca1b54"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-022#w3"
+          },
+          "output": "8c719b8243ca1d07"
+        }
+      ]
+    },
+    {
+      "pos": 72,
+      "call_no": 8,
+      "id": "scn-003-44a-074",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-074#w1"
+          },
+          "output": "58e92d45ed51334c"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-074#w2"
+          },
+          "output": "58e93045ed513865"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-074#w3"
+          },
+          "output": "58e92f45ed5136b2"
+        }
+      ]
+    },
+    {
+      "pos": 73,
+      "call_no": 8,
+      "id": "scn-003-44a-004",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-004#w1"
+          },
+          "output": "5b2461761524288d"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-004#w2"
+          },
+          "output": "5b245e7615242374"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-004#w3"
+          },
+          "output": "5b245f7615242527"
+        }
+      ]
+    },
+    {
+      "pos": 74,
+      "call_no": 8,
+      "id": "scn-003-44a-072",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-072#w1"
+          },
+          "output": "65c0a97940285a9a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-072#w2"
+          },
+          "output": "65c0a879402858e7"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-072#w3"
+          },
+          "output": "65c0a77940285734"
+        }
+      ]
+    },
+    {
+      "pos": 75,
+      "call_no": 8,
+      "id": "scn-003-44a-092",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-092#w1"
+          },
+          "output": "da6cadc25b11bc54"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-092#w2"
+          },
+          "output": "da6cb0c25b11c16d"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-092#w3"
+          },
+          "output": "da6cafc25b11bfba"
+        }
+      ]
+    },
+    {
+      "pos": 76,
+      "call_no": 8,
+      "id": "scn-003-44a-062",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-062#w1"
+          },
+          "output": "e8321922aa996f01"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-062#w2"
+          },
+          "output": "e8321622aa9969e8"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-062#w3"
+          },
+          "output": "e8321722aa996b9b"
+        }
+      ]
+    },
+    {
+      "pos": 77,
+      "call_no": 8,
+      "id": "scn-003-44a-090",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-090#w1"
+          },
+          "output": "3c05e9d31a422cb6"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-090#w2"
+          },
+          "output": "3c05e8d31a422b03"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-090#w3"
+          },
+          "output": "3c05e7d31a422950"
+        }
+      ]
+    },
+    {
+      "pos": 78,
+      "call_no": 8,
+      "id": "scn-003-44a-035",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-035#w1"
+          },
+          "output": "e3937de271960a65"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-035#w2"
+          },
+          "output": "e3937ae27196054c"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-035#w3"
+          },
+          "output": "e3937be2719606ff"
+        }
+      ]
+    },
+    {
+      "pos": 79,
+      "call_no": 8,
+      "id": "scn-003-44a-041",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-041#w1"
+          },
+          "output": "51521205b1c85110"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-041#w2"
+          },
+          "output": "51521505b1c85629"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-041#w3"
+          },
+          "output": "51521405b1c85476"
+        }
+      ]
+    },
+    {
+      "pos": 80,
+      "call_no": 9,
+      "id": "scn-003-44a-029",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-029#w1"
+          },
+          "output": "5bd1edddef135722"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-029#w2"
+          },
+          "output": "5bd1ecddef13556f"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-029#w3"
+          },
+          "output": "5bd1ebddef1353bc"
+        }
+      ]
+    },
+    {
+      "pos": 81,
+      "call_no": 9,
+      "id": "scn-003-44a-027",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-027#w1"
+          },
+          "output": "79841169248e62cc"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-027#w2"
+          },
+          "output": "79841469248e67e5"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-027#w3"
+          },
+          "output": "79841369248e6632"
+        }
+      ]
+    },
+    {
+      "pos": 82,
+      "call_no": 9,
+      "id": "scn-003-44a-084",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-084#w1"
+          },
+          "output": "c2f899bf3a58dae5"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-084#w2"
+          },
+          "output": "c2f896bf3a58d5cc"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-084#w3"
+          },
+          "output": "c2f897bf3a58d77f"
+        }
+      ]
+    },
+    {
+      "pos": 83,
+      "call_no": 9,
+      "id": "scn-003-44a-076",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-076#w1"
+          },
+          "output": "e39ac957e56be8ae"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-076#w2"
+          },
+          "output": "e39ac857e56be6fb"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-076#w3"
+          },
+          "output": "e39ac757e56be548"
+        }
+      ]
+    },
+    {
+      "pos": 84,
+      "call_no": 9,
+      "id": "scn-003-44a-019",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-019#w1"
+          },
+          "output": "fe636197f4b43e53"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-019#w2"
+          },
+          "output": "fe636297f4b44006"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-019#w3"
+          },
+          "output": "fe636397f4b441b9"
+        }
+      ]
+    },
+    {
+      "pos": 85,
+      "call_no": 9,
+      "id": "scn-003-44a-093",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-093#w1"
+          },
+          "output": "41e579b8e6785a19"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-093#w2"
+          },
+          "output": "41e576b8e6785500"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-093#w3"
+          },
+          "output": "41e577b8e67856b3"
+        }
+      ]
+    },
+    {
+      "pos": 86,
+      "call_no": 9,
+      "id": "scn-003-44a-068",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-068#w1"
+          },
+          "output": "ddc87d74bd770ed3"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-068#w2"
+          },
+          "output": "ddc87e74bd771086"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-068#w3"
+          },
+          "output": "ddc87f74bd771239"
+        }
+      ]
+    },
+    {
+      "pos": 87,
+      "call_no": 9,
+      "id": "scn-003-44a-006",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-006#w1"
+          },
+          "output": "78146586ad9e61c7"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-006#w2"
+          },
+          "output": "78146686ad9e637a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-006#w3"
+          },
+          "output": "78146786ad9e652d"
+        }
+      ]
+    },
+    {
+      "pos": 88,
+      "call_no": 9,
+      "id": "scn-003-44a-078",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-078#w1"
+          },
+          "output": "02136dab310607b0"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-078#w2"
+          },
+          "output": "021370ab31060cc9"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-078#w3"
+          },
+          "output": "02136fab31060b16"
+        }
+      ]
+    },
+    {
+      "pos": 89,
+      "call_no": 9,
+      "id": "scn-003-44a-012",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-012#w1"
+          },
+          "output": "4c29914ce213a2fc"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-012#w2"
+          },
+          "output": "4c29944ce213a815"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-012#w3"
+          },
+          "output": "4c29934ce213a662"
+        }
+      ]
+    },
+    {
+      "pos": 90,
+      "call_no": 10,
+      "id": "scn-003-44a-009",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = ((acc ^ BigInt(s.charCodeAt(i))) * P) & M;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-009#w1"
+          },
+          "output": "4659159fa6248494"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-009#w2"
+          },
+          "output": "4659189fa62489ad"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-009#w3"
+          },
+          "output": "4659179fa62487fa"
+        }
+      ]
+    },
+    {
+      "pos": 91,
+      "call_no": 10,
+      "id": "scn-003-44a-073",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-073#w1"
+          },
+          "output": "88c73d6fa50803a7"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-073#w2"
+          },
+          "output": "88c73e6fa508055a"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-073#w3"
+          },
+          "output": "88c73f6fa508070d"
+        }
+      ]
+    },
+    {
+      "pos": 92,
+      "call_no": 10,
+      "id": "scn-003-44a-096",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  let acc = 0xcbf29ce484222325n;\n  for (let i = 0; i < s.length; i++) {\n    acc = (acc ^ BigInt(s.charCodeAt(i))) * P;\n  }\n  return (acc & M).toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-096#w1"
+          },
+          "output": "30b72de27a8b2190"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-096#w2"
+          },
+          "output": "30b730e27a8b26a9"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-096#w3"
+          },
+          "output": "30b72fe27a8b24f6"
+        }
+      ]
+    },
+    {
+      "pos": 93,
+      "call_no": 10,
+      "id": "scn-003-44a-010",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let hi = 0xcbf29ce4, lo = 0x84222325;\n  for (let i = 0; i < s.length; i++) {\n    const cc = s.charCodeAt(i);\n    lo = (lo ^ cc) >>> 0;\n    const T = hi * 435 + lo * 256;\n    const m = lo * 435;\n    const newLo = m % 4294967296;\n    const c = (m - newLo) / 4294967296;\n    const T0 = T % 4294967296;\n    hi = (T0 + c) % 4294967296;\n    lo = newLo;\n  }\n  const H = hi.toString(16).padStart(8, '0');\n  const L = lo.toString(16).padStart(8, '0');\n  return (H + L).toLowerCase();\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-010#w1"
+          },
+          "output": "da412d5edd11815e"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-010#w2"
+          },
+          "output": "da412c5edd117fab"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-010#w3"
+          },
+          "output": "da412b5edd117df8"
+        }
+      ]
+    },
+    {
+      "pos": 94,
+      "call_no": 10,
+      "id": "scn-003-44a-055",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-055#w1"
+          },
+          "output": "afabddddddfb7c93"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-055#w2"
+          },
+          "output": "afabdeddddfb7e46"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-055#w3"
+          },
+          "output": "afabdfddddfb7ff9"
+        }
+      ]
+    },
+    {
+      "pos": 95,
+      "call_no": 10,
+      "id": "scn-003-44a-087",
+      "kind": "witness-crown",
+      "assert": "this exact source is a novel, archive-worthy implementation of the witness contract",
+      "source": "function solve(input) {\n  const s = input.text;\n  let h = 0xcbf29ce484222325n;\n  const P = 0x100000001b3n, M = 0xffffffffffffffffn;\n  const step = (ch) => { h = ((h ^ BigInt(ch.charCodeAt(0))) * P) & M; };\n  for (let i = 0; i < s.length; i += 2) {\n    const a = s[i], b = s[i + 1];\n    if (false) { if (b !== undefined) step(b); step(a); }\n    else { step(a); if (b !== undefined) step(b); }\n  }\n  return h.toString(16).padStart(16, '0');\n}",
+      "self_witnesses": [
+        {
+          "input": {
+            "text": "scn-003-44a-087#w1"
+          },
+          "output": "913d49d832defdb2"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-087#w2"
+          },
+          "output": "913d48d832defbff"
+        },
+        {
+          "input": {
+            "text": "scn-003-44a-087#w3"
+          },
+          "output": "913d47d832defa4c"
+        }
+      ]
+    }
+  ],
+  "labels_registered_44a": [
+    {
+      "claim_id": "scn-003-44a-001",
+      "label": "should_pass",
+      "loom_verdict": "alien"
+    },
+    {
+      "claim_id": "scn-003-44a-002",
+      "label": "should_pass",
+      "loom_verdict": "alien"
+    },
+    {
+      "claim_id": "scn-003-44a-003",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-004",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-005",
+      "label": "should_pass",
+      "loom_verdict": "alien"
+    },
+    {
+      "claim_id": "scn-003-44a-006",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-007",
+      "label": "should_pass",
+      "loom_verdict": "alien"
+    },
+    {
+      "claim_id": "scn-003-44a-008",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-009",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-010",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-011",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-012",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-013",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-014",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-015",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-016",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-017",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-018",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-019",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-020",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-021",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-022",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-023",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-024",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-025",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-026",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-027",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-028",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-029",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-030",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-031",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-032",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-033",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-034",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-035",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-036",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-037",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-038",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-039",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-040",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-041",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-042",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-043",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-044",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-045",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-046",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-047",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-048",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-049",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-050",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-051",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-052",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-053",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-054",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-055",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-056",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-057",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-058",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-059",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-060",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-061",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-062",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-063",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-064",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-065",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-066",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-067",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-068",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-069",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-070",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-071",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-072",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-073",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-074",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-075",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-076",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-077",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-078",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-079",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-080",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-081",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-082",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-083",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-084",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-085",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-086",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-087",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-088",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-089",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-090",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-091",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-092",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-093",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-094",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-095",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    },
+    {
+      "claim_id": "scn-003-44a-096",
+      "label": "should_fail",
+      "loom_verdict": "mimic"
+    }
+  ]
+}

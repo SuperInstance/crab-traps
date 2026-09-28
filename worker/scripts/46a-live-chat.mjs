@@ -56,7 +56,19 @@ const OUT_DIR = process.argv[2] && !process.argv[2].startsWith("--")
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const sha256 = (s) => crypto.createHash("sha256").update(s).digest("hex");
-const DRY = process.argv.slice(2).includes("--dry");
+const argv = process.argv.slice(2);
+const DRY = argv.includes("--dry");
+// --resume: operational resume mechanism (added after the first live start was
+// reaped by the sandbox shell during strict-seat re-derivation, BEFORE any wire
+// call; disclosed in the run receipt). Ingests existing 46a call receipts
+// (parse-only, NO re-calls); ingested calls COUNT against the registered
+// 10-call budget. --pass-limit N: make at most N NEW calls this invocation,
+// then write artifacts and exit (the registered budget/fail-closed rules are
+// UNCHANGED; this only bounds calls per process invocation so the run fits the
+// execution environment's foreground timeout).
+const RESUME = argv.includes("--resume");
+const passIdx = argv.indexOf("--pass-limit");
+const PASS_LIMIT = passIdx >= 0 ? Math.max(1, Number(argv[passIdx + 1]) || 0) : Infinity;
 const readJson = (p) => JSON.parse(fs.readFileSync(p, "utf-8"));
 
 // ── 1. PRE-REGISTRATION must exist, match its registration receipt, predate the run ──
@@ -265,6 +277,59 @@ let pos = 0;
 const coveredPositions = new Set();
 let callCount = 0;
 const batchesMade = [];
+const ingestedCalls = [];
+
+// --resume: parse existing 46a call receipts into the verdict table. Parse-only;
+// no network; calls already spent are counted against MAX_CALLS.
+function ingestReceipts() {
+  const files = fs.readdirSync(OUT_DIR)
+    .filter((f) => /^46a-call-\d+-response\.json$/.test(f)).sort();
+  for (const f of files) {
+    const reqFile = f.replace("-response.json", "-request.json");
+    if (!fs.existsSync(path.join(OUT_DIR, reqFile))) continue;
+    const req = JSON.parse(fs.readFileSync(path.join(OUT_DIR, reqFile), "utf-8"));
+    const resp = JSON.parse(fs.readFileSync(path.join(OUT_DIR, f), "utf-8"));
+    const callNo = req.call_no;
+    const positions = req.items.map(({ pos: p, claim_id }) => {
+      const claimIndex = claims44a.findIndex((c) => c.claim_id === claim_id);
+      coveredPositions.add(p);
+      return { pos: p, claimIndex };
+    });
+    const msg = resp && resp.choices && resp.choices[0] && resp.choices[0].message;
+    const { arr, source } = extractAnswer(msg);
+    if (arr) {
+      const idToIndex = new Map(positions.map(({ pos: p, claimIndex }) => [claims44a[claimIndex].claim_id, { pos: p, claimIndex }]));
+      mapRowsToLLM(arr, source, idToIndex, callNo);
+    }
+    ingestedCalls.push({
+      call_no: callNo, receipt_file: f,
+      finish_reason: resp && resp.choices && resp.choices[0] && resp.choices[0].finish_reason || null,
+      answer_source: arr ? source : "none", verdicts_mapped: arr ? arr.length : 0,
+      note: "call ingested from receipt (NO re-call; counts against the 10-call budget)",
+    });
+    batchesMade.push({ call_no: callNo, positions, batch: positions.length });
+    usageLog.push({
+      call_no: callNo, attempt: 1, status: 200, ms: null, source: "receipt-ingest",
+      usage: resp && resp.usage, model: (resp && resp.model) || MODEL, requested_model: MODEL,
+      finish_reason: resp && resp.choices && resp.choices[0] && resp.choices[0].finish_reason || null,
+      batch_size: positions.length,
+      at: new Date().toISOString(),
+    });
+    if (resp && resp.usage) {
+      const u = resp.usage;
+      estSpend.input_tokens += u.prompt_tokens || 0;
+      estSpend.output_tokens += u.completion_tokens || 0;
+      estSpend.usd = +((estSpend.input_tokens / 1e6) * PRICE_USD_PER_MTOK.input +
+        (estSpend.output_tokens / 1e6) * PRICE_USD_PER_MTOK.output).toFixed(6);
+    }
+    callCount++;
+  }
+  if (ingestedCalls.length) {
+    console.log(`[46a] resume: ingested ${ingestedCalls.length} receipted call(s) (counts against the ${MAX_CALLS}-call budget); ${coveredPositions.size} positions covered`);
+  }
+}
+
+if (RESUME) ingestReceipts();
 
 async function liveCall(positions, attempt) {
   const items = positions.map(({ claimIndex }) => redactedItem(claims44a[claimIndex]));
@@ -333,7 +398,8 @@ if (DRY) {
   }
   pos = POOL;
 } else {
-  while (pos < POOL && callCount < MAX_CALLS) {
+  let newCallsThisPass = 0;
+  while (pos < POOL && callCount < MAX_CALLS && newCallsThisPass < PASS_LIMIT) {
     if (coveredPositions.has(pos)) { pos++; continue; }
     // spend-cap guard BEFORE the call (disclosed assumptions, worst case)
     const estIn = (SYSTEM_PROMPT.length + 400) / 4 + batchNow * 480; // chars->tok heuristic + ~480 tok/claim source+witnesses
@@ -373,6 +439,7 @@ if (DRY) {
       await sleep(2000);
     }
     callCount++;
+    newCallsThisPass++;
     const tag = String(out.requestReceipt.call_no).padStart(2, "0");
     fs.writeFileSync(path.join(OUT_DIR, `46a-call-${tag}-request.json`),
       JSON.stringify(out.requestReceipt, null, 2) + "\n");
@@ -575,6 +642,10 @@ const runReceipt = {
     items_answered: answered.length,
     items_unparsed_or_uncalled: unparsed,
     batching: `batch ${ITEMS_PER_BATCH}/call registered; pre-registered starvation ladder 10 -> 2 -> 1; ladder log receipted`,
+    resume: ingestedCalls.length || RESUME ? {
+      mechanism: "--resume ingests existing 46a call receipts (parse-only, NO re-calls; ingested calls COUNT against the registered 10-call budget); --pass-limit bounds NEW calls per process invocation. OPERATIONAL ONLY — the registered predictions, budget, order, prompts, strict seat, D rule and fail-closed accounting are UNCHANGED. Disclosed cause: the first live start (pre-registration push 4532313, BEFORE any wire call) was reaped by the execution environment's shell during strict-seat re-derivation, so the runner was made resumable; zero budget was consumed by the reaped start (no receipts existed).",
+      ingested_calls: ingestedCalls,
+    } : undefined,
     ladder_log: ladderLog,
     starved_run: starvedRun,
     spend_guard: {
