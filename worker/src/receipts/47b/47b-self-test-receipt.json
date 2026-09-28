@@ -1,0 +1,117 @@
+{
+  "tool": "crab-traps worker/scripts/47b-self-test.mjs",
+  "lane": "47-b second-reader (two-reader rule, first installment)",
+  "walker": "crab-traps-second-reader",
+  "run_at": "2026-09-28T01:38:14.794Z",
+  "mode": "offline-injected-bytes + cli-end-to-end",
+  "fleet_reference": {
+    "repo": "SuperInstance/fleet-seeds",
+    "reference_commit": "9c46c34253c18ae3f94f764470ccb6e837768255",
+    "wave46_claims_sha256": "cfaf425b42ac2824b91c9190a0d89d34be9158657815399e12e0513d4ca0118a",
+    "wave46_rollup_chain_tip": "6e4cdb8f2ca27607f74068b4640258c0c363957fb55248ea8a2f357740451407",
+    "wave46_run_at": "2026-09-28T00:48:42.400Z"
+  },
+  "byte_source": "fleet-seeds checkout at --fleet-root (READ-ONLY): playtest/wave46/witness-rollout/receipts/fetched/ + in-repo fixture paths",
+  "controls": [
+    {
+      "id": "T1",
+      "fault": "e_q10 chain byte flipped",
+      "expected": "DISAGREE",
+      "observed": "stone walk or pin comparison rejected the tampered chain",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T2",
+      "fault": "e_q6 pinned tip replaced with wrong value",
+      "expected": "DISAGREE",
+      "observed": "tip != wrong pin -> disagree",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T3",
+      "fault": "wave-44 KAT receipt byte flipped",
+      "expected": "DISAGREE",
+      "observed": "witness grammar rejected the tampered receipt",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T4",
+      "fault": "middle KAT receipt skipped",
+      "expected": "DISAGREE",
+      "observed": "parent link broken after skip",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T5",
+      "fault": "45c result artifact bytes flipped",
+      "expected": "DISAGREE",
+      "observed": "caught: artifact bytes 71a137f7124b… != pinned 818e66834edb…",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T6",
+      "fault": "44a predictions bytes flipped",
+      "expected": "DISAGREE",
+      "observed": "caught: embedded pre_registration.sha256 != fetched predictions bytes cff775bd4be5…",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T7",
+      "fault": "moth-42b fixture byte flipped",
+      "expected": "DISAGREE",
+      "observed": "caught: fixture sha mismatches: tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "T8",
+      "fault": "pong pinned tip replaced with wrong value",
+      "expected": "DISAGREE",
+      "observed": "tip != wrong pin -> disagree",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "POS",
+      "fault": "all bytes untampered",
+      "expected": "8/8 AGREE",
+      "observed": "8/8 agree",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    }
+  ],
+  "cli_controls": [
+    {
+      "id": "E1",
+      "fault": "runner --offline over tampered e_q10 copy",
+      "expect": "exit != 0, receipt.ok=false, qthe_e_q10 disagree",
+      "observed": "exit=1 receipt.ok=false row.agree=false",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "E2",
+      "fault": "runner --offline --sabotage qthe_e_q6:wrong-pin",
+      "expect": "exit != 0, qthe_e_q6 disagree, sabotage receipted",
+      "observed": "exit=1 row.agree=false sabotage=qthe_e_q6:wrong-pin",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    },
+    {
+      "id": "E3",
+      "fault": "none (clean offline replay)",
+      "expect": "exit 0, 8/8 agree",
+      "observed": "exit=0 receipt.ok=true all_agree=true agreed=8/8",
+      "ok": true,
+      "walker": "crab-traps-second-reader"
+    }
+  ],
+  "ok": true,
+  "contract": "self-test exits 0 iff every negative control is caught AND the positive controls agree"
+}

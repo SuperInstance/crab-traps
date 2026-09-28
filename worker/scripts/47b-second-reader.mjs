@@ -292,6 +292,11 @@ for (const pin of PIN_TABLE) {
       }
       const res = fixturesResult(pin, files);
       const mode = live ? pin.label : 'OFFLINE';
+      const blobPerFile = pin.files.map((f) => ({
+        path: f.path,
+        git_blob_computed: gitBlobAt(FLEET_REFERENCE.reference_commit, f.path),
+        git_blob_matches_pin: null,
+      })).map((x) => ({ ...x, git_blob_matches_pin: x.git_blob_computed === null ? null : x.git_blob_computed === pin.files.find((f) => f.path === x.path).git_blob }));
       const crossPerFile = files.map((f) => {
         const s = bySha(fleetCommittedPath(pin.id, f.path.split('/').pop()));
         return s === null ? { path: f.path, fleet_committed_bytes_equal: null } : { path: f.path, fleet_committed_bytes_equal: s === sha256Hex(f.bytes) };
@@ -300,7 +305,7 @@ for (const pin of PIN_TABLE) {
       const crossBytes = crossCompared.length === 0 ? null : crossCompared.every((x) => x.fleet_committed_bytes_equal === true);
       entry.source = live ? `FIXTURE:${opt.fleetRoot} (tools/fixtures)` : `OFFLINE:${offlinePathFor(pin.id, pin.files[0].fetched_name)} (+${pin.files.length - 1} more)`;
       entry.pin = { files: pin.files.map(({ path, sha256, git_blob }) => ({ path, sha256, git_blob })), fleet_receipted_output_digest: pin.fleet_receipted_output_digest };
-      entry.fetched = { files: files.map((f) => ({ path: f.path, bytes_sha256: sha256Hex(f.bytes), size_bytes: f.bytes.length })), fleet_committed_bytes_equal: crossBytes, fleet_compared_count: crossCompared.length, cross_per_file: crossPerFile, mode };
+      entry.fetched = { files: files.map((f) => ({ path: f.path, bytes_sha256: sha256Hex(f.bytes), size_bytes: f.bytes.length })), git_blob_checks: blobPerFile, git_blobs_all_match: blobPerFile.every((b) => b.git_blob_matches_pin === true), fleet_committed_bytes_equal: crossBytes, fleet_compared_count: crossCompared.length, cross_per_file: crossPerFile, mode };
       entry.computed = { ...res.computed, walker_note: SECOND_READER_ID };
       entry.agree = res.agree;
       entry.why = res.why;

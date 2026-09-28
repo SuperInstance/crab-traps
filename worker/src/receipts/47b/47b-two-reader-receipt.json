@@ -1,0 +1,588 @@
+{
+  "tool": "crab-traps worker/scripts/47b-second-reader.mjs",
+  "lane": "47-b second-reader (two-reader rule, first installment)",
+  "walker": "crab-traps-second-reader",
+  "run_at": "2026-09-28T01:37:57.514Z",
+  "mode": "live",
+  "sabotage": null,
+  "claims": {
+    "file": "worker/src/arena-scenarios-003-two-reader-claims.json",
+    "sha256": "d274f8c6c03bcfb239b073d6eda51787aa18e3e1c65ad0f1150138cf42860dd3"
+  },
+  "fleet_reference": {
+    "repo": "SuperInstance/fleet-seeds",
+    "reference_commit": "9c46c34253c18ae3f94f764470ccb6e837768255",
+    "wave46_claims_sha256": "cfaf425b42ac2824b91c9190a0d89d34be9158657815399e12e0513d4ca0118a",
+    "wave46_rollup_chain_tip": "6e4cdb8f2ca27607f74068b4640258c0c363957fb55248ea8a2f357740451407",
+    "wave46_run_at": "2026-09-28T00:48:42.400Z"
+  },
+  "walker_independence": "walker written from the stone-v1 law + witness grammar text (fleet modules read as spec only); no fleet walker code imported or copied",
+  "chains": [
+    {
+      "id": "wave44_kat",
+      "kind": "witness-chain",
+      "label": "FIXTURE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "FIXTURE:/home/z/my-project/pt47b-fs/playtest/wave44/witness-grammar/kat/chain.jsonl",
+      "fetched": {
+        "bytes_sha256": "c68175e7aa54383a6c4795595c7d7ee4eef4c68628d2e96f5720b28e6033f7c9",
+        "size_bytes": 2274,
+        "git_blob_computed": {
+          "at_fleet_pin": "5cac84cff7946abf6940e1b7f3337a5e94d0b4c3",
+          "at_reference_commit": "5cac84cff7946abf6940e1b7f3337a5e94d0b4c3"
+        },
+        "git_blob_matches_pin": true,
+        "fleet_committed_bytes_equal": null,
+        "mode": "FIXTURE"
+      },
+      "pin": {
+        "bytes_sha256": "c68175e7aa54383a6c4795595c7d7ee4eef4c68628d2e96f5720b28e6033f7c9",
+        "expect_tip": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+        "expect_links": 5,
+        "git_blob": "5cac84cff7946abf6940e1b7f3337a5e94d0b4c3",
+        "pinned_at_fleet_commit": null
+      },
+      "computed": {
+        "ok": true,
+        "tip": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+        "links": 5,
+        "output_sha256": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "inputs_sha256": "c68175e7aa54383a6c4795595c7d7ee4eef4c68628d2e96f5720b28e6033f7c9",
+      "output_sha256": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c"
+    },
+    {
+      "id": "qthe_e_q10",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "LIVE:https://raw.githubusercontent.com/SuperInstance/qthe/0f5be9d6652d90b7984ebfaa5394a6e20179c7dc/receipts/e_q10_chain.jsonl",
+      "fetched": {
+        "bytes_sha256": "6637ce7dfb2d68718cc0a09d13fbe6311d59f52d3a91c8e00264546911f1fc59",
+        "size_bytes": 10484,
+        "git_blob_computed": {
+          "at_fleet_pin": null,
+          "at_reference_commit": null
+        },
+        "git_blob_matches_pin": null,
+        "fleet_committed_bytes_equal": true,
+        "mode": "LIVE"
+      },
+      "pin": {
+        "bytes_sha256": "6637ce7dfb2d68718cc0a09d13fbe6311d59f52d3a91c8e00264546911f1fc59",
+        "expect_tip": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+        "expect_links": 24,
+        "git_blob": null,
+        "pinned_at_fleet_commit": null
+      },
+      "computed": {
+        "ok": true,
+        "tip": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+        "links": 24,
+        "output_sha256": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "inputs_sha256": "6637ce7dfb2d68718cc0a09d13fbe6311d59f52d3a91c8e00264546911f1fc59",
+      "output_sha256": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938"
+    },
+    {
+      "id": "qthe_e_q6",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "LIVE:https://raw.githubusercontent.com/SuperInstance/qthe/905bb2f57ba369500359dc255aeaaeb681125fa6/receipts/e_q6_chain.jsonl",
+      "fetched": {
+        "bytes_sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+        "size_bytes": 9242,
+        "git_blob_computed": {
+          "at_fleet_pin": null,
+          "at_reference_commit": null
+        },
+        "git_blob_matches_pin": null,
+        "fleet_committed_bytes_equal": true,
+        "mode": "LIVE"
+      },
+      "pin": {
+        "bytes_sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+        "expect_tip": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+        "expect_links": 15,
+        "git_blob": null,
+        "pinned_at_fleet_commit": null
+      },
+      "computed": {
+        "ok": true,
+        "tip": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+        "links": 15,
+        "output_sha256": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "inputs_sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+      "output_sha256": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0"
+    },
+    {
+      "id": "pong_birth_seal",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "LIVE:https://raw.githubusercontent.com/SuperInstance/pong-quilt/1da41be23eff100f4d11df0e187311e12ad704f9/checkpoints/stone-v1.json",
+      "fetched": {
+        "bytes_sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+        "size_bytes": 1299,
+        "git_blob_computed": {
+          "at_fleet_pin": null,
+          "at_reference_commit": null
+        },
+        "git_blob_matches_pin": null,
+        "fleet_committed_bytes_equal": true,
+        "mode": "LIVE"
+      },
+      "pin": {
+        "bytes_sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+        "expect_tip": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+        "expect_links": 5,
+        "git_blob": null,
+        "pinned_at_fleet_commit": null
+      },
+      "computed": {
+        "ok": true,
+        "tip": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+        "links": 5,
+        "output_sha256": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "inputs_sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+      "output_sha256": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7"
+    },
+    {
+      "id": "tavern_round11",
+      "kind": "stone-v1",
+      "label": "FIXTURE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "FIXTURE:/home/z/my-project/pt47b-fs/tavern/round-11/round11_ledger.jsonl",
+      "fetched": {
+        "bytes_sha256": "bdf3be0641f51b4241d3846b16744e2623bfb4ec24f5374f931d7618d1d19bf5",
+        "size_bytes": 4800,
+        "git_blob_computed": {
+          "at_fleet_pin": "913eea42b2b0f34ff669c74c3a6156dc2319a471",
+          "at_reference_commit": "913eea42b2b0f34ff669c74c3a6156dc2319a471"
+        },
+        "git_blob_matches_pin": true,
+        "fleet_committed_bytes_equal": null,
+        "mode": "FIXTURE"
+      },
+      "pin": {
+        "bytes_sha256": "bdf3be0641f51b4241d3846b16744e2623bfb4ec24f5374f931d7618d1d19bf5",
+        "expect_tip": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+        "expect_links": 6,
+        "git_blob": "913eea42b2b0f34ff669c74c3a6156dc2319a471",
+        "pinned_at_fleet_commit": "a7a0226185a47695f4b7fd420d54d0e394e48630"
+      },
+      "computed": {
+        "ok": true,
+        "tip": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+        "links": 6,
+        "output_sha256": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "inputs_sha256": "bdf3be0641f51b4241d3846b16744e2623bfb4ec24f5374f931d7618d1d19bf5",
+      "output_sha256": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5"
+    },
+    {
+      "id": "crabtraps_45c",
+      "kind": "artifact+pre-registration-binding",
+      "label": "LIVE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "LIVE:https://raw.githubusercontent.com/SuperInstance/crab-traps/e6f5ce3342e12280d7ef70d982ec4c6d709540e9/worker/src/arena-scenarios-003-live-reasoner-results.json",
+      "fetched": {
+        "bytes_sha256": "818e66834edb5ed1d21f1a2070eeb860d6cc8dd291546deaa59ea3fb61bc2184",
+        "predictions_bytes_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+        "artifact_size_bytes": 76987,
+        "predictions_size_bytes": 8556,
+        "fleet_committed_bytes_equal": true,
+        "mode": "LIVE"
+      },
+      "pin": {
+        "artifact_sha256": "818e66834edb5ed1d21f1a2070eeb860d6cc8dd291546deaa59ea3fb61bc2184",
+        "predictions_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+        "fleet_receipted_output_digest": "9267feb453683e993fa4bb395a7b15c7177e8740a90bd67e62a8c11bce17d5e4"
+      },
+      "computed": {
+        "ok": true,
+        "tip": "b33ff1a1a423ab66632ecc87b116c4db3824d883099646158a071ad6f039e59b",
+        "links": null,
+        "detail": {
+          "artifact_sha256": "818e66834edb5ed1d21f1a2070eeb860d6cc8dd291546deaa59ea3fb61bc2184",
+          "predictions_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+          "embedded_pre_registration_sha256": "76bf72511c5507d0997eb7a2dc4d152090a8f7a0860f42b8159248fc21beac2a",
+          "artifactShaMatchesPin": true,
+          "embeddedMatchesPredictions": true,
+          "embeddedMatchesPin": true,
+          "hasVerdict": true
+        },
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "facts_agree": true,
+      "digest_reproduction": {
+        "reproduced": true,
+        "fleet_digest": "9267feb453683e993fa4bb395a7b15c7177e8740a90bd67e62a8c11bce17d5e4"
+      },
+      "inputs_sha256": "af535c396e51876e1eae34295d3b180a39a8ec904d9b953dc440cf838a2d667f",
+      "output_sha256": "b33ff1a1a423ab66632ecc87b116c4db3824d883099646158a071ad6f039e59b"
+    },
+    {
+      "id": "crabtraps_44a",
+      "kind": "artifact+pre-registration-binding",
+      "label": "LIVE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "LIVE:https://raw.githubusercontent.com/SuperInstance/crab-traps/fed1e98502dfcedbd3669652bbe3d713e1156d78/worker/src/arena-scenarios-003-gan-results.json",
+      "fetched": {
+        "bytes_sha256": "6d7db23ec86e2ffb79d8dcae65b9972fd87bd6f012ecc33d596fb7ebe47a0d78",
+        "predictions_bytes_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+        "artifact_size_bytes": 193784,
+        "predictions_size_bytes": 9604,
+        "fleet_committed_bytes_equal": true,
+        "mode": "LIVE"
+      },
+      "pin": {
+        "artifact_sha256": "6d7db23ec86e2ffb79d8dcae65b9972fd87bd6f012ecc33d596fb7ebe47a0d78",
+        "predictions_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+        "fleet_receipted_output_digest": "5e7d51ca4487d90d92cc9c65d19a66d94822f85c7e3f16fba76648698b348f41"
+      },
+      "computed": {
+        "ok": true,
+        "tip": "fed9369f990ceba0c81e70b745626369f79b20b630ced1a511ce41c674dbfd4d",
+        "links": null,
+        "detail": {
+          "artifact_sha256": "6d7db23ec86e2ffb79d8dcae65b9972fd87bd6f012ecc33d596fb7ebe47a0d78",
+          "predictions_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+          "embedded_pre_registration_sha256": "76e5ef055f74c4d3b59d2021f1cfb59c994c44ad6119fedae6db5950b0b3ece7",
+          "artifactShaMatchesPin": true,
+          "embeddedMatchesPredictions": true,
+          "embeddedMatchesPin": true,
+          "hasVerdict": true
+        },
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "facts_agree": true,
+      "digest_reproduction": {
+        "reproduced": true,
+        "fleet_digest": "5e7d51ca4487d90d92cc9c65d19a66d94822f85c7e3f16fba76648698b348f41"
+      },
+      "inputs_sha256": "c82da1a9c1e28697154e61a9d02c8e98767c7dc2d3e36784a6353960970aa6a5",
+      "output_sha256": "fed9369f990ceba0c81e70b745626369f79b20b630ced1a511ce41c674dbfd4d"
+    },
+    {
+      "id": "fleetseeds_fixtures",
+      "kind": "fixture-manifest",
+      "label": "FIXTURE",
+      "walker_note": "crab-traps-second-reader",
+      "source": "FIXTURE:/home/z/my-project/pt47b-fs (tools/fixtures)",
+      "fetched": {
+        "files": [
+          {
+            "path": "tools/fixtures/qthe-e_q6-chain-905bb2f57ba369500359dc255aeaaeb681125fa6.jsonl",
+            "bytes_sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+            "size_bytes": 9242
+          },
+          {
+            "path": "tools/fixtures/pong-stone-v1-1da41be23eff100f4d11df0e187311e12ad704f9.json",
+            "bytes_sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+            "size_bytes": 1299
+          },
+          {
+            "path": "tools/fixtures/rekor-ecdsa-entry-108e9186-a00ec06ef.live-get.json",
+            "bytes_sha256": "4545f9182b4204e5f7bc2c1130739aeb0039026d12c735f4756c20043f879268",
+            "size_bytes": 3242
+          },
+          {
+            "path": "tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9-152c46272e19.txt",
+            "bytes_sha256": "ebc8a43d90be5c0b01788f7cc63021ab0b0dac1a0294756e73a2882360b5e9b9",
+            "size_bytes": 4848
+          }
+        ],
+        "git_blob_checks": [
+          {
+            "path": "tools/fixtures/qthe-e_q6-chain-905bb2f57ba369500359dc255aeaaeb681125fa6.jsonl",
+            "git_blob_computed": "2ea29bb4e3228fd0481389aa79971486df977727",
+            "git_blob_matches_pin": true
+          },
+          {
+            "path": "tools/fixtures/pong-stone-v1-1da41be23eff100f4d11df0e187311e12ad704f9.json",
+            "git_blob_computed": "b88c07772fe5559009fde43f3dc2503cb65272fb",
+            "git_blob_matches_pin": true
+          },
+          {
+            "path": "tools/fixtures/rekor-ecdsa-entry-108e9186-a00ec06ef.live-get.json",
+            "git_blob_computed": "4866bf319bef70bb80fcf4a2087d40e618733c30",
+            "git_blob_matches_pin": true
+          },
+          {
+            "path": "tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9-152c46272e19.txt",
+            "git_blob_computed": "ce1b22efc7fe06530d631df6a886ad6807ec5b7f",
+            "git_blob_matches_pin": true
+          }
+        ],
+        "git_blobs_all_match": true,
+        "fleet_committed_bytes_equal": null,
+        "fleet_compared_count": 0,
+        "cross_per_file": [
+          {
+            "path": "tools/fixtures/qthe-e_q6-chain-905bb2f57ba369500359dc255aeaaeb681125fa6.jsonl",
+            "fleet_committed_bytes_equal": null
+          },
+          {
+            "path": "tools/fixtures/pong-stone-v1-1da41be23eff100f4d11df0e187311e12ad704f9.json",
+            "fleet_committed_bytes_equal": null
+          },
+          {
+            "path": "tools/fixtures/rekor-ecdsa-entry-108e9186-a00ec06ef.live-get.json",
+            "fleet_committed_bytes_equal": null
+          },
+          {
+            "path": "tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9-152c46272e19.txt",
+            "fleet_committed_bytes_equal": null
+          }
+        ],
+        "mode": "FIXTURE"
+      },
+      "pin": {
+        "files": [
+          {
+            "path": "tools/fixtures/qthe-e_q6-chain-905bb2f57ba369500359dc255aeaaeb681125fa6.jsonl",
+            "sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+            "git_blob": "2ea29bb4e3228fd0481389aa79971486df977727"
+          },
+          {
+            "path": "tools/fixtures/pong-stone-v1-1da41be23eff100f4d11df0e187311e12ad704f9.json",
+            "sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+            "git_blob": "b88c07772fe5559009fde43f3dc2503cb65272fb"
+          },
+          {
+            "path": "tools/fixtures/rekor-ecdsa-entry-108e9186-a00ec06ef.live-get.json",
+            "sha256": "4545f9182b4204e5f7bc2c1130739aeb0039026d12c735f4756c20043f879268",
+            "git_blob": "4866bf319bef70bb80fcf4a2087d40e618733c30"
+          },
+          {
+            "path": "tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9-152c46272e19.txt",
+            "sha256": "ebc8a43d90be5c0b01788f7cc63021ab0b0dac1a0294756e73a2882360b5e9b9",
+            "git_blob": "ce1b22efc7fe06530d631df6a886ad6807ec5b7f"
+          }
+        ],
+        "fleet_receipted_output_digest": "108f535f78bfee266ce2550267285c9c461cd5fcab2c045e06579f4ec7530239"
+      },
+      "computed": {
+        "ok": true,
+        "tip": "0e0564388509cd532cf275bc6b247f5012718e23625feb46c5e4e9c4d20902bc",
+        "links": null,
+        "entries": [
+          {
+            "path": "tools/fixtures/moth-42b-raw-bits-2caa822b-7c46-4f65-a0c9-152c46272e19.txt",
+            "sha256": "ebc8a43d90be5c0b01788f7cc63021ab0b0dac1a0294756e73a2882360b5e9b9",
+            "sizeBytes": 4848
+          },
+          {
+            "path": "tools/fixtures/pong-stone-v1-1da41be23eff100f4d11df0e187311e12ad704f9.json",
+            "sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+            "sizeBytes": 1299
+          },
+          {
+            "path": "tools/fixtures/qthe-e_q6-chain-905bb2f57ba369500359dc255aeaaeb681125fa6.jsonl",
+            "sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+            "sizeBytes": 9242
+          },
+          {
+            "path": "tools/fixtures/rekor-ecdsa-entry-108e9186-a00ec06ef.live-get.json",
+            "sha256": "4545f9182b4204e5f7bc2c1130739aeb0039026d12c735f4756c20043f879268",
+            "sizeBytes": 3242
+          }
+        ],
+        "manifest_sha256": "bae152496461a90e4fea85d503b0bf92cc81867930668e8652286e9b8cba2310",
+        "walker_note": "crab-traps-second-reader"
+      },
+      "agree": true,
+      "why": null,
+      "facts_agree": true,
+      "digest_reproduction": {
+        "reproduced": true,
+        "fleet_digest": "108f535f78bfee266ce2550267285c9c461cd5fcab2c045e06579f4ec7530239"
+      },
+      "inputs_sha256": "bae152496461a90e4fea85d503b0bf92cc81867930668e8652286e9b8cba2310",
+      "output_sha256": "0e0564388509cd532cf275bc6b247f5012718e23625feb46c5e4e9c4d20902bc"
+    }
+  ],
+  "agreement_table": [
+    {
+      "id": "wave44_kat",
+      "kind": "witness-chain",
+      "label": "FIXTURE",
+      "fleet_receipted_tip": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+      "computed": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+      "agree": true,
+      "digest_reproduced": null,
+      "facts_agree": null
+    },
+    {
+      "id": "qthe_e_q10",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "fleet_receipted_tip": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+      "computed": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+      "agree": true,
+      "digest_reproduced": null,
+      "facts_agree": null
+    },
+    {
+      "id": "qthe_e_q6",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "fleet_receipted_tip": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+      "computed": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+      "agree": true,
+      "digest_reproduced": null,
+      "facts_agree": null
+    },
+    {
+      "id": "pong_birth_seal",
+      "kind": "stone-v1",
+      "label": "LIVE",
+      "fleet_receipted_tip": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+      "computed": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+      "agree": true,
+      "digest_reproduced": null,
+      "facts_agree": null
+    },
+    {
+      "id": "tavern_round11",
+      "kind": "stone-v1",
+      "label": "FIXTURE",
+      "fleet_receipted_tip": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+      "computed": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+      "agree": true,
+      "digest_reproduced": null,
+      "facts_agree": null
+    },
+    {
+      "id": "crabtraps_45c",
+      "kind": "artifact+pre-registration-binding",
+      "label": "LIVE",
+      "fleet_receipted_tip": "9267feb453683e993fa4bb395a7b15c7177e8740a90bd67e62a8c11bce17d5e4",
+      "computed": "b33ff1a1a423ab66632ecc87b116c4db3824d883099646158a071ad6f039e59b",
+      "agree": true,
+      "digest_reproduced": true,
+      "facts_agree": true
+    },
+    {
+      "id": "crabtraps_44a",
+      "kind": "artifact+pre-registration-binding",
+      "label": "LIVE",
+      "fleet_receipted_tip": "5e7d51ca4487d90d92cc9c65d19a66d94822f85c7e3f16fba76648698b348f41",
+      "computed": "fed9369f990ceba0c81e70b745626369f79b20b630ced1a511ce41c674dbfd4d",
+      "agree": true,
+      "digest_reproduced": true,
+      "facts_agree": true
+    },
+    {
+      "id": "fleetseeds_fixtures",
+      "kind": "fixture-manifest",
+      "label": "FIXTURE",
+      "fleet_receipted_tip": "108f535f78bfee266ce2550267285c9c461cd5fcab2c045e06579f4ec7530239",
+      "computed": "0e0564388509cd532cf275bc6b247f5012718e23625feb46c5e4e9c4d20902bc",
+      "agree": true,
+      "digest_reproduced": true,
+      "facts_agree": true
+    }
+  ],
+  "receipt_chain": {
+    "receipts": [
+      {
+        "claim": "two-reader walk of wave44_kat (witness-chain, FIXTURE): agree=true computed_tip=e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c walker=crab-traps-second-reader",
+        "inputs_sha256": "c68175e7aa54383a6c4795595c7d7ee4eef4c68628d2e96f5720b28e6033f7c9",
+        "output_sha256": "e4226c8846a9528253a4f193e21099abb87b275859edd7290556f8b3c7cdc69c",
+        "parent": "GENESIS",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of qthe_e_q10 (stone-v1, LIVE): agree=true computed_tip=50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938 walker=crab-traps-second-reader",
+        "inputs_sha256": "6637ce7dfb2d68718cc0a09d13fbe6311d59f52d3a91c8e00264546911f1fc59",
+        "output_sha256": "50ddf5f9226d8c847948ea4916c54af6338775bd9f8d42b5bd314063317e6938",
+        "parent": "395672f0e0d24ece9d3f19d19e18dc12e5b51bd15953ea075cf7001239927043",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of qthe_e_q6 (stone-v1, LIVE): agree=true computed_tip=ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0 walker=crab-traps-second-reader",
+        "inputs_sha256": "3340b0823aabcd7773172c15104397452fdfbef01e006f25ed330dacf98018cc",
+        "output_sha256": "ab4ea19681888b11c2843b9ca43d12f652dca045338217dc5bf1b5cd9e477db0",
+        "parent": "4ff7553bfa8bfaada7df95bed5305372e8fcc7df1e226133af59a9bda272d66e",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of pong_birth_seal (stone-v1, LIVE): agree=true computed_tip=c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7 walker=crab-traps-second-reader",
+        "inputs_sha256": "6e958f6716225872c613be556a3e0bd754628c7c4c47c3c378220a70e84ed576",
+        "output_sha256": "c155fd016b364335c076cc18772b835672581230c2fd377fd8ac9f2849d296c7",
+        "parent": "473cb9b0e4aa2aa8b7348c730229e057adbef4b65f0a948abf3bc94bd75e6845",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of tavern_round11 (stone-v1, FIXTURE): agree=true computed_tip=db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5 walker=crab-traps-second-reader",
+        "inputs_sha256": "bdf3be0641f51b4241d3846b16744e2623bfb4ec24f5374f931d7618d1d19bf5",
+        "output_sha256": "db324fd05d0a4373b4f8ec8fc395039065e1b54494ba546425fd3e76054dc1b5",
+        "parent": "26a8582cdd0bf78784bbaeb76925111fb3d2597e157a8710673b2206c769857b",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of crabtraps_45c (artifact+pre-registration-binding, LIVE): agree=true computed_tip=b33ff1a1a423ab66632ecc87b116c4db3824d883099646158a071ad6f039e59b walker=crab-traps-second-reader",
+        "inputs_sha256": "af535c396e51876e1eae34295d3b180a39a8ec904d9b953dc440cf838a2d667f",
+        "output_sha256": "b33ff1a1a423ab66632ecc87b116c4db3824d883099646158a071ad6f039e59b",
+        "parent": "74b9c3701993bee07fee67029dac1913ec51f4f9ad7b6956d8c4bf6bc5372dcb",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of crabtraps_44a (artifact+pre-registration-binding, LIVE): agree=true computed_tip=fed9369f990ceba0c81e70b745626369f79b20b630ced1a511ce41c674dbfd4d walker=crab-traps-second-reader",
+        "inputs_sha256": "c82da1a9c1e28697154e61a9d02c8e98767c7dc2d3e36784a6353960970aa6a5",
+        "output_sha256": "fed9369f990ceba0c81e70b745626369f79b20b630ced1a511ce41c674dbfd4d",
+        "parent": "6c3e903f53ddff6036a9ee92a4962b27074b6802cd51454a77d0c35919d2146a",
+        "ts": "2026-09-28T01:37:58.132Z"
+      },
+      {
+        "claim": "two-reader walk of fleetseeds_fixtures (fixture-manifest, FIXTURE): agree=true computed_tip=0e0564388509cd532cf275bc6b247f5012718e23625feb46c5e4e9c4d20902bc walker=crab-traps-second-reader",
+        "inputs_sha256": "bae152496461a90e4fea85d503b0bf92cc81867930668e8652286e9b8cba2310",
+        "output_sha256": "0e0564388509cd532cf275bc6b247f5012718e23625feb46c5e4e9c4d20902bc",
+        "parent": "f0956107e8bb8b28188997524591e9ec82fa412fa07085c6b3cf7ed996c84fb0",
+        "ts": "2026-09-28T01:37:58.132Z"
+      }
+    ],
+    "tip": "ad143bbbcaada87de9b2d6b8f0db962477bf09de0a23ac3ba2e9eb37eb40a78a",
+    "self_verify": {
+      "ok": true,
+      "receipts": 8,
+      "tip": "ad143bbbcaada87de9b2d6b8f0db962477bf09de0a23ac3ba2e9eb37eb40a78a",
+      "why": null
+    }
+  },
+  "identity_check": {
+    "walker": "crab-traps-second-reader",
+    "rows_checked": 8,
+    "rows_with_identity": 8,
+    "entries_checked": 8,
+    "entries_with_identity": 8,
+    "ok": true
+  },
+  "all_agree": true,
+  "exit_contract": "exit 0 iff every chain agrees AND the receipt chain self-verifies AND identity check passes; else exit 1",
+  "ok": true
+}
