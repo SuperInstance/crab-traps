@@ -397,3 +397,24 @@ its siblings:
 ---
 
 *🦐 Cocapn fleet · lighthouse keeper architecture · `fleet.cocapn.ai`*
+
+## Documentation (wave-69 doc package)
+
+Route by audience — every file is complete and current as of wave-69:
+
+- Just cloned, zero context (agents): [docs/ONBOARDING.md](docs/ONBOARDING.md) —
+  identity, verify-it-works commands, gotchas (boat IP, gate rules, bundle builds),
+  frontier.
+- Casting lures / playing the Reef (users): [docs/USER-GUIDE.md](docs/USER-GUIDE.md) —
+  install, first success, everyday tasks (cast, record catches, wander, enter the
+  Arena), troubleshooting, FAQ (incl. the ethics design).
+- Extending the code (developers): [docs/DEVELOPER-GUIDE.md](docs/DEVELOPER-GUIDE.md) —
+  code layout, core concepts (lure/catch/plaque/edge-ledger/dials), how to add lures,
+  routes, ledger producers, and scenarios; testing; gotchas.
+- Operating/reviewing the system (engineers):
+  [docs/ENGINEERING-NOTES.md](docs/ENGINEERING-NOTES.md) — architecture, invariants,
+  failure modes & blast radius, cost envelope, design decisions.
+- Deciding investment (executives): [docs/CTO-BRIEF.md](docs/CTO-BRIEF.md) — maturity,
+  risks, cost profile, strategic options.
+- The index of indexes (everyone): [docs/KNOWLEDGE-MAP.md](docs/KNOWLEDGE-MAP.md) —
+  every file, lure category, receipt, journal task ID, and sibling relationship.
